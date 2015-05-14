@@ -3,6 +3,27 @@ var toscaDoc = null;
 var selected = null;
 var initialState = null;
 
+var fileInput = document.getElementById("file-input");
+fileInput.addEventListener('change', function() {
+    //fileInput.disabled = true;
+    /*
+    console.log(fileInput.files[0]);
+    var blob = new zip.BlobReader(fileInput.files[0]);
+    zip.createReader(blob, function(zipReader) {
+	zipReader.getEntries(function(entries) {
+	    console.log("Contents:");
+	    for (var i = 0; i < entries.length; i++) {
+		console.log(entries[i].filename);
+	    }
+	});
+    });
+    */
+    var fs = new zip.fs.FS();
+    fs.importBlob(fileInput.files[0], function() {
+    });
+    console.log(fs);
+}, false);
+
 $(document).click(function(event) {
 	if(selected != null) {
 		if (selected.id.indexOf("state_") == 0) {

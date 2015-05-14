@@ -7,14 +7,26 @@
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
 	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
 	<script src="jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
-	<script src="editor.js"> </script>
+	<script type="text/javascript" src="lib/zip.js"></script>
+	<script type="text/javascript" src="lib/zip-fs.js"></script>
 	<script src="TOSCA.js"></script>
 	<script src="ManagementProtocols.js"></script>
+	<script type="text/javascript">
+	  function qualifyURL(url){
+	    var img = document.createElement('img');
+	    img.src = url; // set string url
+	    url = img.src; // get qualified url
+	    img.src = null; // no server request
+	    return url;
+	  }
+	  
+	  zip.workerScriptsPath = qualifyURL("lib/");
+	</script>	  
 </head>
 <body>
 <!-- Menu -->
 	<div id="topMenu">
-		<div class="topOption" onclick="loadXMLDoc()">LOAD</div>
+		<input class="topOption" type="file" id="file-input">
 		<div class="topOption" onclick="exportXMLDoc()">EXPORT</div>
 		<div class="topOption about" onclick="about()">info</div>
 	</div>
@@ -77,5 +89,6 @@
 		</div>
 	</div>
 	<div id="popup_shadower"></div>
+	<script src="editor.js"></script>
 </body>
 </html>
