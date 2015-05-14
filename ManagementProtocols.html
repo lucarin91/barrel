@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Editor</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<link href="css/editor.css" rel="stylesheet" type="text/css">
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
+	<script src="jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
+	<script src="editor.js"> </script>
+	<script src="TOSCA.js"></script>
+	<script src="ManagementProtocols.js"></script>
+</head>
+<body>
+<!-- Menu -->
+	<div id="topMenu">
+		<div class="topOption" onclick="loadXMLDoc()">LOAD</div>
+		<div class="topOption" onclick="exportXMLDoc()">EXPORT</div>
+		<div class="topOption about" onclick="about()">info</div>
+	</div>
+	<br>
+	<!-- Editor -->
+	<div id="divEnv"> </div>
+	<div id="toolbox">
+		<h3>Toolbox</h3>
+		<h4 id="toolbox_selected"></h4>
+		<div id="toolbox_initialState">
+			<div class="toolboxOption" onclick="toolbox_setAsInitialState()">- Set as initial state</div>
+		</div>
+		<div id="toolbox_reliesOn">
+			<h5>Relies on:</h5>
+			<div class="toolboxOption" onclick="toolbox_addReliesOn()">- Add requirement..</div>
+			<div class="toolboxOption" onclick="toolbox_removeReliesOn()">- Remove requirement..</div>
+		</div>
+		<div id="toolbox_offers">
+			<h5>Offers:</h5>
+			<div class="toolboxOption" onclick="toolbox_addOffers()">- Add capability..</div>
+			<div class="toolboxOption" onclick="toolbox_removeOffers()">- Remove capability..</div>
+		</div>
+		<div id="toolbox_transitions">
+			<h5>Outgoing transitions:</h5>
+			<div class="toolboxOption" onclick="toolbox_addTransition()">- Add transition..</div>
+			<div class="toolboxOption" onclick="toolbox_removeTransition()">- Remove transition..</div>
+		</div>
+	</div>
+	<div id="popup_selector" class="popup">
+		<h3>Selector</h3>
+		<div id="popup_selector_label">Please select the feature you want to add</div>
+		<select	id="popup_selector_menu" class="popup_selector"></select>
+		<!--input id="popup_selector_text"/-->
+		<div style="margin-left:100px">
+			<div id="popup_selector_OK" class="popup_button" onClick="selector_addReliesOn()">OK</div>
+			<div class="popup_button" onClick="selector_close()">Cancel</div>
+		</div>
+	</div>
+	<div id="popup_transition" class="popup transition">
+		<h3>Selector</h3>
+		<div id="popup_transition_opDiv" style="display:none">
+			<h5>Operation</h5>
+			<div>Please select the operation firing the transition</div>
+			<select	id="popup_transition_operationMenu" class="popup_selector"></select>
+		</div>
+		<div id="popup_transition_stateDiv" style="display:none">
+			<h5>Target state</h5>
+			<div>Please select the state reached by firing the transition</div>
+			<select	id="popup_transition_targetStateMenu" class="popup_selector"></select>
+		</div>
+		<div id="popup_transition_reqDiv" style="display:none">
+			<h5>Needed requirements</h5>
+			<div>Please click on the requirements needed to fire the transition</div>
+			<div id="popup_transition_neededRequirements" style="padding: 5px 5px"></div>
+		</div>
+		<!--input id="popup_selector_text"/-->
+		<div style="margin-left:100px">
+			<div id="transition_selector_OK" class="popup_button" onClick="transition_addTransition()">OK</div>
+			<div class="popup_button" onClick="transition_close()">Cancel</div>
+		</div>
+	</div>
+	<div id="popup_shadower"></div>
+</body>
+</html>
