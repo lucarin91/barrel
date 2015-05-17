@@ -1,11 +1,26 @@
-//Parses .tosca file at "fileURL"
-function parseToscaDefinitions(fileURL: string): Element {
-    var TOSCAhttp = new XMLHttpRequest();
-    fileURL += "?"; //needed to force no-caching
-    TOSCAhttp.open("GET", fileURL, false);
-    TOSCAhttp.send();
-    return TOSCAhttp.responseXML.documentElement;
+/// <reference path="jquery.d.ts" />
+
+function parseToscaMeta(data: string) {
+    return /Entry-Definitions: *(.*)/.exec(data)[1].split("/");
 }
+
+//Parses .tosca file at "fileURL"
+function parseToscaDefinitions(data: string): Element {
+    return $.parseXML(data).documentElement;
+}
+
+class ToscaDocument {
+    private doc: Element;
+
+    constructor(data: string) {
+	this.doc = $.parseXML(data).documentElement;
+    }
+
+    get(name: string) {
+	return this.doc.getElementsByTagNameNS("http://docs.oasis-open.org/tosca/ns/2011/12", name);
+    }
+}
+
 
 //Finds an element (of a certain "name") inside "toscaDoc"
 function getToscaElements(toscaDoc: Element, name: string) {

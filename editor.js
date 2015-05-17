@@ -1,28 +1,27 @@
+var csar = null;
+
 var toscaDoc = null;
 
 var selected = null;
 var initialState = null;
 
 var fileInput = document.getElementById("file-input");
-fileInput.addEventListener('change', function() {
-    //fileInput.disabled = true;
-    /*
-    console.log(fileInput.files[0]);
-    var blob = new zip.BlobReader(fileInput.files[0]);
-    zip.createReader(blob, function(zipReader) {
-	zipReader.getEntries(function(entries) {
-	    console.log("Contents:");
-	    for (var i = 0; i < entries.length; i++) {
-		console.log(entries[i].filename);
+
+var readCsar = function() {
+    var onend = function() {
+	for (var d in csar.docs) {
+	    var nts = csar.docs[d].get("NodeType");
+	    for (var i = 0; i < nts.length; i++) {
+		console.log(d);
+		console.log(nts[i]);
 	    }
-	});
-    });
-    */
-    var fs = new zip.fs.FS();
-    fs.importBlob(fileInput.files[0], function() {
-    });
-    console.log(fs);
-}, false);
+	}
+	//$("#nodeTypeSelector").append(item);
+    }
+    csar = new Csar.Csar(fileInput.files[0], onend);
+}
+
+fileInput.addEventListener('change', readCsar, false);
 
 $(document).click(function(event) {
 	if(selected != null) {

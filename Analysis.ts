@@ -1,14 +1,15 @@
 module Analyzer {
     export interface Map<T> { [id: string]: T; }
+    export interface Set { [id: string]: boolean; }
     
     export class Operation {
 	constructor(public to: string,
-		    public reqs: string[]) { }
+		    public reqs: Set) { }
     }
 
     export class State {
-	constructor(public caps: string[],
-		    public reqs: string[],
+	constructor(public caps: Set,
+		    public reqs: Set,
 		    public ops: Map<Operation>) { }
     }
 
@@ -18,22 +19,21 @@ module Analyzer {
     }
 
     export class Application {
-	public caps: Map<boolean>;
+	public caps: Set;
 	constructor(public nodes: Map<Node>,
 		    public binding: Map<string>) {
 	    this.caps = {};
 
 	    for (var nodeId in nodes) {
 		var node = nodes[nodeId];
-		var nodeCaps = node.states[node.state].caps;
-		for (var i = 0; i < nodeCaps.length; i++)
-		    this.caps[nodeCaps[i]] = true;
+		for (var cap in node.states[node.state].caps)
+		    this.caps[cap] = true;
 	    }
 	}
 
-	private reqsSatisfied(reqs: string[]) {
-	    for (var i = 0; i < reqs.length; i++) {
-		if (!this.caps[this.binding[reqs[i]]])
+	private reqsSatisfied(reqs: Set) {
+	    for (var req in reqs) {
+		if (!this.caps[this.binding[req]])
 		    return false;
 	    }
 	    return true;
@@ -64,17 +64,15 @@ module Analyzer {
 		return false;
 
 	    // Remove old caps
-	    var nodeCaps = node.states[node.state].caps;
-	    for (var i = 0; i < nodeCaps.length; i++)
-		this.caps[nodeCaps[i]] = false;
+	    for (var cap in node.states[node.state].caps)
+		this.caps[cap] = false;
 
 	    // Update node state
 	    node.state = op.to;
 	    
 	    // Add new caps
-	    var nodeCaps = node.states[node.state].caps;
-	    for (var i = 0; i < nodeCaps.length; i++)
-		this.caps[nodeCaps[i]] = true;
+	    for (var cap in node.states[node.state].caps)
+		this.caps[cap] = true;
 
 	    return true;
 	}
