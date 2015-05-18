@@ -9,14 +9,18 @@ var fileInput = document.getElementById("file-input");
 
 var readCsar = function() {
     var onend = function() {
-	for (var d in csar.docs) {
-	    var nts = csar.docs[d].get("NodeType");
-	    for (var i = 0; i < nts.length; i++) {
-		console.log(d);
-		console.log(nts[i]);
-	    }
+	var nts = csar.get("NodeType");
+	for (var i = 0; i < nts.length; i++) {
+	    var el = nts[i].element;
+	    var name = el.getAttribute("name");
+	    var item = document.createElement("li");
+	    item.innerHTML = item.id = name;
+	    $("#nodeTypeSelector").append(item);
+	    $("#" + name).click(function () {
+		toscaDoc = el.ownerDocument;
+		drawEnvironment();
+	    });
 	}
-	//$("#nodeTypeSelector").append(item);
     }
     csar = new Csar.Csar(fileInput.files[0], onend);
 }
