@@ -10,14 +10,29 @@ function parseToscaDefinitions(data: string): Element {
 }
 
 class ToscaDocument {
-    private doc: Element;
+    public doc: Document;
 
-    constructor(data: string) {
-	this.doc = $.parseXML(data).documentElement;
+    constructor(private _load: (onend: (data: string) => void) => void,
+		private _save: (data: string, onend: () => void) => void,
+		onend: () => void)
+    {
+	this.reload(onend);
     }
 
     get(name: string) {
 	return this.doc.getElementsByTagNameNS("http://docs.oasis-open.org/tosca/ns/2011/12", name);
+    }
+
+    reload(onend: () => void) {
+	var that = this;
+	this._load(function(data) {
+	    that.doc = $.parseXML(data);
+	    onend();
+	});
+    }
+    
+    save(onend: () => void) {
+	this._save(new XMLSerializer().serializeToString(this.doc), onend);
     }
 }
 

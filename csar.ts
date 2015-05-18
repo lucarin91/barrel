@@ -8,7 +8,7 @@ module Csar {
     export interface Map<T> { [path: string]: T; }
 
     export interface FileNode {
-	fileName: string;
+	doc: ToscaDocument;
 	element: Node;
     }
 
@@ -40,8 +40,23 @@ module Csar {
 		    return onend();
 
 		var fileName = locations.pop();
-		var parseDoc = function (data: string) {
-		    var doc = new ToscaDocument(data);
+
+		var load = function (onend: (text: string) => void) {
+		    var file = <zip.fs.ZipFileEntry> that.fs.find(fileName);
+		    file.getText(onend);
+		}
+		var save = function (text: string, onend: () => void) {
+		    var file = <zip.fs.ZipFileEntry> that.fs.find(fileName);
+		    that.fs.remove(file);
+		    var pathElements = fileName.split("/");
+		    var name = pathElements.pop();
+		    var dir = <zip.fs.ZipDirectoryEntry> that.fs.find(pathElements.join("/"));
+		    dir.addText(name, text);
+		    onend();
+		}
+
+		var doc: ToscaDocument;
+		var parseDoc = function () {
 		    that.docs[fileName] = doc;
 		    var imports = doc.get("Import");
 		    for (var i = 0; i < imports.length; i++) {
@@ -51,9 +66,8 @@ module Csar {
 		    }
 		    parseToscaDocuments();
 		}
-		
-		var file = <zip.fs.ZipFileEntry> that.fs.find(fileName);
-		file.getText(parseDoc);
+
+		doc = new ToscaDocument(load, save, parseDoc);
 	    }
 
 	    var parseToscaMeta = function(data: string) {
@@ -75,7 +89,7 @@ module Csar {
 	    for (var d in this.docs) {
 		var els = this.docs[d].get(name);
 		for (var i = 0; i < els.length; i++) {
-		    r.push({ fileName: d, element: els[i] });
+		    r.push({ doc: this.docs[d], element: els[i] });
 		}
 	    }
 	    return r;

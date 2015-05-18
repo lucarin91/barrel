@@ -1,13 +1,24 @@
-var csar = null;
-
-var toscaDoc = null;
-
 var selected = null;
-var initialState = null;
+var mProt = null;
+
+var arrayContains = function(a, x) {
+    for (var i = 0; i < a.length; i++)
+	if (a[i] === x)
+	    return true;
+
+    return false;
+}
+
+var arrayRemove = function(a, x) {
+    for (var i = 0; i < a.length; i++)
+	if (a[i] === x)
+	    a.splice(i, 1);
+}
 
 var fileInput = document.getElementById("file-input");
 
 var readCsar = function() {
+    var csar = null;
     var onend = function() {
 	var nts = csar.get("NodeType");
 	for (var i = 0; i < nts.length; i++) {
@@ -16,10 +27,13 @@ var readCsar = function() {
 	    var item = document.createElement("li");
 	    item.innerHTML = item.id = name;
 	    $("#nodeTypeSelector").append(item);
-	    $("#" + name).click(function () {
-		toscaDoc = el.ownerDocument;
-		drawEnvironment();
-	    });
+	    var closure = function(doc, name) {
+		return function () {
+		    mProt = new ManagementProtocol(doc, name);
+		    drawEnvironment(mProt);
+		};
+	    } (nts[i].doc, name);
+	    $("#" + name).click(closure);
 	}
     }
     csar = new Csar.Csar(fileInput.files[0], onend);
@@ -57,9 +71,7 @@ function initialPositioning(divs) {
 	}
 }
 
-function createState(divEnv,state) {
-	var stateName = state.getAttributeNode("state").value;
-	
+function createState(divEnv,stateName) {
 	//creating main state div
 	//whose id is "state_<stateName>"
 	var divState = document.createElement("div");
@@ -173,75 +185,55 @@ function deleteTransition(sourceState,operationName){
 }
 
 function updateInitialState(newInitialState) {
-	newInitialState = "state_" + newInitialState;
-	if (initialState!=null) {
-		var oldInitialState = document.getElementById(initialState);
-		oldInitialState.className = oldInitialState.className.replace(" initial","");
-	}
-	document.getElementById(newInitialState).className += " initial";
-	initialState=newInitialState;
+    $(".initial").remove("initial");
+    $("#state_" + newInitialState).addClass("initial");
 }
 
-function loadXMLDoc() {
-	var url = prompt('Please enter the URL of TOSCA file', 'http://www.di.unipi.it/~soldani/MProt/UbuntuOSNodeType_WithMPROT.tosca');
-	toscaDoc = parseToscaDefinitions(url);
-	drawEnvironment();
-}
+function drawEnvironment(mProt) {
+    //clear environment
+    var divEnv = document.getElementById("divEnv");
+    divEnv.innerHTML = "";
+    jsPlumb.reset();
+    
+    var stateDivs = [];
+    
+    //instance states
+    var instanceStates = mProt.getStates();
+    if (instanceStates.length==0) {
+	alert("The imported NodeType has no instance states");
+	return;
+    }
 
-function drawEnvironment() {		
-	//clear environment
-	var divEnv = document.getElementById("divEnv");
-	divEnv.innerHTML = "";
-	jsPlumb.reset();
+    for(i=0; i < instanceStates.length; i++) {
+	var is = instanceStates[i];
+	var divState = createState(divEnv, is);
+	stateDivs.push(divState);
 	
-	var stateDivs = [];
+	var reqList = mProt.getStateReqs(is);
+	for(var j=0; j<reqList.length; j++)
+	    drawRequirementAssumption(is, reqList[j]);
+
+	var capList = mProt.getStateCaps(is);
+	for(var j=0; j<capList.length; j++)
+	    drawCapabilityOffering(is,capList[j]);
+
+	var iniStates = mProt.get("InitialState");
+	if (iniStates.length == 1)
+	    updateInitialState(iniStates[0].getAttribute("state"));
+
+	var transitions = mProt.get("Transition");
+	for (var j=0; j<transitions.length; j++)
+	    drawTransition(transitions[j]);
+    }		
 	
-	//instance states
-	var instanceStates = getInstanceStates(toscaDoc);
-	for(i=0; i < instanceStates.length; i++) {
-		var is = instanceStates[i];
-		var divState = createState(divEnv,is);
-		stateDivs.push(divState);
-		if (is.hasChildNodes()) {
-			if(is.firstElementChild.localName == "ReliesOn") {
-				var reqList = is.firstElementChild.childNodes;
-				for(j=0; j<reqList.length; j++)
-					drawRequirementAssumption(is.getAttribute("state"),reqList[j].getAttribute("name"));
-			}
-			if(is.lastElementChild.localName == "Offers") {
-				var capList = is.lastElementChild.childNodes;
-				for(j=0; j<capList.length; j++)
-					drawCapabilityOffering(is.getAttribute("state"),capList[j].getAttribute("name"));
-			}
-		}
-	}
-	if (instanceStates.length==0) {
-		alert("The imported NodeType has no instance states");
-		toscaDoc = null;
-		return;
-	}
+    initialPositioning(stateDivs);
 	
-	var mProt = getManagementProtocol(toscaDoc);
-	if (mProt.hasChildNodes()) {
-		if (mProt.firstElementChild.localName == "InitialState") {
-			var iniState = mProt.firstElementChild.getAttribute("state");
-			updateInitialState(iniState);
-		}
-		if (mProt.lastElementChild.localName == "Transitions") {
-			var transitions = mProt.lastElementChild.childNodes;
-			for (i=0; i<transitions.length; i++)
-				drawTransition(transitions[i]);
-		}		
-	}
-	
-	initialPositioning(stateDivs);
-	
-	jsPlumb.repaintEverything();
-	jsPlumb.repaintEverything();
+    jsPlumb.repaintEverything();
+    jsPlumb.repaintEverything();
 };
 
 function exportXMLDoc() {
-	var xmlBlob = serializeToscaDefinitions(toscaDoc);
+	var xmlBlob = serializeToscaDefinitions(mProt.node.ownerDocument);
 	var url = URL.createObjectURL(xmlBlob);
 	window.open(url, "_blank", "");
 }
@@ -256,82 +248,64 @@ function toolbox_addReliesOn() {
 		"Please select a requirement that must hold in state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
 	document.getElementById("popup_selector_OK").setAttribute("onClick","selector_addReliesOn()");
 	
-	var reqList = getRequirementDefinitions(toscaDoc);
-	if (reqList.length == 0) {
-		alert("No more requirements can be added");
-		return;
-	}
+    var reqList = mProt.getReqs();
+    var menu = document.getElementById("popup_selector_menu");
+    for(var i = 0; i < reqList.length; i++) {
+	var option = document.createElement("option");
+	option.value = reqList[i];
+	option.innerHTML = reqList[i];
+	menu.appendChild(option);
+    }
 	
-	var menu = document.getElementById("popup_selector_menu");
-	for(i=0; i<reqList.length; i++) {
-		var option = document.createElement("option");
-		option.value = reqList[i].getAttribute("name");
-		option.innerHTML = reqList[i].getAttribute("name");
-		menu.appendChild(option);
-	}
-	
-	//popping up the selector
-	selector_open();
+    //popping up the selector
+    selector_open();
 }
 
 function selector_addReliesOn() {
-	//var reqName = prompt("Requirement to be added?","xxxx");
-	var reqName = document.getElementById("popup_selector_menu").value;
-	var mProt = getManagementProtocol(toscaDoc);
-	var stateName = selected.id.substring(6,selected.id.length);
-	var added = addRequirementAssumption(mProt,stateName,reqName);
-	if (added==1) 
-		drawRequirementAssumption(stateName,reqName);
-	else if(added==0)
-		alert("Specified requirement is already assumed");
+    //var reqName = prompt("Requirement to be added?","xxxx");
+    var reqName = document.getElementById("popup_selector_menu").value;
+    var stateName = selected.id.substring(6,selected.id.length);
+    var reqs = mProt.getStateReqs(stateName);
+    if (arrayContains(reqs, reqName)) {
+	alert("Specified requirement is already assumed");
+    } else {
+	reqs.push(reqName);
+	mProt.setStateReqs(stateName, reqs);
+	drawRequirementAssumption(stateName,reqName);
+    }
 	
-	selector_close();
+    selector_close();
 }
 
 function toolbox_removeReliesOn() {
-	//setting the selector
-	document.getElementById("popup_selector_label").innerHTML = 
-		"Please select the requirement that does not need to hold any more in state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
-	document.getElementById("popup_selector_OK").setAttribute("onClick","selector_removeReliesOn()");
+    //setting the selector
+    document.getElementById("popup_selector_label").innerHTML = 
+	"Please select the requirement that does not need to hold any more in state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
+    document.getElementById("popup_selector_OK").setAttribute("onClick","selector_removeReliesOn()");
 	
-	var stateName = selected.id.substring(6,selected.id.length);
-	var iStates = getInstanceStates(toscaDoc);
-	var menu = document.getElementById("popup_selector_menu");
-	for (i=0; i < iStates.length; i++) {
-		var is = iStates[i];
-		if (is.getAttribute("state") == stateName) {
-			if (is.hasChildNodes()) {
-				if(is.firstElementChild.localName == "ReliesOn" ||
-				   is.firstElementChild.localName == "mprot:ReliesOn") {
-					var rOn = is.firstElementChild.childNodes;
-					for (j=0; j<rOn.length; j++) {
-						var option = document.createElement("option");
-						option.value = rOn[j].getAttribute("name");
-						option.innerHTML = rOn[j].getAttribute("name");
-						menu.appendChild(option);
-					}
-				}
-			}
-		}
-	}
-	//checking if there is nothing to remove
-	if(!menu.hasChildNodes()){
-		alert("No requirements to be removed!");
-		return;
-	}
-	
-	//popping up the selector
-	selector_open();
+    var stateName = selected.id.substring(6,selected.id.length);
+    var reqs = mProt.getStateReqs(stateName);
+    var menu = document.getElementById("popup_selector_menu");
+    for (var j = 0; j < reqs.length; j++) {
+	var option = document.createElement("option");
+	option.value = reqs[j];
+	option.innerHTML = reqs[j];
+	menu.appendChild(option);
+    }
+
+    //popping up the selector
+    selector_open();
 }
 
 function selector_removeReliesOn() {
-	var reqName = document.getElementById("popup_selector_menu").value;
-	var mProt = getManagementProtocol(toscaDoc);
-	var stateName = selected.id.substring(6,selected.id.length);
-	removeRequirementAssumption(mProt,stateName,reqName);
-	deleteRequirementAssumption(stateName,reqName);
+    var reqName = document.getElementById("popup_selector_menu").value;
+    var stateName = selected.id.substring(6,selected.id.length);
+    var reqs = mProt.getStateReqs(stateName);
+    arrayRemove(reqs, reqName);
+    mProt.setStateReqs(stateName, reqs);
+    deleteRequirementAssumption(stateName,reqName);
 	
-	selector_close();
+    selector_close();
 }
 
 function toolbox_addOffers() {
@@ -561,8 +535,7 @@ function transition_close() {
 }
 
 function toolbox_setAsInitialState() {
-	var iniStateName = selected.id.substring(6,selected.length);
-	var mProt = getManagementProtocol(toscaDoc);
-	setInitialState(mProt,iniStateName);
-	updateInitialState(iniStateName);
+    var iniStateName = selected.id.substring(6,selected.length); // drop "state_"
+    mProt.setInitialState(iniStateName);
+    updateInitialState(iniStateName);
 }
