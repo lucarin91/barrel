@@ -18,6 +18,7 @@ var arrayRemove = function(a, x) {
 var fileInput = document.getElementById("file-input");
 
 var readCsar = function() {
+	$("#nodeTypeSelector").html(""); //JS: Added
     var csar = null;
     var onend = function() {
 	var nts = csar.get("NodeType");
@@ -186,12 +187,15 @@ function deleteTransition(sourceState,operationName){
 
 function updateInitialState(newInitialState) {
     $(".initial").remove("initial");
+	$(".stateDiv").removeClass("initial"); //JS: Added
     $("#state_" + newInitialState).addClass("initial");
 }
 
 function drawEnvironment(mProt) {
     //clear environment
     var divEnv = document.getElementById("divEnv");
+	$("#toolbox").attr("style","display:none"); //JS: Added
+	selected = null; //JS: Added
     divEnv.innerHTML = "";
     jsPlumb.reset();
     
@@ -251,10 +255,10 @@ function toolbox_addReliesOn() {
     var reqList = mProt.getReqs();
     var menu = document.getElementById("popup_selector_menu");
     for(var i = 0; i < reqList.length; i++) {
-	var option = document.createElement("option");
-	option.value = reqList[i];
-	option.innerHTML = reqList[i];
-	menu.appendChild(option);
+		var option = document.createElement("option");
+		option.value = reqList[i];
+		option.innerHTML = reqList[i];
+		menu.appendChild(option);
     }
 	
     //popping up the selector
@@ -314,33 +318,52 @@ function toolbox_addOffers() {
 		"Please select a capability that is offered by state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
 	document.getElementById("popup_selector_OK").setAttribute("onClick","selector_addOffers()");
 	
-	var capList = getCapabilityDefinitions(toscaDoc);
-	if (capList.length == 0) {
-		alert("No more capability can be added");
-		return;
-	}
+	// var capList = getCapabilityDefinitions(toscaDoc);
+	// if (capList.length == 0) {
+		// alert("No more capability can be added");
+		// return;
+	// }
 	
-	var menu = document.getElementById("popup_selector_menu");
-	for(i=0; i<capList.length; i++) {
-		var option = document.createElement("option");
-		option.value = capList[i].getAttribute("name");
-		option.innerHTML = capList[i].getAttribute("name");
-		menu.appendChild(option);
-	}
+	// var menu = document.getElementById("popup_selector_menu");
+	// for(i=0; i<capList.length; i++) {
+		// var option = document.createElement("option");
+		// option.value = capList[i].getAttribute("name");
+		// option.innerHTML = capList[i].getAttribute("name");
+		// menu.appendChild(option);
+	// }
+	var capList = mProt.getCaps(); //JS: Added
+    var menu = document.getElementById("popup_selector_menu"); //JS: Added
+    for(var i = 0; i < capList.length; i++) { //JS: Added
+		var option = document.createElement("option"); //JS: Added
+		option.value = capList[i]; //JS: Added
+		option.innerHTML = capList[i]; //JS: Added
+		menu.appendChild(option); //JS: Added
+    }
+	
 	
 	//popping up the selector
 	selector_open();
 }
 
 function selector_addOffers() {
-	var capName = document.getElementById("popup_selector_menu").value;
-	var mProt = getManagementProtocol(toscaDoc);
-	var stateName = selected.id.substring(6,selected.id.length);
-	var added = addCapabilityOffering(mProt,stateName,capName);
-	if (added==1) 
-		drawCapabilityOffering(stateName,capName);
-	else if(added==0)
-		alert("Specified capability is already offered");
+	// var capName = document.getElementById("popup_selector_menu").value;
+	// var mProt = getManagementProtocol(toscaDoc);
+	// var stateName = selected.id.substring(6,selected.id.length);
+	// var added = addCapabilityOffering(mProt,stateName,capName);
+	// if (added==1) 
+		// drawCapabilityOffering(stateName,capName);
+	// else if(added==0)
+		// alert("Specified capability is already offered");
+	var capName = document.getElementById("popup_selector_menu").value; //JS: Added
+    var stateName = selected.id.substring(6,selected.id.length); //JS: Added
+    var caps = mProt.getStateCaps(stateName); //JS: Added
+    if (arrayContains(caps, capName)) { //JS: Added
+	alert("Specified requirement is already assumed"); //JS: Added
+    } else { //JS: Added
+	caps.push(capName); //JS: Added
+	mProt.setStateCaps(stateName, caps); //JS: Added
+	drawCapabilityOffering(stateName,capName); //JS: Added
+    } //JS: Added
 	
 	selector_close();
 }
@@ -351,43 +374,59 @@ function toolbox_removeOffers() {
 		"Please select a capability that is no more offered by state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
 	document.getElementById("popup_selector_OK").setAttribute("onClick","selector_removeOffers()");
 	
-	var stateName = selected.id.substring(6,selected.id.length);
-	var iStates = getInstanceStates(toscaDoc);
-	var menu = document.getElementById("popup_selector_menu");
-	for (i=0; i < iStates.length; i++) {
-		var is = iStates[i];
-		if (is.getAttribute("state") == stateName) {
-			if (is.hasChildNodes()) {
-				if(is.lastElementChild.localName == "Offers" ||
-				   is.lastElementChild.localName == "mprot:Offers") {
-					var off = is.lastElementChild.childNodes;
-					for (j=0; j<off.length; j++) {
-						var option = document.createElement("option");
-						option.value = off[j].getAttribute("name");
-						option.innerHTML = off[j].getAttribute("name");
-						menu.appendChild(option);
-					}
-				}
-			}
-		}
-	}
-	//checking if there is nothing to remove
-	if(!menu.hasChildNodes()){
-		alert("No offerings to be removed!");
-		return;
-	}
+	// var stateName = selected.id.substring(6,selected.id.length);
+	// var iStates = getInstanceStates(toscaDoc);
+	// var menu = document.getElementById("popup_selector_menu");
+	// for (i=0; i < iStates.length; i++) {
+		// var is = iStates[i];
+		// if (is.getAttribute("state") == stateName) {
+			// if (is.hasChildNodes()) {
+				// if(is.lastElementChild.localName == "Offers" ||
+				   // is.lastElementChild.localName == "mprot:Offers") {
+					// var off = is.lastElementChild.childNodes;
+					// for (j=0; j<off.length; j++) {
+						// var option = document.createElement("option");
+						// option.value = off[j].getAttribute("name");
+						// option.innerHTML = off[j].getAttribute("name");
+						// menu.appendChild(option);
+					// }
+				// }
+			// }
+		// }
+	// }
+	// //checking if there is nothing to remove
+	// if(!menu.hasChildNodes()){
+		// alert("No offerings to be removed!");
+		// return;
+	// }
+	var stateName = selected.id.substring(6,selected.id.length); //JS: Added
+    var caps = mProt.getStateCaps(stateName); //JS: Added
+    var menu = document.getElementById("popup_selector_menu"); //JS: Added
+    for (var j = 0; j < caps.length; j++) { //JS: Added
+	var option = document.createElement("option"); //JS: Added
+		option.value = caps[j]; //JS: Added
+		option.innerHTML = caps[j]; //JS: Added
+		menu.appendChild(option); //JS: Added
+    } //JS: Added
 	
 	//popping up the selector
 	selector_open();
 }
 
 function selector_removeOffers() {
-	var capName = document.getElementById("popup_selector_menu").value;
-	var mProt = getManagementProtocol(toscaDoc);
-	var stateName = selected.id.substring(6,selected.id.length);
-	removeCapabilityOffering(mProt,stateName,capName);
-	deleteCapabilityOffering(stateName,capName);
+	// var capName = document.getElementById("popup_selector_menu").value;
+	// var mProt = getManagementProtocol(toscaDoc);
+	// var stateName = selected.id.substring(6,selected.id.length);
+	// removeCapabilityOffering(mProt,stateName,capName);
+	// deleteCapabilityOffering(stateName,capName);
 	
+	var capName = document.getElementById("popup_selector_menu").value; //JS: Added
+    var stateName = selected.id.substring(6,selected.id.length); //JS: Added
+    var caps = mProt.getStateCaps(stateName); //JS: Added
+    arrayRemove(caps, capName); //JS: Added
+    mProt.setStateCaps(stateName, caps); //JS: Added
+    deleteCapabilityOffering(stateName,capName); //JS: Added
+ 	
 	selector_close();
 }
 

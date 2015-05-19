@@ -27,14 +27,24 @@
 <body>
 <!-- Menu -->
 	<div id="topMenu">
-		<input class="topOption" type="file" id="file-input">
-		<div class="topOption" onclick="exportXMLDoc()">EXPORT</div>
+		<div class="topOption">
+			Import CSAR
+			<input type="file" id="file-input"/>
+		</div>
+		<div class="topOption" onclick="exportXMLDoc()">Export CSAR</div>
+		<div class="topOption" onclick="alert('TODO')">Analyze</div>
 		<div class="topOption about" onclick="about()">info</div>
 	</div>
 	<br>
 	<!-- Editor -->
-	<div>
+	<div id="div_nodeTypeSelector">
+	  <h3>
+		Available
+		<br>
+		NodeTypes
+	  </h3>
 	  <ul id="nodeTypeSelector">
+		<li>None</li>
 	  </ul>
 	</div>
 	<div id="divEnv"> </div>
@@ -64,7 +74,6 @@
 		<h3>Selector</h3>
 		<div id="popup_selector_label">Please select the feature you want to add</div>
 		<select	id="popup_selector_menu" class="popup_selector"></select>
-		<!--input id="popup_selector_text"/-->
 		<div style="margin-left:100px">
 			<div id="popup_selector_OK" class="popup_button" onClick="selector_addReliesOn()">OK</div>
 			<div class="popup_button" onClick="selector_close()">Cancel</div>
@@ -91,6 +100,18 @@
 		<div style="margin-left:100px">
 			<div id="transition_selector_OK" class="popup_button" onClick="transition_addTransition()">OK</div>
 			<div class="popup_button" onClick="transition_close()">Cancel</div>
+		</div>
+	</div>
+	<div id="popup_analyzer" class="popup analyzer">
+		<h3>Analyzer</h3>
+		<div id="analyzerDiv">
+			<!--div class="analyzer_node">
+				<h4>NodeType1</h4>
+				<div>
+					<div class="operation">Lifecycle:Operation11</div>
+					<div class="operation unavailable">Lifecycle:Operation12</div>
+				</div>
+			</div-->
 		</div>
 	</div>
 	<div id="popup_shadower"></div>
