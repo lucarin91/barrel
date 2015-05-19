@@ -234,6 +234,10 @@ module ManagementProtocol {
 	    }
 	}
 
+	getXML() {
+	    return this.doc.getXML();
+	}
+
 	getTransitions() {
 	    var r: Transition[] = [];
 	    var trans = this.getMProt("Transition");

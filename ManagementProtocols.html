@@ -31,7 +31,8 @@
 			Import CSAR
 			<input type="file" id="file-input"/>
 		</div>
-		<div class="topOption" onclick="exportXMLDoc()">Export CSAR</div>
+		<div class="topOption" onclick="exportCsar()">Export CSAR</div>
+		<div class="topOption" onclick="exportXMLDoc()">View XML</div>
 		<div class="topOption" onclick="alert('TODO')">Analyze</div>
 		<div class="topOption about" onclick="about()">info</div>
 	</div>
@@ -105,13 +106,13 @@
 	<div id="popup_analyzer" class="popup analyzer">
 		<h3>Analyzer</h3>
 		<div id="analyzerDiv">
-			<!--div class="analyzer_node">
+			<div class="analyzer_node">
 				<h4>NodeType1</h4>
 				<div>
 					<div class="operation">Lifecycle:Operation11</div>
 					<div class="operation unavailable">Lifecycle:Operation12</div>
 				</div>
-			</div-->
+			</div>
 		</div>
 	</div>
 	<div id="popup_shadower"></div>

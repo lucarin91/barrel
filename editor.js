@@ -1,5 +1,7 @@
 var selected = null;
 var mProt = null;
+var csar = null;
+var csarFileName = null;
 
 var arrayRemove = function(a, x) {
     for (var i = 0; i < a.length; i++) {
@@ -14,7 +16,6 @@ var fileInput = document.getElementById("file-input");
 
 var readCsar = function() {
     $("#nodeTypeSelector").html("");
-    var csar = null;
     var onend = function() {
 	var nts = csar.get("NodeType");
 	for (var i = 0; i < nts.length; i++) {
@@ -32,6 +33,7 @@ var readCsar = function() {
 	    $("#" + name).click(closure);
 	}
     }
+    csarFileName = fileInput.files[0].name;
     csar = new Csar.Csar(fileInput.files[0], onend);
 }
 
@@ -227,9 +229,26 @@ function drawEnvironment(mProt) {
 };
 
 function exportXMLDoc() {
-    var xmlBlob = serializeToscaDefinitions(mProt.node.ownerDocument);
-    var url = URL.createObjectURL(xmlBlob);
+    var url = URL.createObjectURL(mProt.getXML());
     window.open(url, "_blank", "");
+}
+
+function exportCsar() {
+    csar.exportBlob(function (blob) {
+	var url = URL.createObjectURL(blob);
+	setTimeout(function () {
+	    var a = document.createElement("a");
+	    a.style = "display: none";
+	    a.href = url;
+	    a.download = csarFileName;
+	    document.body.appendChild(a);
+	    a.click();
+	    setTimeout(function() {
+		document.body.removeChild(a);
+		window.URL.revokeObjectURL(url);
+	    }, 0);
+	}, 0);
+    });
 }
 
 function about() {

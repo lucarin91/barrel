@@ -30,9 +30,17 @@ class ToscaDocument {
 	    onend();
 	});
     }
+
+    private getXMLString() {
+	return new XMLSerializer().serializeToString(this.doc);
+    }
     
+    getXML() {
+	return new Blob([ this.getXMLString() ], { type: "text/xml" });
+    }
+
     save(onend: () => void) {
-	this._save(new XMLSerializer().serializeToString(this.doc), onend);
+	this._save(this.getXMLString(), onend);
     }
 }
 
