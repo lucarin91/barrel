@@ -16,7 +16,7 @@ var fileInput = document.getElementById("file-input");
 
 var nodeTypeSelectorCallback = function(doc, name) {
     var onend = function () {
-	mProt = new ManagementProtocol.ManagementProtocol(doc, name);
+	mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
 	drawEnvironment(mProt);
     };
 
@@ -576,6 +576,21 @@ function toolbox_setAsInitialState() {
     var iniStateName = selected.id.substring(6,selected.length); // drop "state_"
     mProt.setInitialState(iniStateName);
     updateInitialState(iniStateName);
+}
+
+
+function createNodeTemplateDiv(nodeTemplate, nodeTypes) {
+    var caps = getToscaElements(nodeTemplate, "Capability");
+    var reqs = getToscaElements(nodeTemplate, "Requirement");
+    var type = nodeTemplate.getAttribute("name").split(':')[1];
+    //type = types[nodeTypes[type]];
+    var nt = { id: nodeTemplate.getAttribute("id"),
+	       caps: 
+    console.log(caps);
+    console.log(reqs);
+    console.log(type);
+
+    return Mustache.render("<div class='analyzer_node'><h4>{{id}}</h4><div>{{#ops}}<div class='operation'>{{.}}</div>{{/ops}}</div></div>", nt);
 }
 
 function analyzer_open() {

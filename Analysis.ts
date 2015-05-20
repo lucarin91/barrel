@@ -1,4 +1,4 @@
-module Analyzer {
+module Analysis {
     export interface Map<T> { [id: string]: T; }
     export interface Set { [id: string]: boolean; }
     
@@ -49,8 +49,7 @@ module Analyzer {
 	    return true;
 	}
 
-	// Try to perform an operation
-	performOp(nodeId: string, opId: string) {
+	canPerformOp(nodeId: string, opId: string) {
 	    var node = this.nodes[nodeId];
 	    var state = node.states[node.state];
 
@@ -60,8 +59,17 @@ module Analyzer {
 	    var op = state.ops[opId];
 
 	    // Check if the operation requirements are satisfied
-	    if (!this.reqsSatisfied(op.reqs))
-		return false;
+	    return this.reqsSatisfied(op.reqs);
+	}
+	
+	// Try to perform an operation
+	performOp(nodeId: string, opId: string) {
+	    if (!this.canPerformOp(nodeId, opId))
+		throw "Illegal operation";
+
+	    var node = this.nodes[nodeId];
+	    var state = node.states[node.state];
+	    var op = state.ops[opId];
 
 	    // Remove old caps
 	    for (var cap in node.states[node.state].caps)
@@ -73,8 +81,6 @@ module Analyzer {
 	    // Add new caps
 	    for (var cap in node.states[node.state].caps)
 		this.caps[cap] = true;
-
-	    return true;
 	}
     }
 }

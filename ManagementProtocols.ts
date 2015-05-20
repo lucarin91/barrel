@@ -42,7 +42,7 @@ module ManagementProtocol {
 	    nodes[i].parentNode.removeChild(nodes[i]);
     }
 
-    function getMProtElements(node: Element, tagName: string) {
+    export function getMProtElements(node: Element, tagName: string) {
 	return node.getElementsByTagNameNS(mprotNS, tagName);
     }
 
@@ -75,74 +75,32 @@ module ManagementProtocol {
     }
 
     export class ManagementProtocol {
-	private nodeType: Element;
-	private mprot: Element;
+	public mprot: Element;
+	
+	constructor(public nodeType: Element) {
+	    if (nodeType)
+		this.reset(nodeType);
+	}
 
-	constructor(private doc: ToscaDocument,
-		    name: string,
-		    onend: () => void)
-	{
-	    var that = this;
+	reset(nodeType: Element) {
+	    this.nodeType = nodeType;
+	    this.mprot = <Element> this.getMProt("ManagementProtocol")[0];
 
-	    var ensureTransitions = function() {
-		var transitions = that.getMProt("Transitions");
+	    if (this.mprot) {
+		var transitions = this.getMProt("Transitions");
 		if (transitions.length != 1) {
 		    removeAll(transitions);
-		    that.mprot.appendChild(that.doc.doc.createElementNS(mprotNS, "Transitions"));
+		    this.mprot.appendChild(nodeType.ownerDocument.createElementNS(mprotNS, "Transitions"));
 		}
 	    }
-	    
-	    var outerend = function() {
-		that.mprot = <Element> that.getMProt("ManagementProtocol")[0];
-		ensureTransitions();
-		if (onend !== undefined)
-		    onend();
-	    }
-
-	    var findNodeType = function() {
-		var nts = doc.get("NodeType");
-
-		for (var i = 0; i < nts.length; i++) {
-		    var nt = <Element> nts[i];
-		    if (nt.getAttribute("name") == name)
-			return nt;
-		}
-
-		throw "Did not find NodeType " + name;
-	    }
-
-	    var init = function() {
-		var defs = <Element> doc.doc.firstChild;
-		defs.setAttribute("xmlns:mprot", mprotNS);
-		removeAll(that.getMProt("ManagementProtocol"));
-		that.nodeType.appendChild(that.doc.doc.createElementNS(mprotNS, "ManagementProtocol"));
-
-		that.save(function() {
-		    that.doc.reload(function() {
-			that.nodeType = findNodeType();
-			outerend();
-		    });
-		});
-	    }
-
-	    this.nodeType = findNodeType();
-	    
-	    if (this.getMProt("ManagementProtocol").length != 1)
-		init();
-	    else
-		outerend();
 	}
 	
 	private getTosca(tagName: string) {
 	    return getToscaElements(this.nodeType, tagName);
 	}
 
-	private getMProt(tagName: string) {
+	getMProt(tagName: string) {
 	    return getMProtElements(this.nodeType, tagName);
-	}
-
-	save(onend: () => void) {
-	    this.doc.save(onend);
 	}
 
 	getReqs() {
@@ -194,7 +152,7 @@ module ManagementProtocol {
 	setInitialState(state: string) {
 	    removeAll(this.getMProt("InitialState"));
 
-	    var stateNode = this.doc.doc.createElementNS(mprotNS, "InitialState");
+	    var stateNode = this.nodeType.ownerDocument.createElementNS(mprotNS, "InitialState");
 	    stateNode.setAttribute("state", state);
 	    this.mprot.insertBefore(stateNode, this.mprot.firstChild);
 	}
@@ -212,13 +170,13 @@ module ManagementProtocol {
 	    if (this.hasTransition(source, opName, ifaceName))
 		return false;
 
-	    var t = this.doc.doc.createElementNS(mprotNS, "Transition");
+	    var t = this.nodeType.ownerDocument.createElementNS(mprotNS, "Transition");
 	    t.setAttribute("sourceState", source);
 	    t.setAttribute("targetState", target);
 	    t.setAttribute("operationName", opName);
 	    t.setAttribute("interfaceName", ifaceName);
 	    if(reqs.length > 0)
-		t.appendChild(createElementGroup(reqs, this.doc.doc, "ReliesOn", "Requirement", "name"));
+		t.appendChild(createElementGroup(reqs, this.nodeType.ownerDocument, "ReliesOn", "Requirement", "name"));
 	    
 	    this.getMProt("Transitions")[0].appendChild(t);
 	    return true;
@@ -237,11 +195,6 @@ module ManagementProtocol {
 		}
 	    }
 	}
-
-	getXML() {
-	    return this.doc.getXML();
-	}
-
 	getTransitions() {
 	    var r: Transition[] = [];
 	    var trans = this.getMProt("Transition");
@@ -269,6 +222,58 @@ module ManagementProtocol {
 	    }
 
 	    return trans;
+	}
+    }
+
+    export class ManagementProtocolEditor extends ManagementProtocol {
+	constructor(private doc: ToscaDocument,
+		    name: string,
+		    onend: () => void)
+	{
+	    super(null);
+
+	    var that = this;
+
+	    var findNodeType = function() {
+		var nts = doc.get("NodeType");
+
+		for (var i = 0; i < nts.length; i++) {
+		    var nt = <Element> nts[i];
+		    if (nt.getAttribute("name") == name)
+			return nt;
+		}
+
+		throw "Did not find NodeType " + name;
+	    }
+
+	    var init = function() {
+		var defs = <Element> doc.doc.firstChild;
+		defs.setAttribute("xmlns:mprot", mprotNS);
+		removeAll(that.getMProt("ManagementProtocol"));
+		that.nodeType.appendChild(doc.doc.createElementNS(mprotNS, "ManagementProtocol"));
+
+		that.save(function() {
+		    doc.reload(function() {
+			that.reset(findNodeType());
+			onend();
+		    });
+		});
+	    }
+
+	    this.reset(findNodeType());
+
+	    if (!this.mprot)
+		init();
+	    else if (onend !== undefined)
+		onend();
+	}
+	
+	save(onend: () => void) {
+	    this.doc.save(onend);
+	}
+
+	getXML() {
+	    return this.doc.getXML();
 	}
     }
 }
