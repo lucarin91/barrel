@@ -45,6 +45,10 @@ body {
 	cursor: pointer;
 }
 
+.hidden {
+	display: none;
+}
+
 #file-input {
 	cursor: inherit;
     display: block;
@@ -201,7 +205,10 @@ body {
 }
 
 #toolbox h4,h5 {
-	margin: 0px 0px;
+	margin-top: 5px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+	margin-right: 0px;
 	padding: 2px 5px;
 }
 
@@ -278,6 +285,7 @@ body {
 	text-align: center;
 	padding-top: 10px;
 	float: left;
+	cursor: pointer;
 }
 
 .popup_selector_button:hover {
@@ -319,7 +327,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    height:100%;
+    height: 2053px;
     width: 100%;
     cursor: no-drop;
     z-index: 10000;
@@ -330,7 +338,8 @@ body {
 
 /** Popup analyzer**/
 .analyzer {
-	font-size: 11pt;
+	width:80%;
+    font-size: 11pt;
 }
 
 .analyzer_node {
@@ -353,18 +362,43 @@ body {
 	cursor: not-allowed;
 }
 
+/** POPUP ABOUT**/
+#about_content {
+	font-size: 11pt;
+	text-align: justify;
+	padding: 5px;
+	margin: 5px 2px;
+}
+
+#about_paper_title {
+	margin-left: 5px;
+	font-weight: bold;
+}
+
+#about_paper_authors{
+	margin-left: 5px;
+}
+
+#about_paper_otherInfo{
+	margin-left: 5px;
+	font-style: italic;
+}
+
+#about_copyright {
+	margin-top: 10px;
+}
+
+#about_copyright div{
+	margin-left: 5px;
+}
+
 /** jsPlumb SETTING **/
 ._jsPlumb_connector {
 	z-index:4;
 }
 
-._jsPlumb_connector:hover{
-	z-index:4;
-	stroke-style: red;
-}
-
 ._jsPlumb_endpoint { 
-	z-index:5; 
+	z-index:1; 
 }
 
 ._jsPlumb_overlay { 

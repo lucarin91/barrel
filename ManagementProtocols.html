@@ -31,21 +31,20 @@
 			Import CSAR
 			<input type="file" id="file-input"/>
 		</div>
-		<div class="topOption" onclick="exportCsar()">Export CSAR</div>
-		<div class="topOption" onclick="exportXMLDoc()">View XML</div>
-		<div class="topOption" onclick="alert('TODO')">Analyze</div>
-		<div class="topOption about" onclick="about()">info</div>
+		<div class="topOption hidden" onclick="exportCsar()">Export CSAR</div>
+		<div class="topOption hidden" onclick="exportXMLDoc()">View XML</div>
+		<div class="topOption hidden" onclick="analyzer_open()">Analyze</div>
+		<div class="topOption about" onclick="about_open()">info</div>
 	</div>
 	<br>
 	<!-- Editor -->
 	<div id="div_nodeTypeSelector">
-	  <h3>
+	  <h3 class="hidden">
 		Available
 		<br>
 		NodeTypes
 	  </h3>
 	  <ul id="nodeTypeSelector">
-		<li>None</li>
 	  </ul>
 	</div>
 	<div id="divEnv"> </div>
@@ -53,22 +52,22 @@
 		<h3>Toolbox</h3>
 		<h4 id="toolbox_selected"></h4>
 		<div id="toolbox_initialState">
-			<div class="toolboxOption" onclick="toolbox_setAsInitialState()">- Set as initial state</div>
+			<div class="toolboxOption" onclick="toolbox_setAsInitialState()">&#9729; Set as initial state</div>
 		</div>
 		<div id="toolbox_reliesOn">
 			<h5>Relies on:</h5>
-			<div class="toolboxOption" onclick="toolbox_addReliesOn()">- Add requirement..</div>
-			<div class="toolboxOption" onclick="toolbox_removeReliesOn()">- Remove requirement..</div>
+			<div class="toolboxOption" onclick="toolbox_addReliesOn()">&#9729; Add requirement..</div>
+			<div class="toolboxOption" onclick="toolbox_removeReliesOn()">&#9729; Remove requirement..</div>
 		</div>
 		<div id="toolbox_offers">
 			<h5>Offers:</h5>
-			<div class="toolboxOption" onclick="toolbox_addOffers()">- Add capability..</div>
-			<div class="toolboxOption" onclick="toolbox_removeOffers()">- Remove capability..</div>
+			<div class="toolboxOption" onclick="toolbox_addOffers()">&#9729; Add capability..</div>
+			<div class="toolboxOption" onclick="toolbox_removeOffers()">&#9729; Remove capability..</div>
 		</div>
 		<div id="toolbox_transitions">
 			<h5>Outgoing transitions:</h5>
-			<div class="toolboxOption" onclick="toolbox_addTransition()">- Add transition..</div>
-			<div class="toolboxOption" onclick="toolbox_removeTransition()">- Remove transition..</div>
+			<div class="toolboxOption" onclick="toolbox_addTransition()">&#9729; Add transition..</div>
+			<div class="toolboxOption" onclick="toolbox_removeTransition()">&#9729; Remove transition..</div>
 		</div>
 	</div>
 	<div id="popup_selector" class="popup">
@@ -113,6 +112,24 @@
 					<div class="operation unavailable">Lifecycle:Operation12</div>
 				</div>
 			</div>
+		</div>
+		<div class="popup_button" onClick="analyzer_close()">Exit</div>
+	</div>
+	<div id="popup_about" class="popup info">
+		<h3>About</h3>
+		<div id="about_content">
+			This editor has been developed in the scope of the following research paper: 
+			<div id="about_paper_title">Title</div>
+			<div id="about_paper_authors">Author</div>
+			<div id="about_paper_otherInfo">Other infos</div>
+			<div id="about_copyright"> 
+				Copyright &copy; 
+				<div> A. Canciani, J. Soldani </div>
+				<div> Computer Science Department, University of Pisa, Italy </div>
+			</div>
+		</div>
+		<div style="margin-left: 151px">
+			<div class="popup_button" onClick="about_close()">OK</div>
 		</div>
 	</div>
 	<div id="popup_shadower"></div>

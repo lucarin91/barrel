@@ -117,7 +117,7 @@ module ManagementProtocol {
 		removeAll(that.getMProt("ManagementProtocol"));
 		that.nodeType.appendChild(that.doc.doc.createElementNS(mprotNS, "ManagementProtocol"));
 
-		that.doc.save(function() {
+		that.save(function() {
 		    that.doc.reload(function() {
 			that.nodeType = findNodeType();
 			outerend();
@@ -139,6 +139,10 @@ module ManagementProtocol {
 
 	private getMProt(tagName: string) {
 	    return getMProtElements(this.nodeType, tagName);
+	}
+
+	save(onend: () => void) {
+	    this.doc.save(onend);
 	}
 
 	getReqs() {

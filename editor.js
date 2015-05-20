@@ -14,27 +14,38 @@ var arrayRemove = function(a, x) {
 
 var fileInput = document.getElementById("file-input");
 
+var nodeTypeSelectorCallback = function(doc, name) {
+    var onend = function () {
+	mProt = new ManagementProtocol.ManagementProtocol(doc, name);
+	drawEnvironment(mProt);
+    };
+
+    return function() {
+	if (mProt != null)
+	    mProt.save(onend);
+	else
+	    onend();
+    };
+}
+
+var onCsarRead = function() {
+    //Allow CSAR elaboration
+    $(".hidden").removeClass("hidden");
+    var nts = csar.get("NodeType");
+    for (var i = 0; i < nts.length; i++) {
+	var el = nts[i].element;
+	var name = el.getAttribute("name");
+	var item = document.createElement("li");
+	item.innerHTML = item.id = name;
+	$("#nodeTypeSelector").append(item);
+	$("#" + name).click(nodeTypeSelectorCallback(nts[i].doc, name));
+    }
+}
+
 var readCsar = function() {
     $("#nodeTypeSelector").html("");
-    var onend = function() {
-	var nts = csar.get("NodeType");
-	for (var i = 0; i < nts.length; i++) {
-	    var el = nts[i].element;
-	    var name = el.getAttribute("name");
-	    var item = document.createElement("li");
-	    item.innerHTML = item.id = name;
-	    $("#nodeTypeSelector").append(item);
-	    var closure = function(doc, name) {
-		return function () {
-		    mProt = new ManagementProtocol.ManagementProtocol(doc, name);
-		    drawEnvironment(mProt);
-		};
-	    } (nts[i].doc, name);
-	    $("#" + name).click(closure);
-	}
-    }
     csarFileName = fileInput.files[0].name;
-    csar = new Csar.Csar(fileInput.files[0], onend);
+    csar = new Csar.Csar(fileInput.files[0], onCsarRead);
 }
 
 fileInput.addEventListener('change', readCsar, false);
@@ -42,13 +53,13 @@ fileInput.addEventListener('change', readCsar, false);
 $(document).click(function(event) {
     if(selected != null) {
 	if (selected.id.indexOf("state_") == 0) {
-	    document.getElementById("toolbox").setAttribute("style","display:block");
+	    $("#toolbox").attr("style","display:block");
 	    console.log("DIV: " + selected.id);
-	    document.getElementById("toolbox_selected").innerHTML = selected.id.substring(6,selected.id.length);
+	    $("#toolbox_selected").html(selected.id.substring(6,selected.id.length));
 	}
 	if (selected.id.indexOf("con_") == 0) {
 	    console.log("CONN: " + selected.id);
-	    document.getElementById("toolbox").setAttribute("style","display:none");
+	    $("#toolbox").attr("style","display:none");
 	}
     }
 });
@@ -76,7 +87,7 @@ function createState(divEnv,stateName) {
     divState.className = "stateDiv";
     divState.id = "state_" + stateName;
     divState.addEventListener("click", function() {selected = divState});
-    divEnv.appendChild(divState);
+    divEnv.append(divState);
     //creating sub-div for state name
     var divStateName = document.createElement("div");
     divStateName.id = divState.id + "_title";
@@ -109,48 +120,52 @@ function drawRequirementAssumption(isName,reqName) {
     var reqDiv = document.createElement("div");
     reqDiv.id = "state_"+isName+"_ReliesOn_"+reqName;
     reqDiv.innerHTML = "- " + reqName;
-    document.getElementById("state_"+isName+"_ReliesOn").appendChild(reqDiv);
+    $("#state_"+isName+"_ReliesOn").append(reqDiv);
 };
 
 function drawCapabilityOffering(isName,capName) {
     var capDiv = document.createElement("div");
     capDiv.id = "state_"+isName+"_Offers_"+capName;
     capDiv.innerHTML = "- " + capName;
-    document.getElementById("state_"+isName+"_Offers").appendChild(capDiv);
+    $("#state_"+isName+"_Offers").append(capDiv);
 };
 
 function deleteRequirementAssumption(isName,reqName) {
-    var reqDiv = document.getElementById("state_"+isName+"_ReliesOn_"+reqName);
-    reqDiv.parentNode.removeChild(reqDiv);
+    var reqDiv = $("#state_"+isName+"_ReliesOn_"+reqName);
+    //reqDiv.parentNode.removeChild(reqDiv);
+	reqDiv.remove();
 };
 
 function deleteCapabilityOffering(isName,capName) {
-    var capDiv = document.getElementById("state_"+isName+"_Offers_"+capName);
-    capDiv.parentNode.removeChild(capDiv);
+    var capDiv = $("#state_"+isName+"_Offers_"+capName);
+    //capDiv.parentNode.removeChild(capDiv);
+	capDiv.remove();
 };
 
 function drawTransition(source, target, operationName, interfaceName, reqs) {
     var sourceState = "state_" + source;
     var targetState = "state_" + target;
-    var transLabel = operationName;
+    var transLabel = "<b>" + interfaceName + ":" + operationName + "</b>";
     
     if (reqs.length != 0)
-	transLabel = "{" + reqs.join(", ") + "}" + transLabel;
+		transLabel += "<br> Relies on: {" + reqs.join(", ") + "}";
     
     var c = jsPlumb.connect({
-	source: sourceState,
+		source: sourceState,
         target: targetState,
-	anchor: "Continuous",
-	endpoint: "Blank",
-	paintStyle:{ strokeStyle:"#112835", lineWidth:2 },
-	hoverPaintStyle:{ strokeStyle:"#3399FF" },
-	overlays:[ 
-	    ["Arrow" , { width:12, length:12, location:1 }], 
-	    ["Label", { label:transLabel, id:"label", location: 0.25, cssClass: "transLabel" }]
-	]
+		anchor: "Continuous",
+		connector: ["StateMachine", { curviness: 50 }],
+		endpoint: "Dot",
+		endpointStyle: { fillStyle:"#112835", radius:7 },
+		paintStyle: { strokeStyle:"#112835", lineWidth:2 },
+		hoverPaintStyle:{ strokeStyle:"#3399FF" },
+		overlays:[ 
+			["Arrow" , { width:12, length:12, location:1 }], 
+			["Label", { label:transLabel, id:"label", location: 0.4, cssClass: "transLabel" }]
+		]
     });
     
-    c.setParameter({ id: sourceState + "_" + operationName });
+    c.setParameter({ id: sourceState + "_" + interfaceName + "_" + operationName });
 
     c.bind("click", function(conn) {selected = c});
 };
@@ -179,10 +194,10 @@ function updateInitialState(newInitialState) {
 
 function drawEnvironment(mProt) {
     //clear environment
-    var divEnv = document.getElementById("divEnv");
+    var divEnv = $("#divEnv");
     $("#toolbox").attr("style","display:none");
     selected = null;
-    divEnv.innerHTML = "";
+    divEnv.html("");
     jsPlumb.reset();
     
     var stateDivs = [];
@@ -194,7 +209,7 @@ function drawEnvironment(mProt) {
 	return;
     }
 
-    for(i=0; i < instanceStates.length; i++) {
+    for(var i=0; i < instanceStates.length; i++) {
 	var stateName = instanceStates[i];
 	var state = mProt.getState(stateName);
 	var divState = createState(divEnv, stateName);
@@ -206,22 +221,22 @@ function drawEnvironment(mProt) {
 
 	var capList = state.getCaps();
 	for(var j=0; j<capList.length; j++)
-	    drawCapabilityOffering(is,capList[j]);
+	    drawCapabilityOffering(stateName,capList[j]);
 
 	var iniState = mProt.getInitialState();
 	if (iniState != null)
 	    updateInitialState(iniState);
-
-	var transitions = mProt.getTransitions();
-	for (var j=0; j<transitions.length; j++) {
-	    drawTransition(transitions[j].source,
-			   transitions[j].target,
-			   transitions[j].operation,
-			   transitions[j].iface,
-			   transitions[j].reqs);
-	}
     }		
     
+	var transitions = mProt.getTransitions();
+	for (var i=0; i<transitions.length; i++) {
+	    drawTransition(transitions[i].source,
+			   transitions[i].target,
+			   transitions[i].operation,
+			   transitions[i].iface,
+			   transitions[i].reqs);
+	}
+	
     initialPositioning(stateDivs);
     
     jsPlumb.repaintEverything();
@@ -234,40 +249,62 @@ function exportXMLDoc() {
 }
 
 function exportCsar() {
-    csar.exportBlob(function (blob) {
-	var url = URL.createObjectURL(blob);
-	setTimeout(function () {
-	    var a = document.createElement("a");
-	    a.style = "display: none";
-	    a.href = url;
-	    a.download = csarFileName;
-	    document.body.appendChild(a);
-	    a.click();
-	    setTimeout(function() {
-		document.body.removeChild(a);
-		window.URL.revokeObjectURL(url);
+    mProt.save(function () {
+	csar.exportBlob(function (blob) {
+	    var url = URL.createObjectURL(blob);
+	    setTimeout(function () {
+		var a = document.createElement("a");
+		a.style = "display: none";
+		a.href = url;
+		a.download = csarFileName;
+		document.body.appendChild(a);
+		a.click();
+		setTimeout(function() {
+		    document.body.removeChild(a);
+		    window.URL.revokeObjectURL(url);
+		}, 0);
 	    }, 0);
-	}, 0);
+	});
     });
 }
 
-function about() {
-    alert("This editor has been produced in scope of the research paper: \n <paper info> \n \n Copyright: \n \t Andrea Canciani and Jacopo Soldani \n \t CS Department, University of Pisa");
+function shadower_on() {
+    $("#popup_shadower").attr("style","display:block");
+};
+
+function shadower_off() {
+    $("#popup_shadower").attr("style","display:none");
+};
+
+function about_open() {
+    $("#popup_about").attr("style","display:block");
+	shadower_on();
+};
+
+function about_close() {
+    $("#popup_about").attr("style","display:none");
+	shadower_off();
 };
 
 function toolbox_addReliesOn() {
-    //setting the selector
-    document.getElementById("popup_selector_label").innerHTML = 
-	"Please select a requirement that must hold in state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
-    document.getElementById("popup_selector_OK").setAttribute("onClick","selector_addReliesOn()");
-    
+    var stateName = selected.id.substring(6,selected.id.length);
+	var state = mProt.getState(stateName);
+	var reqs = state.getReqs();
+	
+	//setting the selector
+    $("#popup_selector_label").html("Please select a requirement that must hold in state <em>"+stateName+"</em>");
+    $("#popup_selector_OK").attr("onClick","selector_addReliesOn()");
+    		
     var reqList = mProt.getReqs();
-    var menu = document.getElementById("popup_selector_menu");
+    var menu = $("#popup_selector_menu");
+    menu.html("");
     for(var i = 0; i < reqList.length; i++) {
-	var option = document.createElement("option");
-	option.value = reqList[i];
-	option.innerHTML = reqList[i];
-	menu.appendChild(option);
+		if (reqs.indexOf(reqList[i]) == -1) {
+			var option = document.createElement("option");
+			option.value = reqList[i];
+			option.innerHTML = reqList[i];
+			menu.append(option);
+		}
     }
     
     //popping up the selector
@@ -275,37 +312,35 @@ function toolbox_addReliesOn() {
 }
 
 function selector_addReliesOn() {
-    //var reqName = prompt("Requirement to be added?","xxxx");
-    var reqName = document.getElementById("popup_selector_menu").value;
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var reqs = state.getReqs();
-    if (reqs.indexOf(reqName) != -1) {
-	alert("Specified requirement is already assumed");
-    } else {
-	reqs.push(reqName);
-	state.setReqs(reqs);
-	drawRequirementAssumption(stateName,reqName);
-    }
-    
+    var reqName = $("#popup_selector_menu").val();
+    if (reqName != null) {
+		var stateName = selected.id.substring(6,selected.id.length);
+		var state = mProt.getState(stateName);
+		var reqs = state.getReqs();
+		reqs.push(reqName);
+		state.setReqs(reqs);
+		drawRequirementAssumption(stateName,reqName);
+	}
+	
     selector_close();
 }
 
 function toolbox_removeReliesOn() {
-    //setting the selector
-    document.getElementById("popup_selector_label").innerHTML = 
-	"Please select the requirement that does not need to hold any more in state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
-    document.getElementById("popup_selector_OK").setAttribute("onClick","selector_removeReliesOn()");
-    
     var stateName = selected.id.substring(6,selected.id.length);
     var state = mProt.getState(stateName);
     var reqs = state.getReqs();
-    var menu = document.getElementById("popup_selector_menu");
+    	
+	//setting the selector
+    $("#popup_selector_label").html("Please select the requirement that does not need to hold any more in state <em>"+stateName+"</em>");
+    $("#popup_selector_OK").attr("onClick","selector_removeReliesOn()");
+    
+    var menu = $("#popup_selector_menu");
+    menu.html("");
     for (var j = 0; j < reqs.length; j++) {
-	var option = document.createElement("option");
-	option.value = reqs[j];
-	option.innerHTML = reqs[j];
-	menu.appendChild(option);
+		var option = document.createElement("option");
+		option.value = reqs[j];
+		option.innerHTML = reqs[j];
+		menu.append(option);
     }
 
     //popping up the selector
@@ -313,30 +348,38 @@ function toolbox_removeReliesOn() {
 }
 
 function selector_removeReliesOn() {
-    var reqName = document.getElementById("popup_selector_menu").value;
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var reqs = state.getReqs();
-    arrayRemove(reqs, reqName);
-    state.setReqs(reqs);
-    deleteRequirementAssumption(stateName,reqName);
-    
+    var reqName = $("#popup_selector_menu").val();
+	if (reqName != null) {
+		var stateName = selected.id.substring(6,selected.id.length);
+		var state = mProt.getState(stateName);
+		var reqs = state.getReqs();
+		arrayRemove(reqs, reqName);
+		state.setReqs(reqs);
+		deleteRequirementAssumption(stateName,reqName);
+	}
+	
     selector_close();
 }
 
 function toolbox_addOffers() {
-    //setting the selector
-    document.getElementById("popup_selector_label").innerHTML = 
-	"Please select a capability that is offered by state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
-    document.getElementById("popup_selector_OK").setAttribute("onClick","selector_addOffers()");
+    var stateName = selected.id.substring(6,selected.id.length);
+    var state = mProt.getState(stateName);
+    var caps = state.getCaps();
+    
+	//setting the selector
+    $("#popup_selector_label").html("Please select a capability that is offered by state <em>"+stateName+"</em>");
+    $("#popup_selector_OK").attr("onClick","selector_addOffers()");
     
     var capList = mProt.getCaps();
-    var menu = document.getElementById("popup_selector_menu");
+    var menu = $("#popup_selector_menu");
+	menu.html("");
     for(var i = 0; i < capList.length; i++) {
-	var option = document.createElement("option");
-	option.value = capList[i];
-	option.innerHTML = capList[i];
-	menu.appendChild(option);
+		if (caps.indexOf(capList[i]) == -1) {
+			var option = document.createElement("option");
+			option.value = capList[i];
+			option.innerHTML = capList[i];
+			menu.append(option);
+		}
     }
 
     //popping up the selector
@@ -344,36 +387,35 @@ function toolbox_addOffers() {
 }
 
 function selector_addOffers() {
-    var capName = document.getElementById("popup_selector_menu").value;
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var caps = state.getCaps();
-    if (caps.indexOf(capName) != -1) {
-	alert("Specified requirement is already assumed");
-    } else {
-	caps.push(capName);
-	state.setCaps(caps);
-	drawCapabilityOffering(stateName,capName);
+    var capName = $("#popup_selector_menu").val();
+	if (capName != null) {
+		var stateName = selected.id.substring(6,selected.id.length);
+		var state = mProt.getState(stateName);
+		var caps = state.getCaps();
+		caps.push(capName);
+		state.setCaps(caps);
+		drawCapabilityOffering(stateName,capName);
     }
     
     selector_close();
 }
 
 function toolbox_removeOffers() {
-    //setting the selector
-    document.getElementById("popup_selector_label").innerHTML = 
-	"Please select a capability that is no more offered by state <em>"+selected.id.substring(6,selected.id.length)+"</em>";
-    document.getElementById("popup_selector_OK").setAttribute("onClick","selector_removeOffers()");
-    
     var stateName = selected.id.substring(6,selected.id.length);
     var state = mProt.getState(stateName);
     var caps = state.getCaps();
-    var menu = document.getElementById("popup_selector_menu");
+
+    //setting the selector
+    $("#popup_selector_label").html("Please select a capability that is no more offered by state <em>"+stateName+"</em>");
+    $("#popup_selector_OK").attr("onClick","selector_removeOffers()");
+    
+    var menu = $("#popup_selector_menu");
+    menu.html("");
     for (var j = 0; j < caps.length; j++) {
-	var option = document.createElement("option");
-	option.value = caps[j];
-	option.innerHTML = caps[j];
-	menu.appendChild(option);
+		var option = document.createElement("option");
+		option.value = caps[j];
+		option.innerHTML = caps[j];
+		menu.append(option);
     }
     
     //popping up the selector
@@ -381,26 +423,28 @@ function toolbox_removeOffers() {
 }
 
 function selector_removeOffers() {
-    var capName = document.getElementById("popup_selector_menu").value;
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var caps = state.getCaps();
-    arrayRemove(caps, capName);
-    state.setCaps(caps);
-    deleteCapabilityOffering(stateName,capName);
-
+    var capName = $("#popup_selector_menu").val();
+	if (capName != null) {
+		var stateName = selected.id.substring(6,selected.id.length);
+		var state = mProt.getState(stateName);
+		var caps = state.getCaps();
+		arrayRemove(caps, capName);
+		state.setCaps(caps);
+		deleteCapabilityOffering(stateName,capName);
+	}
+	
     selector_close();
 }
 
 function selector_open() {
-    document.getElementById("popup_selector").setAttribute("style","display:block;");
-    document.getElementById("popup_shadower").setAttribute("style","display:block;");
+    $("#popup_selector").attr("style","display:block;");
+    shadower_on();
 }
 
 function selector_close() {
-    document.getElementById("popup_selector").setAttribute("style","display:none;");
-    document.getElementById("popup_shadower").setAttribute("style","display:none;");
-    var menu = document.getElementById("popup_selector_menu");
+    $("#popup_selector").attr("style","display:none;");
+    shadower_off();
+    var menu = $("#popup_selector_menu");
     menu.innerHTML = "";
 }
 
@@ -409,44 +453,44 @@ function toolbox_addTransition() {
     var stateName = selected.id.substring(6,selected.id.length);
     
     var operations = mProt.getOps();
-    document.getElementById("transition_selector_OK").setAttribute("onClick","transition_addTransition()");
+    $("#transition_selector_OK").attr("onClick","transition_addTransition()");
     
     //-add operations to operation menu (by excluding those already used for transitions)
-    var opMenu = document.getElementById("popup_transition_operationMenu");
+    var opMenu = $("#popup_transition_operationMenu");
     var outTrans = mProt.getOutgoingTransitions(stateName);
     var outOps = {}
     for (var i=0; i < outTrans.length; i++)
-	outOps[outTrans.operation] = true;
+		outOps[outTrans[i].iface + ":" + outTrans[i].operation] = true;
 
     for (var i=0; i < operations.length; i++) {
-	var option = document.createElement("option");
-	option.innerHTML = option.value = operations[i].iface + ":" + operations[i].operation;
-	if (!(operations[i].operation in outOps))
-	    opMenu.appendChild(option);
+		var option = document.createElement("option");
+		option.innerHTML = option.value = operations[i].iface + ":" + operations[i].operation;
+		if (!(option.value in outOps))
+			opMenu.append(option);
     }
     
     //-add states to targetSate menu
     var iStates = mProt.getStates();
-    var targetMenu = document.getElementById("popup_transition_targetStateMenu");
+    var targetMenu = $("#popup_transition_targetStateMenu");
     for (var i=0; i < iStates.length; i++) {
-	var option = document.createElement("option");
-	option.innerHTML = option.value = iStates[i];
-	targetMenu.appendChild(option);
+		var option = document.createElement("option");
+		option.innerHTML = option.value = iStates[i];
+		targetMenu.append(option);
     }
     
     //-add requirements to requirement selector
-    var reqSelector = document.getElementById("popup_transition_neededRequirements");
+    var reqSelector = $("#popup_transition_neededRequirements");
     var reqList = mProt.getReqs();
-    if (reqList.length == 0) {
-	reqSelector.innerHTML = "None";
+	if (reqList.length == 0) {
+		reqSelector.html("None");
     } else {
-	for (var i=0; i<reqList.length; i++) {
-	    var req = document.createElement("textbox");
-	    req.className = "transition_unselectedReq";
-	    req.innerHTML = reqList[i];
-	    req.setAttribute("onClick","if(this.className=='transition_unselectedReq') this.className = 'transition_selectedReq'; else this.className = 'transition_unselectedReq';");
-	    reqSelector.appendChild(req);
-	}
+		for (var i=0; i<reqList.length; i++) {
+			var req = document.createElement("textbox");
+			req.className = "transition_unselectedReq";
+			req.innerHTML = reqList[i];
+			req.setAttribute("onClick","if(this.className=='transition_unselectedReq') this.className = 'transition_selectedReq'; else this.className = 'transition_unselectedReq';");
+			reqSelector.append(req);
+		}
     }
     
     //popping up the transition's menu
@@ -455,14 +499,14 @@ function toolbox_addTransition() {
 
 function transition_addTransition() {
     var sourceStateName = selected.id.substring(6,selected.id.length);
-    var targetStateName = document.getElementById("popup_transition_targetStateMenu").value;
-    var intOp = document.getElementById("popup_transition_operationMenu").value.split(":");
+    var targetStateName = $("#popup_transition_targetStateMenu").val();
+    var intOp = $("#popup_transition_operationMenu").val().split(":");
     var interfaceName = intOp[0];
     var operationName = intOp[1];
     var neededReqs = [];
     var selectedReqs = $(".transition_selectedReq");
     for (var i=0; i<selectedReqs.length; i++)
-	neededReqs.push(selectedReqs[i].innerHTML);
+		neededReqs.push(selectedReqs[i].innerHTML);
     
     mProt.addTransition(sourceStateName,targetStateName,operationName,interfaceName,neededReqs);
     drawTransition(sourceStateName,targetStateName,operationName,interfaceName,neededReqs);
@@ -472,15 +516,15 @@ function transition_addTransition() {
 
 function toolbox_removeTransition() {
     //setting the transition's menu
-    document.getElementById("transition_selector_OK").setAttribute("onClick","transition_removeTransition()");
+    $("#transition_selector_OK").attr("onClick","transition_removeTransition()");
     var sourceStateName = selected.id.substring(6,selected.id.length);
 
-    var opMenu = document.getElementById("popup_transition_operationMenu");
+    var opMenu = $("#popup_transition_operationMenu");
     var existingTransitions = mProt.getOutgoingTransitions(sourceStateName);
     for (var i = 0; i < existingTransitions.length; i++) {
-	var option = document.createElement("option");
-	option.innerHTML = option.value = existingTransitions[i].iface + ":" + existingTransitions[i].operation;
-	opMenu.appendChild(option);
+		var option = document.createElement("option");
+		option.innerHTML = option.value = existingTransitions[i].iface + ":" + existingTransitions[i].operation;
+		opMenu.append(option);
     }
     
     //popping up the transition's menu
@@ -488,7 +532,7 @@ function toolbox_removeTransition() {
 }
 
 function transition_removeTransition() {
-    var t = document.getElementById("popup_transition_operationMenu").value.split(":");
+    var t = $("#popup_transition_operationMenu").val().split(":");
     var sourceStateName = selected.id.substring(6,selected.id.length);
     var interfaceName = t[0];
     var operationName = t[1];
@@ -499,31 +543,42 @@ function transition_removeTransition() {
 }
 
 function transition_open(showAll) {
-    document.getElementById("popup_transition").setAttribute("style","display:block;");;
-    document.getElementById("popup_transition_opDiv").setAttribute("style","display:block;");;
+    $("#popup_transition").attr("style","display:block;");
+    $("#popup_transition_opDiv").attr("style","display:block;");
     if (showAll) {
-	document.getElementById("popup_transition_stateDiv").setAttribute("style","display:block;");;
-	document.getElementById("popup_transition_reqDiv").setAttribute("style","display:block;");;
+		$("#popup_transition_stateDiv").attr("style","display:block;");
+		$("#popup_transition_reqDiv").attr("style","display:block;");
     }
-    document.getElementById("popup_shadower").setAttribute("style","display:block;");;
+
+    shadower_on();
 }
 
 function transition_close() {
-    document.getElementById("popup_transition").setAttribute("style","display:none;");
-    document.getElementById("popup_shadower").setAttribute("style","display:none;");
+    $("#popup_transition").attr("style","display:none;");
+    shadower_off();
     //hiding and clearing operation menu
-    document.getElementById("popup_transition_opDiv").setAttribute("style","display:none;");
-    document.getElementById("popup_transition_operationMenu").innerHTML = "";
+    $("#popup_transition_opDiv").attr("style","display:none;");
+    $("#popup_transition_operationMenu").html("");
     //hiding and clearing targetState menu
-    document.getElementById("popup_transition_stateDiv").setAttribute("style","display:none;");
-    document.getElementById("popup_transition_targetStateMenu").innerHTML = "";
+    $("#popup_transition_stateDiv").attr("style","display:none;");
+    $("#popup_transition_targetStateMenu").html("");
     //hiding and clearing requirement selector
-    document.getElementById("popup_transition_reqDiv").setAttribute("style","display:none;");
-    document.getElementById("popup_transition_neededRequirements").innerHTML = "";
+    $("#popup_transition_reqDiv").attr("style","display:none;");
+    $("#popup_transition_neededRequirements").html("");
 }
 
 function toolbox_setAsInitialState() {
     var iniStateName = selected.id.substring(6,selected.length); // drop "state_"
     mProt.setInitialState(iniStateName);
     updateInitialState(iniStateName);
+}
+
+function analyzer_open() {
+	$("#popup_analyzer").attr("style","display:block;");
+	shadower_on();
+}
+
+function analyzer_close() {
+	$("#popup_analyzer").attr("style","display:none;");
+	shadower_off();
 }
