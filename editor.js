@@ -44,6 +44,8 @@ var onCsarRead = function() {
 
 var readCsar = function() {
     $("#nodeTypeSelector").html("");
+    mProt = null;
+    drawEnvironment(mProt);
     csarFileName = fileInput.files[0].name;
     csar = new Csar.Csar(fileInput.files[0], onCsarRead);
 }
@@ -199,6 +201,9 @@ function drawEnvironment(mProt) {
     selected = null;
     divEnv.html("");
     jsPlumb.reset();
+
+    if (mProt == null)
+	return;
     
     var stateDivs = [];
     
