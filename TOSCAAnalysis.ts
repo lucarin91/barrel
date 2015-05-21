@@ -55,11 +55,8 @@ module TOSCAAnalysis {
     function nodeTemplateToNode(nodeTemplate: Element, types:Analysis.Map<Element>) {
 	var capNames = toscaMap(nodeTemplate, "Capability", "name");
 	var reqNames = toscaMap(nodeTemplate, "Requirement", "name");
-	console.log(nodeTemplate.getAttribute("type"));
 	var typeName = nodeTemplate.getAttribute("type").split(':')[1]
-	console.log(typeName);
 	var mProt = new ManagementProtocol.ManagementProtocol(types[typeName]);
-	console.log(mProt);
 
 	var transitionToOperation = function(t:ManagementProtocol.Transition) {
 	    return new Analysis.Operation(t.target, mapSet(t.reqs, reqNames.data));
