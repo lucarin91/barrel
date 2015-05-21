@@ -89,9 +89,12 @@ module TOSCAAnalysis {
 
 	for (var i = 0; i < nodeTemplates.length; i++) {
 	    var template = <HTMLElement> nodeTemplates[i];
+	    var name = template.getAttribute("name");
 	    var n = nodeTemplateToNode(template, types);
 	    nodes[template.id] = n.data;
 	    uiNames = mergeNames(uiNames, n.uiNames);
+	    if (name)
+		uiNames[template.id] = name;
 	}
 
 	for (var i = 0; i < relationships.length; i++) {
