@@ -190,6 +190,8 @@ function drawTransition(source, target, operationName, interfaceName, reqs) {
     c.setParameter({ id: sourceState + "_" + interfaceName + "_" + operationName });
 
     c.bind("click", function(conn) {selected = c});
+	
+	jsPlumb.repaintEverything();
 };
 
 function deleteTransition(sourceState,operationName){
@@ -252,6 +254,9 @@ function drawEnvironment(mProt) {
 	if (iniState != null)
 	    updateInitialState(iniState);
     }		
+	
+    initialPositioning(stateDivs);
+    jsPlumb.repaintEverything();
     
 	var transitions = mProt.getTransitions();
 	for (var i=0; i<transitions.length; i++) {
@@ -261,10 +266,7 @@ function drawEnvironment(mProt) {
 			   transitions[i].iface,
 			   transitions[i].reqs);
 	}
-	
-    initialPositioning(stateDivs);
     
-    jsPlumb.repaintEverything();
     jsPlumb.repaintEverything();
 };
 
