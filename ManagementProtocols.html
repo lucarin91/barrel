@@ -108,27 +108,32 @@
 	<div id="popup_analyzer" class="popup analyzer">
 		<h3>Analyzer</h3>
 		<script id="analyzer-nodes" type="text/x-handlebars-template">
+		    <div class='advertiser {{#unless (is-consistent this)}} inconsistent {{/unless}}'>Inconsistent state</div>
 		    {{#each nodes}}
 		    <div class='analyzer_node'>
-		      <h4>
+		      <div class='analyzer_node_name'>
 			{{#if (ui-name @key)}}
 			  {{ui-name @key}} [{{@key}}]
 			{{else}}
 			  {{@key}}
 			{{/if}}
-		      </h4>
+		      </div>
 		      <div id='{{@key}}_state'>
-			<div class='analyzer_node_state'>{{stateId}}</div>
+			<div class='analyzer_node_state'>State: <em>{{stateId}}</em></div>
 			{{#get-state this}}
 			<ul class='analyzer_node_caps'>
+			  Capabilities: {
 			  {{#each caps}}
 			  <li>{{ui-name @key}}</li>
 			  {{/each}}
+			  }
 			</ul>
 			<ul class='analyzer_node_reqs'>
+			  Requirements: {
 			  {{#each reqs}}	
 			  <li>{{ui-name @key}}</li>
 			  {{/each}}
+			  }
 			</ul>
 			<ul class='analyzer_node_ops'>
 			  {{#each ops}}
@@ -144,9 +149,7 @@
 		      </div>
 		    </div>
 		    {{/each}}
-		    {{#unless (is-consistent this)}}
-		    <div class='inconsistent'>Inconsistent state</div>
-		    {{/unless}}
+		    <div class='advertiser {{#unless (is-consistent this)}} inconsistent {{/unless}}'>Inconsistent state</div>
 		</script>
 		<div id="analyzerDiv">
 		</div>
