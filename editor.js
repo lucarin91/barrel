@@ -2,6 +2,17 @@ var selected = null;
 var mProt = null;
 var csar = null;
 var csarFileName = null;
+var app = null;
+
+Handlebars.registerHelper('get-state', function(node, options) {
+    return options.fn(node.getState());
+});
+
+Handlebars.registerHelper('can-perform-op', function(app, nodeId, opId, options) {
+    return app.canPerformOp(nodeId, opId);
+});
+
+var analyzerNodes = Handlebars.compile($("#analyzer-nodes").html());
 
 var arrayRemove = function(a, x) {
     for (var i = 0; i < a.length; i++) {
@@ -578,24 +589,15 @@ function toolbox_setAsInitialState() {
     updateInitialState(iniStateName);
 }
 
-
-function createNodeTemplateDiv(nodeTemplate, nodeTypes) {
-    var caps = getToscaElements(nodeTemplate, "Capability");
-    var reqs = getToscaElements(nodeTemplate, "Requirement");
-    var type = nodeTemplate.getAttribute("name").split(':')[1];
-    //type = types[nodeTypes[type]];
-    var nt = { id: nodeTemplate.getAttribute("id"),
-	       caps: 
-    console.log(caps);
-    console.log(reqs);
-    console.log(type);
-
-    return Mustache.render("<div class='analyzer_node'><h4>{{id}}</h4><div>{{#ops}}<div class='operation'>{{.}}</div>{{/ops}}</div></div>", nt);
+function analyzer_update() {
+    $("#analyzerDiv").html(analyzerNodes(app));
 }
 
 function analyzer_open() {
-	$("#popup_analyzer").attr("style","display:block;");
-	shadower_on();
+    $("#popup_analyzer").attr("style","display:block;");
+    shadower_on();
+    app = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
+    analyzer_update();
 }
 
 function analyzer_close() {

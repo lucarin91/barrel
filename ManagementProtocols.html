@@ -9,9 +9,12 @@
 	<script src="jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
 	<script type="text/javascript" src="lib/zip.js"></script>
 	<script type="text/javascript" src="lib/zip-fs.js"></script>
+	<script src="handlebars-v3.0.3.js"></script>
 	<script src="TOSCA.js"></script>
 	<script src="csar.js"></script>
 	<script src="ManagementProtocols.js"></script>
+	<script src="TOSCAAnalysis.js"></script>
+	<script src="Analysis.js"></script>
 	<script type="text/javascript">
 	  function qualifyURL(url){
 	    var img = document.createElement('img');
@@ -104,14 +107,39 @@
 	</div>
 	<div id="popup_analyzer" class="popup analyzer">
 		<h3>Analyzer</h3>
+		<script id="analyzer-nodes" type="text/x-handlebars-template">
+		  {{#each nodes}}
+		  <div class='analyzer_node'>
+		    <h4>{{@key}}</h4>
+		    <div id='{{@key}}_state'>
+		      <div class='analyzer_node_state'>{{stateId}}</div>
+		      {{#get-state this}}
+		      <ul class='analyzer_node_caps'>
+			{{#each caps}}
+			<li>{{@key}}</li>
+			{{/each}}
+		      </ul>
+		      <ul class='analyzer_node_reqs'>
+			{{#each reqs}}	
+			<li>{{@key}}</li>
+			{{/each}}
+		      </ul>
+		      <ul class='analyzer_node_ops'>
+			{{#each ops}}	
+			<li {{#if (can-perform-op ../../.. @../key @key)}}
+			    class='operation' onclick='app.performOp("{{@../key}}", "{{@key}}"); analyzer_update()'
+			    {{else}}
+			    class='operation unavailable'
+			    {{/if}}
+			    >{{@key}}</li>
+			{{/each}}
+		      </ul>
+		      {{/get-state}}
+		    </div>
+		  </div>
+		  {{/each}}
+		</script>
 		<div id="analyzerDiv">
-			<div class="analyzer_node">
-				<h4>NodeType1</h4>
-				<div>
-					<div class="operation">Lifecycle:Operation11</div>
-					<div class="operation unavailable">Lifecycle:Operation12</div>
-				</div>
-			</div>
 		</div>
 		<div id="popup_analyzer_Exit" class="popup_button" onClick="analyzer_close()">Exit</div>
 	</div>

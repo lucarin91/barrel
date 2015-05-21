@@ -15,7 +15,11 @@ module Analysis {
 
     export class Node {
 	constructor(public states: Map<State>,
-		    public state: string) { }
+		    public stateId: string) { }
+
+	getState() {
+	    return this.states[this.stateId];
+	}
     }
 
     export class Application {
@@ -26,7 +30,7 @@ module Analysis {
 
 	    for (var nodeId in nodes) {
 		var node = nodes[nodeId];
-		for (var cap in node.states[node.state].caps)
+		for (var cap in node.getState().caps)
 		    this.caps[cap] = true;
 	    }
 	}
@@ -43,7 +47,7 @@ module Analysis {
 	isConsistent() {
 	    for (var nodeId in this.nodes) {
 		var node = this.nodes[nodeId];
-		if (!this.reqsSatisfied(node.states[node.state].reqs))
+		if (!this.reqsSatisfied(node.getState().reqs))
 		    return false;
 	    }
 	    return true;
@@ -51,7 +55,7 @@ module Analysis {
 
 	canPerformOp(nodeId: string, opId: string) {
 	    var node = this.nodes[nodeId];
-	    var state = node.states[node.state];
+	    var state = node.getState();
 
 	    // Bail out if the operation is not supperted in the current state
 	    if (!(opId in state.ops))
@@ -68,18 +72,18 @@ module Analysis {
 		throw "Illegal operation";
 
 	    var node = this.nodes[nodeId];
-	    var state = node.states[node.state];
+	    var state = node.getState();
 	    var op = state.ops[opId];
 
 	    // Remove old caps
-	    for (var cap in node.states[node.state].caps)
+	    for (var cap in state.caps)
 		this.caps[cap] = false;
 
 	    // Update node state
-	    node.state = op.to;
+	    node.stateId = op.to;
 	    
 	    // Add new caps
-	    for (var cap in node.states[node.state].caps)
+	    for (var cap in node.getState().caps)
 		this.caps[cap] = true;
 	}
     }

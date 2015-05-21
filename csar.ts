@@ -1,11 +1,10 @@
 /// <reference path="lib/zip-fs.js.d.ts" />
 /// <reference path="TOSCA.ts" />
-/// <reference path="lib/path.js.d.ts" />
 
 module Csar {
     declare function unescape(s: string): string;
 
-    export interface Map<T> { [path: string]: T; }
+    export interface Map<T> { [key: string]: T; }
 
     export interface FileNode {
 	doc: ToscaDocument;
@@ -94,7 +93,17 @@ module Csar {
 	    }
 	    return r;
 	}
-	
+
+	public getTypes() {
+    	    var nodeTypes = this.get("NodeType");
+	    var types:Map<Element> = {};
+	    for (var i = 0; i < nodeTypes.length; i++) {
+		var type = <Element> nodeTypes[i].element;
+		types[type.getAttribute("name")] = type;
+	    }
+	    return types;
+	}
+
 	public exportBlob(onend: (blob: Blob) => void) {
 	    this.fs.exportBlob(onend);
 	}

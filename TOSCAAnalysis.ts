@@ -1,8 +1,6 @@
 /// <reference path="TOSCA.ts" />
-/// <reference path="csar.ts" />
 /// <reference path="Analysis.ts" />
 /// <reference path="ManagementProtocols.ts" />
-
 
 module TOSCAAnalysis {
     function toscaString(node: Element, tagName: string, attr: string) {
@@ -19,10 +17,10 @@ module TOSCAAnalysis {
 	var nodes = getToscaElements(node, tagName);
 	for (var i = 0; i < nodes.length; i++) {
 	    var element = <HTMLElement> nodes[0];
-	    r[element.id] = element.getAttribute(attr);
+	    r[element.getAttribute(attr)] = element.id;
 	}
 	
-	return r; //function (id: string) { return r[id] };
+	return r;
     }
 
     function mapSet(a: string[], m:Analysis.Map<string>) {
@@ -34,9 +32,12 @@ module TOSCAAnalysis {
 
     function nodeTemplateToNode(nodeTemplate: Element, types:Analysis.Map<Element>) {
 	var capNames = toscaMap(nodeTemplate, "Capability", "name");
-	var reqNames = toscaMap(nodeTemplate, "Capability", "name");
-	var typeName = nodeTemplate.getAttribute("name").split(':')[1]
+	var reqNames = toscaMap(nodeTemplate, "Requirement", "name");
+	console.log(nodeTemplate.getAttribute("type"));
+	var typeName = nodeTemplate.getAttribute("type").split(':')[1]
+	console.log(typeName);
 	var mProt = new ManagementProtocol.ManagementProtocol(types[typeName]);
+	console.log(mProt);
 
 	var transitionToOperation = function(t:ManagementProtocol.Transition) {
 	    return new Analysis.Operation(t.target, mapSet(t.reqs, reqNames));
@@ -51,26 +52,19 @@ module TOSCAAnalysis {
 	    var trans = mProt.getOutgoingTransitions(s[i]);
 	    var ops:Analysis.Map<Analysis.Operation> = {};
 	    for (var j = 0; j < trans.length; j++)
-		ops[trans[i].iface + ":" + trans[i].operation] = transitionToOperation(trans[i]);
+		ops[trans[j].iface + ":" + trans[j].operation] = transitionToOperation(trans[j]);
 	    states[s[i]] = new Analysis.State(caps, reqs, ops);
 	}
 
 	return new Analysis.Node(states, mProt.getInitialState());
     }
 
-    export function serviceTemplateToApplication(csar: Csar.Csar, serviceTemplate: Element) {
-	var nodeTypes = csar.get("NodeType");
+    export function serviceTemplateToApplication(serviceTemplate: Element, types:Analysis.Map<Element>) {
 	var nodeTemplates = getToscaElements(serviceTemplate, "NodeTemplate");
 	var relationships = getToscaElements(serviceTemplate, "RelationshipTemplate");
 
-	var types:Analysis.Map<Element> = {};
 	var nodes:Analysis.Map<Analysis.Node> = {};
 	var binding:Analysis.Map<string> = {};
-
-	for (var i = 0; i < nodeTypes.length; i++) {
-	    var type = <Element> nodeTypes[i].element;
-	    types[type.getAttribute("name")] = type;
-	}
 
 	for (var i = 0; i < nodeTemplates.length; i++) {
 	    var template = <HTMLElement> nodeTemplates[i];

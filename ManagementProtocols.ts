@@ -84,15 +84,25 @@ module ManagementProtocol {
 
 	reset(nodeType: Element) {
 	    this.nodeType = nodeType;
-	    this.mprot = <Element> this.getMProt("ManagementProtocol")[0];
+	    var mprots =  this.getMProt("ManagementProtocol");
 
-	    if (this.mprot) {
-		var transitions = this.getMProt("Transitions");
-		if (transitions.length != 1) {
-		    removeAll(transitions);
-		    this.mprot.appendChild(nodeType.ownerDocument.createElementNS(mprotNS, "Transitions"));
-		}
+	    if (mprots.length != 1) {
+		removeAll(this.getMProt("ManagementProtocol"));
+		this.mprot = nodeType.ownerDocument.createElementNS(mprotNS, "ManagementProtocol");
+		nodeType.appendChild(this.mprot);
+	    } else {
+		this.mprot = <Element> mprots[0];
 	    }
+
+	    var transitions = this.getMProt("Transitions");
+	    if (transitions.length != 1) {
+		removeAll(transitions);
+		this.mprot.appendChild(nodeType.ownerDocument.createElementNS(mprotNS, "Transitions"));
+	    }
+
+	    var initialStates = this.getMProt("InitialState");
+	    if (initialStates.length != 1)
+		this.setInitialState(this.getStates()[0]);
 	}
 	
 	private getTosca(tagName: string) {
@@ -141,11 +151,7 @@ module ManagementProtocol {
 	}
 
 	getInitialState() {
-	    var initialStates = this.getMProt("InitialState");
-	    if (initialStates.length != 1)
-		return null;
-
-	    var state = <Element> initialStates[0];
+	    var state = <Element> this.getMProt("InitialState")[0];
 	    return state.getAttribute("state");
 	}
 
@@ -249,8 +255,6 @@ module ManagementProtocol {
 	    var init = function() {
 		var defs = <Element> doc.doc.firstChild;
 		defs.setAttribute("xmlns:mprot", mprotNS);
-		removeAll(that.getMProt("ManagementProtocol"));
-		that.nodeType.appendChild(doc.doc.createElementNS(mprotNS, "ManagementProtocol"));
 
 		that.save(function() {
 		    doc.reload(function() {
