@@ -3,6 +3,15 @@
 /// <reference path="ManagementProtocols.ts" />
 
 module TOSCAAnalysis {
+    export interface UINames {
+	[id: string]: string
+    }
+
+    export class UIData<T> {
+	constructor(public data: T,
+		    public uiNames: UINames) { }
+    }
+
     function toscaString(node: Element, tagName: string, attr: string) {
 	var nodes = getToscaElements(node, tagName);
 	if (nodes.length != 1)
@@ -13,13 +22,26 @@ module TOSCAAnalysis {
     }
 
     function toscaMap(node: Element, tagName: string, attr: string) {
-	var r:Analysis.Map<string> = {}
+	var data:Analysis.Map<string> = {};
+	var uiNames:UINames = {};
 	var nodes = getToscaElements(node, tagName);
 	for (var i = 0; i < nodes.length; i++) {
 	    var element = <HTMLElement> nodes[0];
-	    r[element.getAttribute(attr)] = element.id;
+	    var v = element.getAttribute(attr);
+	    var id = element.id;
+	    data[v] = id;
+	    uiNames[id] = v;
 	}
-	
+
+	return new UIData(data, uiNames);
+    }
+
+    function mergeNames(a: UINames, b: UINames) {
+	var r:UINames = {};
+	for (var v in a)
+	    r[v] = a[v];
+	for (var v in b)
+	    r[v] = b[v];
 	return r;
     }
 
@@ -40,15 +62,15 @@ module TOSCAAnalysis {
 	console.log(mProt);
 
 	var transitionToOperation = function(t:ManagementProtocol.Transition) {
-	    return new Analysis.Operation(t.target, mapSet(t.reqs, reqNames));
+	    return new Analysis.Operation(t.target, mapSet(t.reqs, reqNames.data));
 	}
 
 	var states:Analysis.Map<Analysis.State> = {};
 	var s = mProt.getStates();
 	for (var i = 0; i < s.length; i++) {
 	    var state = mProt.getState(s[i]);
-	    var caps = mapSet(state.getCaps(), capNames);
-	    var reqs = mapSet(state.getReqs(), reqNames);
+	    var caps = mapSet(state.getCaps(), capNames.data);
+	    var reqs = mapSet(state.getReqs(), reqNames.data);
 	    var trans = mProt.getOutgoingTransitions(s[i]);
 	    var ops:Analysis.Map<Analysis.Operation> = {};
 	    for (var j = 0; j < trans.length; j++)
@@ -56,7 +78,8 @@ module TOSCAAnalysis {
 	    states[s[i]] = new Analysis.State(caps, reqs, ops);
 	}
 
-	return new Analysis.Node(states, mProt.getInitialState());
+	return new UIData(new Analysis.Node(states, mProt.getInitialState()),
+			  mergeNames(reqNames.uiNames, capNames.uiNames));
     }
 
     export function serviceTemplateToApplication(serviceTemplate: Element, types:Analysis.Map<Element>) {
@@ -65,10 +88,13 @@ module TOSCAAnalysis {
 
 	var nodes:Analysis.Map<Analysis.Node> = {};
 	var binding:Analysis.Map<string> = {};
+	var uiNames:UINames = {};
 
 	for (var i = 0; i < nodeTemplates.length; i++) {
 	    var template = <HTMLElement> nodeTemplates[i];
-	    nodes[template.id] = nodeTemplateToNode(template, types);
+	    var n = nodeTemplateToNode(template, types);
+	    nodes[template.id] = n.data;
+	    uiNames = mergeNames(uiNames, n.uiNames);
 	}
 
 	for (var i = 0; i < relationships.length; i++) {
@@ -78,6 +104,6 @@ module TOSCAAnalysis {
 	    binding[req] = cap;
 	}
 
-	return new Analysis.Application(nodes, binding);
+	return new UIData(new Analysis.Application(nodes, binding), uiNames);
     }
 }

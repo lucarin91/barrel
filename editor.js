@@ -3,6 +3,7 @@ var mProt = null;
 var csar = null;
 var csarFileName = null;
 var app = null;
+var uiNames = {};
 
 Handlebars.registerHelper('get-state', function(node, options) {
     return options.fn(node.getState());
@@ -17,7 +18,7 @@ Handlebars.registerHelper('is-consistent', function(app) {
 });
 
 Handlebars.registerHelper('ui-name', function(s) {
-    return s; // TODO
+    return uiNames[s];
 });
 
 var analyzerNodes = Handlebars.compile($("#analyzer-nodes").html());
@@ -604,7 +605,9 @@ function analyzer_update() {
 function analyzer_open() {
     $("#popup_analyzer").attr("style","display:block;");
     shadower_on();
-    app = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
+    var v = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
+    app = v.data;
+    uiNames = v.uiNames;
     analyzer_update();
 }
 
