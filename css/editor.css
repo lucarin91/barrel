@@ -235,7 +235,7 @@ body {
     /*height:180px;*/
     position:absolute;
     left:50%;
-    top:50%;
+    top:40%;
     margin:-120px 0 0 -200px;
 	background-color: #D4EAFF;
 	z-index: 15000;
@@ -336,9 +336,12 @@ body {
 	display:none;
 }
 
-/** Popup analyzer**/
+/** POPUP ANALYZER**/
 .analyzer {
-	width:80%;
+	top: 15%;
+	left: 9%;
+	margin: 0;
+	width: 80%;
     font-size: 11pt;
 }
 
@@ -360,6 +363,11 @@ body {
 .unavailable {
 	color: #AABBCC;
 	cursor: not-allowed;
+}
+
+#popup_analyzer_Exit {
+    left: 50%;
+    margin: 5px 0px 0px -25px;
 }
 
 /** POPUP ABOUT**/
