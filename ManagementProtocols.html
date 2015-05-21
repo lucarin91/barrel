@@ -110,22 +110,28 @@
 		<script id="analyzer-nodes" type="text/x-handlebars-template">
 		    {{#each nodes}}
 		    <div class='analyzer_node'>
-		      <h4>{{@key}}</h4>
+		      <h4>
+			{{#if (ui-name @key)}}
+			  {{ui-name @key}} [{{@key}}]
+			{{else}}
+			  {{@key}}
+			{{/if}}
+		      </h4>
 		      <div id='{{@key}}_state'>
 			<div class='analyzer_node_state'>{{stateId}}</div>
 			{{#get-state this}}
 			<ul class='analyzer_node_caps'>
 			  {{#each caps}}
-			  <li>{{@key}}</li>
+			  <li>{{ui-name @key}}</li>
 			  {{/each}}
 			</ul>
 			<ul class='analyzer_node_reqs'>
 			  {{#each reqs}}	
-			  <li>{{@key}}</li>
+			  <li>{{ui-name @key}}</li>
 			  {{/each}}
 			</ul>
 			<ul class='analyzer_node_ops'>
-			  {{#each ops}}	
+			  {{#each ops}}
 			  <li {{#if (can-perform-op ../../.. @../key @key)}}
 			      class='operation' onclick='app.performOp("{{@../key}}", "{{@key}}"); analyzer_update()'
 			      {{else}}
@@ -139,7 +145,7 @@
 		    </div>
 		    {{/each}}
 		    {{#unless (is-consistent this)}}
-		    <div>Inconsistent state</div>
+		    <div class='inconsistent'>Inconsistent state</div>
 		    {{/unless}}
 		</script>
 		<div id="analyzerDiv">

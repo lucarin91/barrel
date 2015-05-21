@@ -16,6 +16,10 @@ Handlebars.registerHelper('is-consistent', function(app) {
     return app.isConsistent();
 });
 
+Handlebars.registerHelper('ui-name', function(s) {
+    return s; // TODO
+});
+
 var analyzerNodes = Handlebars.compile($("#analyzer-nodes").html());
 
 var arrayRemove = function(a, x) {
