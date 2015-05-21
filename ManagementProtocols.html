@@ -108,36 +108,39 @@
 	<div id="popup_analyzer" class="popup analyzer">
 		<h3>Analyzer</h3>
 		<script id="analyzer-nodes" type="text/x-handlebars-template">
-		  {{#each nodes}}
-		  <div class='analyzer_node'>
-		    <h4>{{@key}}</h4>
-		    <div id='{{@key}}_state'>
-		      <div class='analyzer_node_state'>{{stateId}}</div>
-		      {{#get-state this}}
-		      <ul class='analyzer_node_caps'>
-			{{#each caps}}
-			<li>{{@key}}</li>
-			{{/each}}
-		      </ul>
-		      <ul class='analyzer_node_reqs'>
-			{{#each reqs}}	
-			<li>{{@key}}</li>
-			{{/each}}
-		      </ul>
-		      <ul class='analyzer_node_ops'>
-			{{#each ops}}	
-			<li {{#if (can-perform-op ../../.. @../key @key)}}
-			    class='operation' onclick='app.performOp("{{@../key}}", "{{@key}}"); analyzer_update()'
-			    {{else}}
-			    class='operation unavailable'
-			    {{/if}}
-			    >{{@key}}</li>
-			{{/each}}
-		      </ul>
-		      {{/get-state}}
+		    {{#each nodes}}
+		    <div class='analyzer_node'>
+		      <h4>{{@key}}</h4>
+		      <div id='{{@key}}_state'>
+			<div class='analyzer_node_state'>{{stateId}}</div>
+			{{#get-state this}}
+			<ul class='analyzer_node_caps'>
+			  {{#each caps}}
+			  <li>{{@key}}</li>
+			  {{/each}}
+			</ul>
+			<ul class='analyzer_node_reqs'>
+			  {{#each reqs}}	
+			  <li>{{@key}}</li>
+			  {{/each}}
+			</ul>
+			<ul class='analyzer_node_ops'>
+			  {{#each ops}}	
+			  <li {{#if (can-perform-op ../../.. @../key @key)}}
+			      class='operation' onclick='app.performOp("{{@../key}}", "{{@key}}"); analyzer_update()'
+			      {{else}}
+			      class='operation unavailable'
+			      {{/if}}
+			      >{{@key}}</li>
+			  {{/each}}
+			</ul>
+			{{/get-state}}
+		      </div>
 		    </div>
-		  </div>
-		  {{/each}}
+		    {{/each}}
+		    {{#unless (is-consistent this)}}
+		    <div>Inconsistent state</div>
+		    {{/unless}}
 		</script>
 		<div id="analyzerDiv">
 		</div>

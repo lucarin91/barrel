@@ -8,8 +8,12 @@ Handlebars.registerHelper('get-state', function(node, options) {
     return options.fn(node.getState());
 });
 
-Handlebars.registerHelper('can-perform-op', function(app, nodeId, opId, options) {
+Handlebars.registerHelper('can-perform-op', function(app, nodeId, opId) {
     return app.canPerformOp(nodeId, opId);
+});
+
+Handlebars.registerHelper('is-consistent', function(app) {
+    return app.isConsistent();
 });
 
 var analyzerNodes = Handlebars.compile($("#analyzer-nodes").html());
