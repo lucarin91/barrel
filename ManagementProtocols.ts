@@ -255,7 +255,8 @@ module ManagementProtocol {
 		that.save(function() {
 		    doc.reload(function() {
 			that.reset(findNodeType());
-			onend();
+			if (onend)
+			    onend();
 		    });
 		});
 	    }
@@ -264,7 +265,7 @@ module ManagementProtocol {
 
 	    if (!this.mprot)
 		init();
-	    else if (onend !== undefined)
+	    else if (onend)
 		onend();
 	}
 	
