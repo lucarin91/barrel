@@ -38,6 +38,7 @@ var nodeTypeSelectorCallback = function(doc, name) {
     var onend = function () {
 	mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
 	drawEnvironment(mProt);
+	$("#showXML").attr("style","display:block;");
     };
 
     return function() {

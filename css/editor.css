@@ -112,6 +112,17 @@ body {
 	background-color: #B2DDFF;
 }
 
+#showXML {
+	font-size: 10pt;
+	margin-top: 30px;
+	cursor: pointer;
+	display: none;	
+}
+
+#showXML:hover {
+	background-color: #B2DDFF;
+}
+
 /** EDITOR **/
 #divEnv {
 	position: relative;
