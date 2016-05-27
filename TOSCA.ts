@@ -1,4 +1,4 @@
-/// <reference path="jquery.d.ts" />
+/// <reference path="lib/jquery/jquery.d.ts" />
 
 function parseToscaMeta(data: string) {
     return /Entry-Definitions: *(.*)/.exec(data)[1].split("/");
