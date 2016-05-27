@@ -1,136 +1,24 @@
-/** OPEN SANS FONT **/
-@font-face {
-  font-family: 'Open Sans';
-  font-style: normal;
-  font-weight: 400;
- 	src:local('Open Sans'), 
- 		local('OpenSans'),
- 		url("OpenSans-Regular.ttf") format('truetype'),
- 		url("OpenSans.woff") format('woff');
-}
-
-/** BODY SETTING **/
-body {
-    margin:0;    
-    font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;    
-    background-color: whitesmoke;
-}
-
-/** TOP MENU **/
-#topMenu {
-	position: absolute;
-	text-align: center;
-	background-color: #3399FF;
-	color: whitesmoke;
-	width: 100%;
-	height: 54px;
-	overflow: hidden;
-	list-style: none; 
-	margin: 0;
-	box-shadow: 0 2px 1px #9c9c9c;
-	z-index: 5000;
-}
-
-.topOption {
-    float: left;
-    position: relative;
-	padding: 13px 10px;
-	height: 50px;
-    color: whitesmoke;
-    text-transform: uppercase;
-    font-weight: bold;
-	font-size: 14pt;
-    text-decoration: none;
-	text-align: center;
-	cursor: pointer;
-}
-
 .hidden {
 	display: none;
 }
 
-#file-input {
-	cursor: inherit;
-    display: block;
-    font-size: 999px;
-    filter: alpha(opacity=0);
-    min-height: 100%;
-    min-width: 100%;
-    opacity: 0;
-    position: absolute;
-    right: 0;
-    text-align: right;
-    top: 0;
-}
-
-.topOption:hover {
-	background-color: whitesmoke;
-    color: #297ACC;
-}
-
-.about {
-	float: right;
-	text-transform: none;
-}
-
-/** NODE TYPE SELECTOR**/
-#div_nodeTypeSelector {
-	padding: 2px;
-	position:absolute;
-	float: left;
-	min-width: 10%;
-	height: 2000px;
-	top: 30px;
-	background-color: #A1D0EE;
-	box-shadow: 0 2px 1px #9c9c9c;
-	z-index: 4000;
-	color: #0055CC;
-	text-align: center;
-	font-size: 12pt;
-	margin-top: 20px;
-}
-
-#div_nodeTypeSelector h3 {
-	font-weight: bold;
+a, a:hover, h1 {
+    color: #2c3e50;
     text-decoration: none;
-	font-size: 13pt;
+    font-weight: bold;
 }
 
-#nodeTypeSelector {
-	list-style-type: none;
-    padding: 0px;
-    margin: 0px;
-}
-
-#nodeTypeSelector li {
-	padding: 4px 0px;
-	text-align: center;
-	cursor: pointer;
-}
-
-#nodeTypeSelector li:hover {
-	background-color: #B2DDFF;
-}
-
-#showXML {
-	font-size: 10pt;
-	margin-top: 30px;
-	cursor: pointer;
-	display: none;	
-}
-
-#showXML:hover {
-	background-color: #B2DDFF;
+.anchor {
+    margin-top:65px;
 }
 
 /** EDITOR **/
-#divEnv {
+#management-protocol-display {
 	position: relative;
-	top: 30px;
-	float: left;
-	width: 90%;
-	height: 2000px;
-	margin-left: 10%;
+	width: 96%;
+	height: 500px;
+	margin-left: 2%;
+    overflow: scroll;
 }
 
 .stateDiv {
@@ -139,14 +27,17 @@ body {
 	margin: 0;
     padding: 10px 10px 10px 10px;
     list-style: none;  
+    /*
     background-color: #111;
     background-image: linear-gradient(#C2EBFF, #ACE3FF);
+    box-shadow: 0 2px 1px #9c9c9c;
+    */
+    background-color: #FFF;
     border-radius: 10px;
 	border-style: solid;
 	border-width: 2px;
     border-color: #112835;
-	box-shadow: 0 2px 1px #9c9c9c;
-    font-weight: bold;
+	font-weight: bold;
 	font-size: 12pt;
 	color: #112835;
 	text-align: center;
@@ -154,34 +45,56 @@ body {
 }
 
 .stateDiv:hover {
+    background-color: #3399FF;
 	z-index:1000;
 }
 
 .initial {
-	border-style: dotted;
+	border-style: dashed;
 }
 
 .transLabel {
-    /*width: 100px;*/
+    /*
+    width: 100px;
+    box-shadow: 0 2px 1px #9c9c9c;
+    */
 	position: absolute;
 	margin: 0;
     padding: 10px 10px 10px 10px;
     list-style: none;  
-    background-color: #FFF;
+    background-color: #112835;
     border-radius: 10px;
-	border-style: dashed;
-    border-color: #112835;
-	box-shadow: 0 2px 1px #9c9c9c;
+	border-color: #112835;
 	/*font setting*/
 	font-size: 70%;
-	color: #112835;
+	color: #FFF;
 	text-align: center;
 	z-index: 5;
 }
 
-.transLabel:hover {
+.handlerLabel {
+    /*
+    width: 100px;
+    box-shadow: 0 2px 1px #9c9c9c;
+    */
+	position: absolute;
+	margin: 0;
+    padding: 10px 10px 10px 10px;
+    list-style: none;  
+    background-color: #95a5a6;
+    border-radius: 10px;
+	border-color: #95a5a6;
+	/*font setting*/
+	font-size: 70%;
+	color: #000;
+	text-align: center;
+	z-index: 5;
+}
+
+.transLabel:hover, .handlerLabel:hover {
 	border-color: #3399FF;
-	z-index: 1000;
+	background-color: #3399FF;
+    z-index: 1000;
 }
 
 .reliesOnOffersDiv {
@@ -196,14 +109,6 @@ body {
 
 /*TOOLBOX*/
 #toolbox {
-	position: absolute;
-	left: 80%;
-	width: 20%;
-	top: 54px;
-	background-color: #B2E0FF;
-	box-shadow: 0 2px 1px #9c9c9c;
-	z-index: 4000;
-	color: #0055CC;
 	display: none;
 }
 
@@ -282,7 +187,6 @@ body {
 	border-style: solid;
 	border-width: 1px;
 	color: #0077EE;
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
 	background-color: whitesmoke;
 }
 
@@ -334,6 +238,7 @@ body {
     user-select: none;
 }
 
+/*
 #popup_shadower {
     position: absolute;
     top: 0;
@@ -346,6 +251,7 @@ body {
 	opacity: 0.4;
 	display:none;
 }
+*/
 
 /** POPUP ANALYZER**/
 .analyzer {
@@ -449,36 +355,6 @@ body {
 #popup_analyzer_Exit {
     left: 50%;
     margin: 5px 0px 0px -25px;
-}
-
-/** POPUP ABOUT**/
-#about_content {
-	font-size: 11pt;
-	text-align: justify;
-	padding: 5px;
-	margin: 5px 2px;
-}
-
-#about_paper_title {
-	margin-left: 5px;
-	font-weight: bold;
-}
-
-#about_paper_authors{
-	margin-left: 5px;
-}
-
-#about_paper_otherInfo{
-	margin-left: 5px;
-	font-style: italic;
-}
-
-#about_copyright {
-	margin-top: 10px;
-}
-
-#about_copyright div{
-	margin-left: 5px;
 }
 
 /** jsPlumb SETTING **/

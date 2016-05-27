@@ -1,70 +1,623 @@
-var selected = null;
 var mProt = null;
 var csar = null;
 var csarFileName = null;
 var app = null;
 var uiNames = {};
 
-Handlebars.registerHelper('get-state', function(node, options) {
-    return options.fn(node.getState());
-});
+var fileInput = document.getElementById("file-input");
 
-Handlebars.registerHelper('can-perform-op', function(app, nodeId, opId) {
-    return app.canPerformOp(nodeId, opId);
-});
+// NEW FUNCTIONS ///////////////////////////////////////////////////
 
-Handlebars.registerHelper('is-consistent', function(app) {
-    return app.isConsistent();
-});
+// JointJS shape for drawing a "topology node"
+joint.shapes.devs.TopologyNode = joint.shapes.basic.Generic.extend(_.extend({}, joint.shapes.basic.PortsModelInterface, {
+    markup: '<g class="rotatable"><g class="scalable"><rect class="body"/></g><text class="label"/><g class="inPorts"/><g class="outPorts"/></g>',
+    portMarkup: '<g class="port port<%= id %>"><circle class="port-body"/><text class="port-label"/></g>',
+    defaults: joint.util.deepSupplement({
+        type: 'devs.Model',
+        size: { width: 1, height: 1 },
+        inPorts: [],
+        outPorts: [],
+        attrs: {
+            '.': { magnet: false },
+            '.body': { width: 150, height: 50, 'rx': 10, 'ry': 5 },
+            '.port-body': { r: 8, magnet: 'passive' },
+            text: { 'pointer-events': 'none' },
+            '.label': { text: 'Model', 'ref-x': .5, 'ref-y': 18, ref: '.body', 'text-anchor': 'middle' },
+            '.inPorts .port-label': { x: 4, y: -9, 'text-anchor': 'start', transform: 'rotate(330)' },
+            '.outPorts .port-label': { x: 1, y: 19, 'text-anchor': 'end', transform: 'rotate(330)' }
+        }
+    }, joint.shapes.basic.Generic.prototype.defaults),
+    getPortAttrs: function (portName, index, total, selector, type) {
+        var attrs = {};
+        var portClass = 'port' + index;
+        var portSelector = selector + '>.' + portClass;
+        var portLabelSelector = portSelector + '>.port-label';
+        var portBodySelector = portSelector + '>.port-body';
+        attrs[portLabelSelector] = { text: portName };
+        attrs[portBodySelector] = { port: { id: portName || _.uniqueId(type), type: type } };
+        attrs[portSelector] = { ref: '.body', 'ref-x': (index + 0.5) * (1 / total) };
+        if (selector === '.outPorts') {
+            attrs[portSelector]['ref-dy'] = 0;
+        }
+        return attrs;
+    }
+}));
 
-Handlebars.registerHelper('ui-name', function(s) {
-    return uiNames[s];
-});
+/* This function builds a JointJS environment where to draw a graph.
+ * Inputs: 
+ * - "parentElement" -> DOM element inside of which the environment has to be created
+ * - "width" -> width (in pixels) of the environment to create
+ * - "height" -> height (in pixels) of the environment to create
+ * Returns:
+ * - A map with the created "joint.dia.Paper" and "joint.dia.Graph" elements 
+ */
+function createGraph(parentElement, width, height) {
+    // Create the "joint.dia.Graph" to be returned
+    var graph = new joint.dia.Graph();
 
-var analyzerNodes = Handlebars.compile($("#analyzer-nodes").html());
+    // Create a "joint.dia.Paper" environment (inside "parentElement") where to place the graph
+    var paper = new joint.dia.Paper({
+        el: parentElement,
+        width: width,
+        height: height,
+        model: graph
+    });
 
-var arrayRemove = function(a, x) {
-    for (var i = 0; i < a.length; i++) {
-	if (a[i] === x) {
-	    a.splice(i, 1);
-	    i--;
-	}
+    // Avoid inner elements to overflow the environment
+    paper.on('cell:pointermove', function (cellView, evt, x, y) {
+        var cell = cellView.getBBox();
+        var constrained = false;
+
+        var constrainedX = x;
+        if (cell.x <= 0) { constrainedX = x + 1; constrained = true }
+        if (cell.x + cell.width >= width) { constrainedX = x - 1; constrained = true }
+
+        var constrainedY = y;
+        if (cell.y <= 0) { constrainedY = y + 1; constrained = true }
+        if (cell.y + cell.height >= height) { constrainedY = y - 1; constrained = true }
+
+        if (constrained) { cellView.pointermove(evt, constrainedX, constrainedY) }
+    });
+
+    // Return the created "joint.dia.Graph"
+    return { graph: graph, paper: paper };
+}
+
+/*
+ * This function draws the current application's topology.
+ * Inputs:
+ * - "parentDiv" -> HTMLElement where to draw the application topology
+ */
+function drawTopology(parentDiv) {
+    // Clean the content of the "parentDiv"
+    parentDiv.innerHTML = ""
+
+    // Parse the application topology
+    var nodes = EditorUtilities.parseTopology(csar.get("ServiceTemplate")[0].element);
+    var sortedNodes = EditorUtilities.sortNodes(nodes);
+        
+    // Create a new environment (see createGraph function definition)
+    var width = 400;
+    var height = 110 * sortedNodes.length - 1;
+    var env = createGraph(parentDiv, 400, height);
+
+    // Add a field "cell" to each node, to reference the corresponding (displayed) cell in "env"
+    for (var n in nodes) {
+        // Create arrays of capabilties and requirements to be displayed on "nodes[n].cell"
+        var caps = [];
+        for (var c in nodes[n].caps) caps.push(c)
+        var reqs = [];
+        for (var r in nodes[n].reqs) reqs.push(r)
+
+        // Compute ad-hoc size for "nodes[n].cell"
+        var nWidth = Math.max(
+            (Math.max(caps.length, reqs.length) * 20 + 20),
+            (nodes[n].name.length * 10 + 20)
+        );
+        var nHeight = 50; 
+
+        // Create "nodes[n].cell", and add it to "env.graph" 
+        nodes[n].cell = new joint.shapes.devs.TopologyNode({
+            size: { width: nWidth, height: nHeight },
+            inPorts: caps,
+            outPorts: reqs,
+            attrs: { '.label': { text: nodes[n].name } }
+        });
+        env.graph.addCells([nodes[n].cell])
+
+        // Replicate "type" information in "cell" to simplify double-click handling
+        nodes[n].cell.nodeType = nodes[n].type
+    }
+
+    // Create function to connect the "sourcePort" of a "source" cell to the "targetPort" of a "target" cell
+    var connect = function (source, sourcePort, target, targetPort) {
+        var link = new joint.shapes.devs.Link({
+            source: { id: source.id, selector: source.getPortSelector(sourcePort) },
+            target: { id: target.id, selector: target.getPortSelector(targetPort) },
+            smooth: true,
+            attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' } }
+        });
+        link.addTo(env.graph).reparent();
+    };
+
+    // Create connections among node cells according to the parsed topology
+    for (var n in nodes) {
+        for (var r in nodes[n].reqs) {
+            var sourceCell = nodes[n].cell;
+            var sourcePort = r;
+            var targetCell = nodes[nodes[n].reqs[r].nodeId].cell;
+            var targetPort = nodes[n].reqs[r].cap;
+            connect(sourceCell, sourcePort, targetCell, targetPort)
+        }
+    }
+
+    // Create function for handling double-clicks on node cells
+    var nodeDblClickCallback = function (doc, name) {
+        var onend = function () {
+            mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
+            buildManagementProtocolEditor(mProt,name);
+            drawEnvironment(mProt);
+            //$("#showXML").attr("style", "display:block;");
+        };
+
+        if (mProt != null)
+            mProt.save(onend);
+        else
+            onend();
+    }
+
+    // Create a map associating a node type's name with its XML definition
+    var nodeTypes = {}
+    var nodeTypeDefs = csar.get("NodeType");
+    for (var i = 0; i < nodeTypeDefs.length; i++) {
+        var name = nodeTypeDefs[i].element.getAttribute("name");
+        nodeTypes[name] = nodeTypeDefs[i].doc;
+    }
+
+    // Attaching handler (exploiting the above map)
+    env.paper.on('cell:pointerdblclick', function (cellView, evt, x, y) {
+        var nType = cellView.model.nodeType;
+        if (nType) nodeDblClickCallback(nodeTypes[nType], nType);
+    });
+
+    // Position nodes in "env.paper" according to their topological sorting
+    var xDelta;
+    var yDelta = 100;
+    for (var i = sortedNodes.length - 1; i >= 0; i--) {
+        xDelta = env.paper.svg.width.baseVal.value / (sortedNodes[i].length + 1);
+        for (var j = 0; j < sortedNodes[i].length; j++) {
+            var x = (j * xDelta) + (xDelta / 2);
+            var y = (sortedNodes.length - i - 1) * yDelta + yDelta / 2;
+            sortedNodes[i][j].cell.position(x, y);
+        }
     }
 }
 
-var fileInput = document.getElementById("file-input");
+/*
+ * This function builds the management protocol editing pane.
+ * Inputs:
+ * - "mProt" -> management protocol to be edited
+ * - "nodeName" -> name of the node type to be edited
+ */
+function buildManagementProtocolEditor(mProt,nodeName) {
+    $("#management-protocol-node-type-name")[0].innerHTML = nodeName
 
-var nodeTypeSelectorCallback = function(doc, name) {
+    // Fill state selectors
+    var states = mProt.getStates();
+    var stateSelectors = $(".state-selector")
+    for (var i = 0; i < stateSelectors.length; i++) {
+        var stateSelector = stateSelectors[i];
+        // Clean selector
+        stateSelector.innerHTML = "";
+        // Populate selector
+        for (var s in states) {
+            var sOp = document.createElement("option");
+            sOp.innerHTML = states[s];
+            stateSelector.appendChild(sOp);
+        }
+    }
+
+    // Customise initial state selector
+    var iniStateSelector = $("#initial-state-selector")[0];
+    // Add handler to update initial state
+    iniStateSelector.onclick = function () {
+        var state = iniStateSelector.value;
+        $(".stateDiv").removeClass("initial");
+        $("#state_" + state).addClass("initial");
+        mProt.setInitialState(state);
+    };
+    // Set current "initial state"
+    $.each(iniStateSelector.children, function (i, n) {
+        if (n.value == mProt.getInitialState())
+            n.setAttribute("selected", true)
+    })
+}
+
+/*
+ * This function builds the "modal-requirement-editor" or the "modal-capability-editor".
+ * Inputs:
+ * - "mode" -> if "Add" the modal is built to add a new assumption/offering; if "Remove" it is built to remove an existing one.
+ * - "what" -> if "capability" the function builds the "modal-capability-editor"; if "requirement" it builds the "modal-requirement-editor".
+ */
+function buildModalEditor(mode,what) {
+    // Set the click handling (of "requirement/capability-state-selector") to fill the "requirement/capability-selector" depending on the "mode"
+    var selector = $("#" + what + "-state-selector")[0];
+    selector.setAttribute("onclick", "fillSelector('" + mode + "','" + what + "')");
+    selector.click();
+    // Set the confirm button's string to 'Add' or 'Remove'
+    var confirmButton = $("#" + what + "-editor-confirm")[0];
+    confirmButton.innerHTML = mode;
+    confirmButton.setAttribute("onclick", "addOrRemoveRequirementOrCapability('" + mode + "','" + what + "')");
+}
+
+/*
+ * This function fills the requirement selector in "modal-requirement/capability-editor".
+ * Inputs:
+ * - "mode" -> if "Add" the function fills the selector with the requirements/capability that can still be assumed/offered; if "Remove" it fills the selector with the requirements/capabilities that can be removed
+ * - "what" -> if "capability" the function fills the selector with capability offerings; if "requirement" it fills the selector with requirement assumptions.
+ */
+function fillSelector(mode, what) {
+    var selector = $("#" + what + "-selector")[0];
+    // Clean "selector"
+    selector.innerHTML = "";
+
+    // Get the state to be edited
+    var state = $("#" + what + "-state-selector")[0].value;
+
+    // Get options (requirement/capabilities that can be added/removed) to fill the selector
+    var opts;
+    if (what == "requirement") {
+        if (mode == 'Add') {
+            opts = mProt.getReqs();
+            var assumed = mProt.getState(state).getReqs()
+            opts = $(opts).not(assumed).get()
+        }
+        else
+            opts = mProt.getState(state).getReqs()
+    }
+    else if (what == "capability") {
+        if (mode == 'Add') {
+            opts = mProt.getCaps();
+            var offered = mProt.getState(state).getCaps()
+            opts = $(opts).not(offered).get()
+        }
+        else
+            opts = mProt.getState(state).getCaps()
+    }
+
+    // Add an option for each of the above 
+    for (var o in opts) {
+        var option = document.createElement("option");
+        option.innerHTML = opts[o];
+        selector.appendChild(option);
+    }
+}
+
+/*
+ * This function adds/removes a requirement/capability to/from a state (by exploiting the information in "modal-requirement/capability-editor").
+ * Inputs:
+ * - "mode" -> if "Add"/"Remove", the function adds/removes a requirement/capability to/from a state.
+ * - "what" -> if "requirement"/"capability", the function works on requirement assumptions/capability offerings
+ */
+function addOrRemoveRequirementOrCapability(mode,what) {
+    // Get the pair state,requirement/capability from the selectors
+    var stateName = $("#" + what + "-state-selector")[0].value;
+    var whatName = $("#" + what + "-selector")[0].value;
+
+    // Updates the selected "state" of the management protocol
+    var state = mProt.getState(stateName);
+    if (what == "requirement") {
+        var reqs = state.getReqs();
+        if (mode == 'Add') {
+            // by adding the selected requirement "whatName"
+            reqs.push(whatName);
+            drawRequirementAssumption(stateName, whatName);
+        }
+        else {
+            // by removing the selected requirement "whatName"
+            reqs = $(reqs).not([whatName]).get();
+            deleteRequirementAssumption(stateName, whatName)
+        }
+        state.setReqs(reqs);
+    }
+    else if (what == "capability") {
+        var caps = state.getCaps();
+        if (mode == 'Add') {
+            // by adding the selected capability "whatName"
+            caps.push(whatName);
+            drawCapabilityOffering(stateName, whatName);
+        }
+        else {
+            // by removing the selected capability "whatName"
+            caps = $(caps).not([whatName]).get();
+            deleteCapabilityOffering(stateName, whatName)
+        }
+        state.setCaps(caps);
+    }   
+}
+
+/*
+ * This function builds the "modal-transiton-editor".
+ * Inputs:
+ * - "mode" -> if "Add" the modal is built to add a new transition; if "Remove" it is built to remove an existing one.
+ */
+function buildModalTransitionEditor(mode) {
+    // Set the click handling (of "transition-starting-state-selector") to fill the "transition-operation-selector" depending on the "mode"
+    var startSelector = $("#transition-starting-state-selector")[0];
+    startSelector.setAttribute("onclick", "fillOperationSelector('" + mode + "'); fillRequirementsCheckbox()");
+    startSelector.click();
+    var targetSelector = $("#transition-target-state-selector")[0];
+    targetSelector.setAttribute("onclick", "fillRequirementsCheckbox()");
+    
+
+    // Display the "target-state-selector" and the "transition-requirements-checkbox" only if "mode" is "Add"
+    if (mode == 'Add') $(".transition-hide-show").show()
+    else if (mode == 'Remove') $(".transition-hide-show").hide()
+
+    // Set the confirm button's string to 'Add' or 'Remove'
+    var confirmButton = $("#transition-editor-confirm")[0];
+    confirmButton.innerHTML = mode;
+    confirmButton.setAttribute("onclick", "addOrRemoveTransition('" + mode + "')");
+}
+
+/*
+ * This function fills the operation selector in "modal-transition-editor" 
+ * Inputs:
+ * - "mode" -> if "Add" the function fills the selector with the operations that can still outgo from the selected state; if "Remove" it fills the selector with the operations that already outgo from the selected state
+ */
+function fillOperationSelector(mode) {
+    var selector = $("#transition-operation-selector")[0];
+    // Clean "selector"
+    selector.innerHTML = "";
+
+    // Get the state to be edited
+    var state = $("#transition-starting-state-selector")[0].value;
+
+    // Get options (operations that can be added/removed) to fill the selector
+    var opts = [];
+    var outgoingOps = mProt.getOutgoingTransitions(state);
+    if (mode == 'Add') {
+        // "opts" is filled with all operations that can still outgo from "state"
+        var ops = mProt.getOps();
+        for (var i = 0; i < ops.length; i++) {
+            var outgoes = false;
+            for (var j = 0; j < outgoingOps.length; j++) {
+                if (ops[i].iface == outgoingOps[j].iface && ops[i].operation == outgoingOps[j].operation)
+                    outgoes = true
+            }
+            if (!outgoes)
+                opts.push(ops[i].iface + ":" + ops[i].operation)
+        }
+    } else if (mode == 'Remove') {
+        // "opts" is filled with operations that already outgoes from "state"
+        for (var i = 0; i < outgoingOps.length; i++)
+            opts.push(outgoingOps[i].iface + ":" + outgoingOps[i].operation)
+    }
+    
+    // Add an option for each of the above 
+    for (var o in opts) {
+        var option = document.createElement("option");
+        option.innerHTML = opts[o];
+        selector.appendChild(option);
+    }
+}
+
+/*
+ * This function fills the "transition-requirements-checkbox" in the "modal-transition-editor"
+ */
+function fillRequirementsCheckbox() {
+    var startingState = $("#transition-starting-state-selector")[0].value;
+    var targetState = $("#transition-target-state-selector")[0].value;
+
+    var reqs = mProt.getReqs();
+    
+    // Add an option for each requirement in "reqs"
+    var checkbox = $("#transition-requirements-checkbox")[0];
+    checkbox.innerHTML = "";
+    for (var r in reqs) {
+        var label = document.createElement("label");
+        checkbox.appendChild(label);
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = reqs[r];
+        label.appendChild(input);
+        label.innerHTML = label.innerHTML + " " + reqs[r];
+    }
+}
+
+/*
+ * This function adds or removes a transition from the current management protocol. 
+ * Inputs:
+ * - "mode" -> if "Add", the function adds a novel transition to the management protocol; if "Remove", it removes a transition from such protocol.
+ */
+function addOrRemoveTransition(mode) {
+    var startingState = $("#transition-starting-state-selector")[0].value;
+    var op = $("#transition-operation-selector")[0].value.split(":");
+    if (mode == 'Add') {
+        var targetState = $("#transition-target-state-selector")[0].value;
+        var reqs = []
+        $.each($("#transition-requirements-checkbox")[0].getElementsByTagName("input"), function (i, el) {
+            if (el.checked) reqs.push(el.value)
+        });
+        mProt.addTransition(startingState, targetState, op[1], op[0], reqs);
+        drawTransition(startingState, targetState, op[1], op[0], reqs);
+    }
+    else if (mode == 'Remove') {
+        mProt.removeTransition(startingState, op[1], op[0]);
+        deleteTransition(startingState, op[1]);
+    }
+}
+
+/*
+ * This function builds the "modal-fault-editor".
+ * Inputs:
+ * - "mode" -> if "Add" the modal is built to add a new fault handling transition; if "Remove" it is built to remove an existing one.
+ */
+function buildModalFaultEditor(mode) {
+    // Set the click handling (of "transition-starting-state-selector") to fill the "transition-operation-selector" depending on the "mode"
+    var startSelector = $("#fault-starting-state-selector")[0];
+    startSelector.setAttribute("onclick", "fillFaultedRequirementsCheckbox()");
+    startSelector.click();
+
+    // Display the "target-state-selector" and the "transition-requirements-checkbox" only if "mode" is "Add"
+    if (mode == 'Add') $(".fault-hide-show").show()
+    else if (mode == 'Remove') $(".fault-hide-show").hide()
+
+    // Set the confirm button's string to 'Add' or 'Remove'
+    var confirmButton = $("#fault-editor-confirm")[0];
+    confirmButton.innerHTML = mode;
+    confirmButton.setAttribute("onclick", "alert('TODO - " + mode + "')");
+}
+
+/*
+ * This function fills the "fault-requirements-checkbox" in the "modal-fault-editor"
+ */
+function fillFaultedRequirementsCheckbox() {
+    var startingState = $("#fault-starting-state-selector")[0].value;
+    var reqs = mProt.getState(startingState).getReqs();
+    
+    var checkbox = $("#fault-requirements-checkbox")[0];
+    checkbox.innerHTML = "";
+
+    if (reqs.length == 0) {
+        checkbox.innerHTML = "None";
+        $("#fault-target-state-selector, #fault-editor-confirm").prop("disabled", true);
+    }
+    else {
+        $("#fault-target-state-selector, #fault-editor-confirm").prop("disabled", false);
+        // Add an option for each requirement in "reqs"
+        for (var r in reqs) {
+            var label = document.createElement("label");
+            checkbox.appendChild(label);
+            var input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = reqs[r];
+            label.appendChild(input);
+            label.innerHTML = label.innerHTML + " " + reqs[r];
+        }
+    }
+}
+
+/*
+ * This function is a wrapper for "Simulator.build" and permits (re)building the "Simulator" pane from scratch.
+ */
+function buildSimulator() {
+    var sim = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
+    app = sim.data;
+    uiNames = sim.uiNames;
+    Simulator.build($("#simulator-body")[0], app, uiNames)
+}
+
+/*
+ * This function is a wrapper for "Simulator.update" and permits updating the "Simulator".
+ */
+function updateSimulator() {
+    Simulator.update($("#simulator-body")[0], app, uiNames)
+}
+////////////////////////////////////////////////////////////////////
+
+var nodeSelectorCallback = function (doc, name) {
     var onend = function () {
-	mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
-	drawEnvironment(mProt);
-	$("#showXML").attr("style","display:block;");
+        mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
+        drawEnvironment(mProt);
+        buildManagementProtocolEditor(mProt, name);
     };
 
     return function() {
-	if (mProt != null)
-	    mProt.save(onend);
-	else
-	    onend();
+	    if (mProt != null)
+	        mProt.save(onend);
+	    else
+	        onend();
     };
 }
 
 var onCsarRead = function() {
-    //Allow CSAR elaboration
-    $(".hidden").removeClass("hidden");
-    var nts = csar.get("NodeType");
-    for (var i = 0; i < nts.length; i++) {
-	var el = nts[i].element;
-	var name = el.getAttribute("name");
-	var item = document.createElement("li");
-	item.innerHTML = item.id = name;
-	$("#nodeTypeSelector").append(item);
-	$("#" + name).click(nodeTypeSelectorCallback(nts[i].doc, name));
+    // Create a map associating a node type's name with its XML definition
+    var nodeTypes = {}
+    var nodeTypeDefs = csar.get("NodeType");
+    for (var i = 0; i < nodeTypeDefs.length; i++) {
+        var name = nodeTypeDefs[i].element.getAttribute("name");
+        nodeTypes[name] = nodeTypeDefs[i].doc;
     }
+
+    // !-------------------------!
+    // !       VISUALISER        !
+    // !-------------------------!
+    var appName = "Unnamed";
+    if (csar.get("ServiceTemplate")[0].element.hasAttribute("name"))
+        appName = csar.get("ServiceTemplate")[0].element.getAttribute("name");
+    $("#application-name")[0].innerHTML = appName;
+    drawTopology($("#app-topology")[0]);
+    $(".hidden").removeClass("hidden");
+
+    
+    // Fill topology table
+    var table = $("#topology-table-body")[0];
+    table.innerHTML = "";
+    var topology = EditorUtilities.parseTopology(csar.get("ServiceTemplate")[0].element);
+    for (var n in topology) {
+        // Create a new row for the current node
+        var row = document.createElement("tr");
+        row.className = "active" + " row-" + topology[n].type;
+        table.appendChild(row);
+        // Create a field for storing the current node's name
+        var node = document.createElement("td");
+        node.innerHTML = topology[n].name;
+        row.appendChild(node);
+        // Create a field for storing the current node's type
+        var nodeType = document.createElement("td");
+        nodeType.innerHTML = topology[n].type;
+        row.appendChild(nodeType);
+        // Create a field for storing the current node's capabilities
+        var caps = document.createElement("td");
+        var capList = Object.keys(topology[n].caps);
+        for (var i = 0; i < capList.length; i++) 
+            caps.innerHTML += capList[i] + "<br>"
+        if (caps.innerHTML == "") caps.innerHTML = "-"
+        row.appendChild(caps);
+        // Create a field for storing the current node's requirements
+        var reqs = document.createElement("td");
+        var reqList = Object.keys(topology[n].reqs);
+        for (var i = 0; i < reqList.length; i++)
+            reqs.innerHTML += reqList[i] + "<br>"
+        if (reqs.innerHTML == "") reqs.innerHTML = "-"
+        row.appendChild(reqs);
+        // Create a management protocol editor to easily access the current node's operations
+        mProt = new ManagementProtocol.ManagementProtocolEditor(nodeTypes[topology[n].type], topology[n].type);
+        // Create a field for storing the current node's operations
+        var ops = document.createElement("td");
+        var opList = mProt.getOps();
+        for (var i = 0; i < opList.length; i++)
+            ops.innerHTML += opList[i].iface + ":" + opList[i].operation + "<br>"
+        if (ops.innerHTML == "") reqs.innerHTML = "-"
+        row.appendChild(ops);
+    }
+
+    // !-------------------------!
+    // !         EDITOR          !
+    // !-------------------------!
+
+    // Initialise editor to display the management protocol of the last processed node
+    buildManagementProtocolEditor(mProt, topology[n].type);
+    drawEnvironment(mProt);
+
+    // Handle click on rows by opening the corresponding management protocol editor
+    for (var name in nodeTypes) 
+        $(".row-" + name).click(nodeSelectorCallback(nodeTypes[name], name));
+
+    // !-------------------------!
+    // !        SIMULATOR        !
+    // !-------------------------! 
+    buildSimulator();
+
+    // !-------------------------!
+    // !        ANALYSER         !
+    // !-------------------------! 
+    // TODO!!!!!!!!!!!!!!
 }
 
 var readCsar = function() {
-    $("#nodeTypeSelector").html("");
+    //$("#nodeTypeSelector").html("");
     mProt = null;
     drawEnvironment(mProt);
     csarFileName = fileInput.files[0].name;
@@ -72,20 +625,6 @@ var readCsar = function() {
 }
 
 fileInput.addEventListener('change', readCsar, false);
-
-$(document).click(function(event) {
-    if(selected != null) {
-	if (selected.id.indexOf("state_") == 0) {
-	    $("#toolbox").attr("style","display:block");
-	    console.log("DIV: " + selected.id);
-	    $("#toolbox_selected").html(selected.id.substring(6,selected.id.length));
-	}
-	if (selected.id.indexOf("con_") == 0) {
-	    console.log("CONN: " + selected.id);
-	    $("#toolbox").attr("style","display:none");
-	}
-    }
-});
 
 function initialPositioning(divs) {
     var x = 20;
@@ -109,7 +648,6 @@ function createState(divEnv,stateName) {
     var divState = document.createElement("div");
     divState.className = "stateDiv";
     divState.id = "state_" + stateName;
-    divState.addEventListener("click", function() {selected = divState});
     divEnv.append(divState);
     //creating sub-div for state name
     var divStateName = document.createElement("div");
@@ -133,7 +671,7 @@ function createState(divEnv,stateName) {
     
     //attaching jsPlumb anchors
     jsPlumb.draggable(divState.id, {
-	containment: "parent"
+	    containment: "parent"
     });
     
     return divState;
@@ -155,14 +693,12 @@ function drawCapabilityOffering(isName,capName) {
 
 function deleteRequirementAssumption(isName,reqName) {
     var reqDiv = $("#state_"+isName+"_ReliesOn_"+reqName);
-    //reqDiv.parentNode.removeChild(reqDiv);
-	reqDiv.remove();
+    reqDiv.remove();
 };
 
 function deleteCapabilityOffering(isName,capName) {
     var capDiv = $("#state_"+isName+"_Offers_"+capName);
-    //capDiv.parentNode.removeChild(capDiv);
-	capDiv.remove();
+    capDiv.remove();
 };
 
 function drawTransition(source, target, operationName, interfaceName, reqs) {
@@ -178,22 +714,46 @@ function drawTransition(source, target, operationName, interfaceName, reqs) {
         target: targetState,
 		anchor: "Continuous",
 		connector: ["StateMachine", { curviness: 50 }],
-		endpoint: "Dot",
-		endpointStyle: { fillStyle:"#112835", radius:7 },
+		endpoint: "Blank",
 		paintStyle: { strokeStyle:"#112835", lineWidth:2 },
 		hoverPaintStyle:{ strokeStyle:"#3399FF" },
 		overlays:[ 
-			["Arrow" , { width:12, length:12, location:1 }], 
+			["Arrow" , { location:1 }], 
 			["Label", { label:transLabel, id:"label", location: 0.4, cssClass: "transLabel" }]
 		]
     });
     
     c.setParameter({ id: sourceState + "_" + interfaceName + "_" + operationName });
 
-    c.bind("click", function(conn) {selected = c});
-	
 	jsPlumb.repaintEverything();
 };
+
+// PROVA ///////////////////////////////////////////////////////////////////////////////////////////////////
+function drawHandler(source, target, reqs) {
+    var sourceState = "state_" + source;
+    var targetState = "state_" + target;
+    var handlerLabel = "<b> {" + reqs.join(", ") + "} </b>";
+    var handlerId = sourceState + "_" + reqs.join("-")
+    
+    var c = jsPlumb.connect({
+        source: sourceState,
+        target: targetState,
+        anchor: "Continuous",
+        connector: ["StateMachine", { curviness: 50 }],
+        endpoint: "Blank",
+        paintStyle: { strokeStyle: "#95a5a6", lineWidth: 2 },
+        hoverPaintStyle: { strokeStyle: "#3399FF" },
+        overlays: [
+			["Arrow", { location: 1 }],
+			["Label", { label: handlerLabel, id: "label", location: 0.4, cssClass: "handlerLabel" }]
+        ]
+    });
+
+    c.setParameter({ id: handlerId });
+    
+    jsPlumb.repaintEverything();
+};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function deleteTransition(sourceState,operationName){
     var sourceElement = "state_" + sourceState;
@@ -219,9 +779,8 @@ function updateInitialState(newInitialState) {
 
 function drawEnvironment(mProt) {
     //clear environment
-    var divEnv = $("#divEnv");
+    var divEnv = $("#management-protocol-display");
     $("#toolbox").attr("style","display:none");
-    selected = null;
     divEnv.html("");
     jsPlumb.reset();
 
@@ -294,327 +853,4 @@ function exportCsar() {
 	    }, 0);
 	});
     });
-}
-
-function shadower_on() {
-    $("#popup_shadower").attr("style","display:block");
-};
-
-function shadower_off() {
-    $("#popup_shadower").attr("style","display:none");
-};
-
-function about_open() {
-    $("#popup_about").attr("style","display:block");
-	shadower_on();
-};
-
-function about_close() {
-    $("#popup_about").attr("style","display:none");
-	shadower_off();
-};
-
-function toolbox_addReliesOn() {
-    var stateName = selected.id.substring(6,selected.id.length);
-	var state = mProt.getState(stateName);
-	var reqs = state.getReqs();
-	
-	//setting the selector
-    $("#popup_selector_label").html("Please select a requirement that must hold in state <em>"+stateName+"</em>");
-    $("#popup_selector_OK").attr("onClick","selector_addReliesOn()");
-    		
-    var reqList = mProt.getReqs();
-    var menu = $("#popup_selector_menu");
-    menu.html("");
-    for(var i = 0; i < reqList.length; i++) {
-		if (reqs.indexOf(reqList[i]) == -1) {
-			var option = document.createElement("option");
-			option.value = reqList[i];
-			option.innerHTML = reqList[i];
-			menu.append(option);
-		}
-    }
-    
-    //popping up the selector
-    selector_open();
-}
-
-function selector_addReliesOn() {
-    var reqName = $("#popup_selector_menu").val();
-    if (reqName != null) {
-		var stateName = selected.id.substring(6,selected.id.length);
-		var state = mProt.getState(stateName);
-		var reqs = state.getReqs();
-		reqs.push(reqName);
-		state.setReqs(reqs);
-		drawRequirementAssumption(stateName,reqName);
-	}
-	
-    selector_close();
-}
-
-function toolbox_removeReliesOn() {
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var reqs = state.getReqs();
-    	
-	//setting the selector
-    $("#popup_selector_label").html("Please select the requirement that does not need to hold any more in state <em>"+stateName+"</em>");
-    $("#popup_selector_OK").attr("onClick","selector_removeReliesOn()");
-    
-    var menu = $("#popup_selector_menu");
-    menu.html("");
-    for (var j = 0; j < reqs.length; j++) {
-		var option = document.createElement("option");
-		option.value = reqs[j];
-		option.innerHTML = reqs[j];
-		menu.append(option);
-    }
-
-    //popping up the selector
-    selector_open();
-}
-
-function selector_removeReliesOn() {
-    var reqName = $("#popup_selector_menu").val();
-	if (reqName != null) {
-		var stateName = selected.id.substring(6,selected.id.length);
-		var state = mProt.getState(stateName);
-		var reqs = state.getReqs();
-		arrayRemove(reqs, reqName);
-		state.setReqs(reqs);
-		deleteRequirementAssumption(stateName,reqName);
-	}
-	
-    selector_close();
-}
-
-function toolbox_addOffers() {
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var caps = state.getCaps();
-    
-	//setting the selector
-    $("#popup_selector_label").html("Please select a capability that is offered by state <em>"+stateName+"</em>");
-    $("#popup_selector_OK").attr("onClick","selector_addOffers()");
-    
-    var capList = mProt.getCaps();
-    var menu = $("#popup_selector_menu");
-	menu.html("");
-    for(var i = 0; i < capList.length; i++) {
-		if (caps.indexOf(capList[i]) == -1) {
-			var option = document.createElement("option");
-			option.value = capList[i];
-			option.innerHTML = capList[i];
-			menu.append(option);
-		}
-    }
-
-    //popping up the selector
-    selector_open();
-}
-
-function selector_addOffers() {
-    var capName = $("#popup_selector_menu").val();
-	if (capName != null) {
-		var stateName = selected.id.substring(6,selected.id.length);
-		var state = mProt.getState(stateName);
-		var caps = state.getCaps();
-		caps.push(capName);
-		state.setCaps(caps);
-		drawCapabilityOffering(stateName,capName);
-    }
-    
-    selector_close();
-}
-
-function toolbox_removeOffers() {
-    var stateName = selected.id.substring(6,selected.id.length);
-    var state = mProt.getState(stateName);
-    var caps = state.getCaps();
-
-    //setting the selector
-    $("#popup_selector_label").html("Please select a capability that is no more offered by state <em>"+stateName+"</em>");
-    $("#popup_selector_OK").attr("onClick","selector_removeOffers()");
-    
-    var menu = $("#popup_selector_menu");
-    menu.html("");
-    for (var j = 0; j < caps.length; j++) {
-		var option = document.createElement("option");
-		option.value = caps[j];
-		option.innerHTML = caps[j];
-		menu.append(option);
-    }
-    
-    //popping up the selector
-    selector_open();
-}
-
-function selector_removeOffers() {
-    var capName = $("#popup_selector_menu").val();
-	if (capName != null) {
-		var stateName = selected.id.substring(6,selected.id.length);
-		var state = mProt.getState(stateName);
-		var caps = state.getCaps();
-		arrayRemove(caps, capName);
-		state.setCaps(caps);
-		deleteCapabilityOffering(stateName,capName);
-	}
-	
-    selector_close();
-}
-
-function selector_open() {
-    $("#popup_selector").attr("style","display:block;");
-    shadower_on();
-}
-
-function selector_close() {
-    $("#popup_selector").attr("style","display:none;");
-    shadower_off();
-    var menu = $("#popup_selector_menu");
-    menu.innerHTML = "";
-}
-
-function toolbox_addTransition() {
-    //setting the transition's menu
-    var stateName = selected.id.substring(6,selected.id.length);
-    
-    var operations = mProt.getOps();
-    $("#transition_selector_OK").attr("onClick","transition_addTransition()");
-    
-    //-add operations to operation menu (by excluding those already used for transitions)
-    var opMenu = $("#popup_transition_operationMenu");
-    var outTrans = mProt.getOutgoingTransitions(stateName);
-    var outOps = {}
-    for (var i=0; i < outTrans.length; i++)
-		outOps[outTrans[i].iface + ":" + outTrans[i].operation] = true;
-
-    for (var i=0; i < operations.length; i++) {
-		var option = document.createElement("option");
-		option.innerHTML = option.value = operations[i].iface + ":" + operations[i].operation;
-		if (!(option.value in outOps))
-			opMenu.append(option);
-    }
-    
-    //-add states to targetSate menu
-    var iStates = mProt.getStates();
-    var targetMenu = $("#popup_transition_targetStateMenu");
-    for (var i=0; i < iStates.length; i++) {
-		var option = document.createElement("option");
-		option.innerHTML = option.value = iStates[i];
-		targetMenu.append(option);
-    }
-    
-    //-add requirements to requirement selector
-    var reqSelector = $("#popup_transition_neededRequirements");
-    var reqList = mProt.getReqs();
-	if (reqList.length == 0) {
-		reqSelector.html("None");
-    } else {
-		for (var i=0; i<reqList.length; i++) {
-			var req = document.createElement("textbox");
-			req.className = "transition_unselectedReq";
-			req.innerHTML = reqList[i];
-			req.setAttribute("onClick","if(this.className=='transition_unselectedReq') this.className = 'transition_selectedReq'; else this.className = 'transition_unselectedReq';");
-			reqSelector.append(req);
-		}
-    }
-    
-    //popping up the transition's menu
-    transition_open(true);
-}
-
-function transition_addTransition() {
-    var sourceStateName = selected.id.substring(6,selected.id.length);
-    var targetStateName = $("#popup_transition_targetStateMenu").val();
-    var intOp = $("#popup_transition_operationMenu").val().split(":");
-    var interfaceName = intOp[0];
-    var operationName = intOp[1];
-    var neededReqs = [];
-    var selectedReqs = $(".transition_selectedReq");
-    for (var i=0; i<selectedReqs.length; i++)
-		neededReqs.push(selectedReqs[i].innerHTML);
-    
-    mProt.addTransition(sourceStateName,targetStateName,operationName,interfaceName,neededReqs);
-    drawTransition(sourceStateName,targetStateName,operationName,interfaceName,neededReqs);
-    
-    transition_close();
-}
-
-function toolbox_removeTransition() {
-    //setting the transition's menu
-    $("#transition_selector_OK").attr("onClick","transition_removeTransition()");
-    var sourceStateName = selected.id.substring(6,selected.id.length);
-
-    var opMenu = $("#popup_transition_operationMenu");
-    var existingTransitions = mProt.getOutgoingTransitions(sourceStateName);
-    for (var i = 0; i < existingTransitions.length; i++) {
-		var option = document.createElement("option");
-		option.innerHTML = option.value = existingTransitions[i].iface + ":" + existingTransitions[i].operation;
-		opMenu.append(option);
-    }
-    
-    //popping up the transition's menu
-    transition_open(false);
-}
-
-function transition_removeTransition() {
-    var t = $("#popup_transition_operationMenu").val().split(":");
-    var sourceStateName = selected.id.substring(6,selected.id.length);
-    var interfaceName = t[0];
-    var operationName = t[1];
-    mProt.removeTransition(sourceStateName, operationName, interfaceName);
-    deleteTransition(sourceStateName,operationName);
-    
-    transition_close();
-}
-
-function transition_open(showAll) {
-    $("#popup_transition").attr("style","display:block;");
-    $("#popup_transition_opDiv").attr("style","display:block;");
-    if (showAll) {
-		$("#popup_transition_stateDiv").attr("style","display:block;");
-		$("#popup_transition_reqDiv").attr("style","display:block;");
-    }
-
-    shadower_on();
-}
-
-function transition_close() {
-    $("#popup_transition").attr("style","display:none;");
-    shadower_off();
-    //hiding and clearing operation menu
-    $("#popup_transition_opDiv").attr("style","display:none;");
-    $("#popup_transition_operationMenu").html("");
-    //hiding and clearing targetState menu
-    $("#popup_transition_stateDiv").attr("style","display:none;");
-    $("#popup_transition_targetStateMenu").html("");
-    //hiding and clearing requirement selector
-    $("#popup_transition_reqDiv").attr("style","display:none;");
-    $("#popup_transition_neededRequirements").html("");
-}
-
-function toolbox_setAsInitialState() {
-    var iniStateName = selected.id.substring(6,selected.length); // drop "state_"
-    mProt.setInitialState(iniStateName);
-    updateInitialState(iniStateName);
-}
-
-function analyzer_update() {
-    $("#analyzerDiv").html(analyzerNodes(app));
-}
-
-function analyzer_open() {
-    $("#popup_analyzer").attr("style","display:block;");
-    shadower_on();
-    var v = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
-    app = v.data;
-    uiNames = v.uiNames;
-    analyzer_update();
-}
-
-function analyzer_close() {
-	$("#popup_analyzer").attr("style","display:none;");
-	shadower_off();
 }

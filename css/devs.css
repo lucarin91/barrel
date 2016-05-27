@@ -1,0 +1,80 @@
+/* elements */
+
+.devs .body {
+    fill: #2c3e50;
+    stroke: #2c3e50;
+    stroke-width: 6px;
+}
+
+.devs .label {
+    fill: #FFF;
+    font-size: 16px;
+}
+
+.devs .port-body {
+    opacity: 1;
+    stroke-width: 3px;
+}
+
+.devs .inPorts .port-body {
+    stroke: #ffffff;
+    fill: #2c3e50;
+}
+
+.devs .outPorts .port-body {
+    stroke: #2c3e50;
+    fill: #ffffff;
+}
+
+.devs .port-body:hover {
+    opacity: 1;
+}
+
+.devs .port-label {
+    fill: #2c3e50;
+}
+
+/* links */
+.link {
+    z-index: -1;
+}
+
+.link .connection {
+    stroke: #8ca5c0;
+    stroke-width: 4px;
+}
+
+.link .marker-arrowhead {
+    display: none;
+}
+
+.link .marker-vertex {
+    fill: #31D0C6;
+}
+
+.link .marker-target {
+    fill: #8ca5c0;
+    stroke: #8ca5c0;
+}
+
+.link-tools { 
+    display: none 
+}
+
+.link-tools .tool-remove circle {
+    fill: #fe854f;
+}
+
+/* highlighting */
+
+.devs.highlighted-parent .body {
+    stroke: #fe854f;
+    transition: stroke 1s;
+}
+
+.devs.highlighted-parent .label {
+    fill: #fe854f;
+    transition: fill 1s;
+    text-decoration: underline;
+}
+

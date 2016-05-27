@@ -1,183 +1,311 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 	<title>Barrel</title>
-	<link rel="shortcut icon" href="img/barrel_icon.ico"/>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-	<link href="css/editor.css" rel="stylesheet" type="text/css">
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
-	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
-	<script src="jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
+    <!--LINKS-->
+    <link rel="shortcut icon" href="img/barrel_icon.ico"/>
+	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/joint.css" rel="stylesheet" type="text/css">
+    <link href="css/devs.css" rel="stylesheet" type="text/css">
+    <link href="css/editor.css" rel="stylesheet" type="text/css">
+    <!--jQuery-->
+    <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/jquery-ui.js"></script>
+    <!--Required JS Libraries-->
+    <script type="text/javascript" src="lib/lodash.min.js"></script>
+    <script type="text/javascript" src="lib/backbone.min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+    <!--JS libraries for graphics-->
+    <script type="text/javascript" src="lib/joint.js"></script>
+    <script type="text/javascript" src="lib/jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
 	<script type="text/javascript" src="lib/zip.js"></script>
 	<script type="text/javascript" src="lib/zip-fs.js"></script>
-	<script src="handlebars-v3.0.3.js"></script>
+	<!--Typescript generated-->
 	<script src="TOSCA.js"></script>
-	<script src="csar.js"></script>
-	<script src="ManagementProtocols.js"></script>
+    <script src="csar.js"></script>
+    <script src="EditorUtilities.js"></script>
+    <script src="ManagementProtocols.js"></script>
 	<script src="TOSCAAnalysis.js"></script>
-	<script src="Analysis.js"></script>
+    <script src="Analysis.js"></script>
+    <script src="Simulator.js"></script>
+    <!--JS Inline-->
 	<script type="text/javascript">
-	  function qualifyURL(url){
-	    var img = document.createElement('img');
-	    img.src = url; // set string url
-	    url = img.src; // get qualified url
-	    img.src = null; // no server request
-	    return url;
-	  }
-	  
-	  zip.workerScriptsPath = qualifyURL("lib/");
-	</script>	  
+        function qualifyURL(url) {
+            var img = document.createElement('img');
+	        img.src = url; // set string url
+	        url = img.src; // get qualified url
+	        img.src = null; // no server request
+	        return url;
+        }
+        zip.workerScriptsPath = qualifyURL("lib/");
+	</script>
+    <script>
+        $(document).ready(function(){
+            $('[data-toggle="popover"]').popover();
+        });
+    </script>	  
 </head>
 <body>
-<!-- Menu -->
-	<div id="topMenu">
-		<div class="topOption">
-			Import CSAR
-			<input type="file" id="file-input"/>
-		</div>
-		<div class="topOption hidden" onclick="exportCsar()">Export CSAR</div>
-		<div class="topOption hidden" onclick="analyzer_open()">Analyze</div>
-		<div class="topOption about" onclick="about_open()">info</div>
-	</div>
-	<br>
-	<!-- Editor -->
-	<div id="div_nodeTypeSelector">
-	  <h3 class="hidden">
-		Available
-		<br>
-		NodeTypes
-	  </h3>
-	  <ul id="nodeTypeSelector">
-	  </ul>
-	  <div id="showXML" onclick="exportXMLDoc()">Show XML</div>
-	</div>
-	<div id="divEnv"> </div>
-	<div id="toolbox">
-		<h3>Toolbox</h3>
-		<h4 id="toolbox_selected"></h4>
-		<div id="toolbox_initialState">
-			<div class="toolboxOption" onclick="toolbox_setAsInitialState()">&#9729; Set as initial state</div>
-		</div>
-		<div id="toolbox_reliesOn">
-			<h5>Relies on:</h5>
-			<div class="toolboxOption" onclick="toolbox_addReliesOn()">&#9729; Add requirement..</div>
-			<div class="toolboxOption" onclick="toolbox_removeReliesOn()">&#9729; Remove requirement..</div>
-		</div>
-		<div id="toolbox_offers">
-			<h5>Offers:</h5>
-			<div class="toolboxOption" onclick="toolbox_addOffers()">&#9729; Add capability..</div>
-			<div class="toolboxOption" onclick="toolbox_removeOffers()">&#9729; Remove capability..</div>
-		</div>
-		<div id="toolbox_transitions">
-			<h5>Outgoing transitions:</h5>
-			<div class="toolboxOption" onclick="toolbox_addTransition()">&#9729; Add transition..</div>
-			<div class="toolboxOption" onclick="toolbox_removeTransition()">&#9729; Remove transition..</div>
-		</div>
-	</div>
-	<div id="popup_selector" class="popup">
-		<h3>Selector</h3>
-		<div id="popup_selector_label">Please select the feature you want to add</div>
-		<select	id="popup_selector_menu" class="popup_selector"></select>
-		<div style="margin-left:100px">
-			<div id="popup_selector_OK" class="popup_button" onClick="selector_addReliesOn()">OK</div>
-			<div class="popup_button" onClick="selector_close()">Cancel</div>
-		</div>
-	</div>
-	<div id="popup_transition" class="popup transition">
-		<h3>Selector</h3>
-		<div id="popup_transition_opDiv" style="display:none">
-			<h5>Operation</h5>
-			<div>Please select the operation firing the transition</div>
-			<select	id="popup_transition_operationMenu" class="popup_selector"></select>
-		</div>
-		<div id="popup_transition_stateDiv" style="display:none">
-			<h5>Target state</h5>
-			<div>Please select the state reached by firing the transition</div>
-			<select	id="popup_transition_targetStateMenu" class="popup_selector"></select>
-		</div>
-		<div id="popup_transition_reqDiv" style="display:none">
-			<h5>Needed requirements</h5>
-			<div>Please click on the requirements needed to fire the transition</div>
-			<div id="popup_transition_neededRequirements" style="padding: 5px 5px"></div>
-		</div>
-		<!--input id="popup_selector_text"/-->
-		<div style="margin-left:100px">
-			<div id="transition_selector_OK" class="popup_button" onClick="transition_addTransition()">OK</div>
-			<div class="popup_button" onClick="transition_close()">Cancel</div>
-		</div>
-	</div>
-	<div id="popup_analyzer" class="popup analyzer">
-		<h3>Analyzer</h3>
-		<script id="analyzer-nodes" type="text/x-handlebars-template">
-		    <div class='advertiser {{#unless (is-consistent this)}} inconsistent {{/unless}}'>Inconsistent state</div>
-		    {{#each nodes}}
-		    <div class='analyzer_node'>
-		      <div class='analyzer_node_name'>
-			{{#if (ui-name @key)}}
-			  {{ui-name @key}} [{{@key}}]
-			{{else}}
-			  {{@key}}
-			{{/if}}
-		      </div>
-		      <div id='{{@key}}_state'>
-			<div class='analyzer_node_state'>State: <em>{{stateId}}</em></div>
-			{{#get-state this}}
-			<ul class='analyzer_node_caps'>
-			  Capabilities: {
-			  {{#each caps}}
-			  <li>{{ui-name @key}}</li>
-			  {{/each}}
-			  }
-			</ul>
-			<ul class='analyzer_node_reqs'>
-			  Requirements: {
-			  {{#each reqs}}	
-			  <li>{{ui-name @key}}</li>
-			  {{/each}}
-			  }
-			</ul>
-			<ul class='analyzer_node_ops'>
-			  {{#each ops}}
-			  <li {{#if (can-perform-op ../../.. @../key @key)}}
-			      class='operation' onclick='app.performOp("{{@../key}}", "{{@key}}"); analyzer_update()'
-			      {{else}}
-			      class='operation unavailable'
-			      {{/if}}
-			      >{{@key}}</li>
-			  {{/each}}
-			</ul>
-			{{/get-state}}
-		      </div>
-		    </div>
-		    {{/each}}
-		    <div class='advertiser {{#unless (is-consistent this)}} inconsistent {{/unless}}'>Inconsistent state</div>
-		</script>
-		<div id="analyzerDiv">
-		</div>
-		<div id="popup_analyzer_Exit" class="popup_button" onClick="analyzer_close()">Exit</div>
-	</div>
-	<div id="popup_about" class="popup info">
-		<h3>About</h3>
-		<div id="about_content">
-			<div>
-				<center>
-				You can download a sample CSAR by clicking <a href="https://github.com/ranma42/MProt/blob/wip/localzip/test/MotivatingScenario.csar?raw=true"/>here</a>.
-			</div>
-			<!-- This editor has been developed in the scope of the following research paper: 
-			<div id="about_paper_title">Automating the analysis of cloud applications' management through protocols</div>
-			<div id="about_paper_authors">A. Brogi, A. Canciani, and J. Soldani</div>
-			<div id="about_paper_otherInfo">Submitted for publication</div>-->
-			<div id="about_copyright"> 
-				Copyright &copy; 
-				<div> A. Canciani, J. Soldani </div>
-				<div> Computer Science Department, University of Pisa, Italy </div>
-			</div>
-		</div>
-		<div style="margin-left: 151px">
-			<div class="popup_button" onClick="about_close()">OK</div>
-		</div>
-	</div>
-	<div id="popup_shadower"></div>
+    <!--Navigation bar-->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Barrel</a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li><a href="#visualiser" class="hidden">Visualise</a></li>
+                    <li><a href="#editor" class="hidden">Edit</a></li>
+                    <li><a href="#simulator" class="hidden">Simulate</a></li>
+                    <li><a href="#analyser" class="hidden">Analyse</a></li>
+                    <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">CSAR<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a class="hidden" onclick="exportCsar()">Export</a></li>
+                        <li><a onclick="$('#file-input')[0].click()">Import <input type="file" id="file-input" style="display: none"/></a></li>
+                    </ul>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a data-toggle="modal" data-target="#modal-info">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!--Application topology-->
+    <h1 id="visualiser" class="col-lg-10 hidden" style="margin-top:65px">Visualiser</h1>
+    <form class="col-lg-10" style="width:95%">
+        <fieldset>
+            <legend class="hidden">
+                <a class="legend" id="application-name"></a>: Application topology
+            </legend>
+            <table style="width:100%;text-align:center">
+                <tr>
+                    <td style="width:40%">
+                        <div id="app-topology" style="position: relative"></div> 
+                    </td>
+                    <td style="width:60%">
+                        <div style="font-size:90%;margin-left:10px">
+                            <table class="table table-striped table-hover hidden">
+                                <thead>
+                                    <tr class="btn-primary disabled">
+                                        <th>Node</th>
+                                        <th>Node type</th>
+                                        <th>Capabilities</th>
+                                        <th>Requirements</th>
+                                        <th>Operations</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topology-table-body"></tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+                     
+        </fieldset>
+    </form> 
+
+    <!-- Editor -->
+    <h1 id="editor" class="col-lg-10 hidden">Editor</h1>
+    <fieldset class="col-lg-10 hidden">
+        <legend>
+            <a class="legend" id="management-protocol-node-type-name" onclick="exportXMLDoc()"></a>: Management Protocol
+            <button type="button" class="btn btn-info btn-xs" data-container="body" data-toggle="popover" data-placement="right" data-content="To edit a management protocol, (i) double click on a topology node, or (ii) click on row of the corresponding table." data-original-title="" title="">info</button>
+        </legend>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td style="width:70%">
+                        <pre id="management-protocol-display"></pre>
+                    </td>
+                    <td style="width:30%">
+                        <form class="form-horizontal">
+                            <fieldset>
+                                <legend>Edit</legend>
+                                <div class="col-lg-10"><label class="control-label">Initial state</label></div>
+                                <div class="col-lg-10" style="width:80%"><select class="form-control state-selector" id="initial-state-selector"></select></div>
+                                <div class="col-lg-10"><label class="control-label">Requirement assumptions</label></div>
+                                <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-requirement-editor" onclick="buildModalEditor('Add','requirement')">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-requirement-editor" onclick="buildModalEditor('Remove','requirement')">Remove</a>
+                                </div>
+                                <div class="col-lg-10"><label class="control-label">Provisioned capabilities</label></div>
+                                <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-capability-editor" onclick="buildModalEditor('Add','capability')">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-capability-editor" onclick="buildModalEditor('Remove','capability')">Remove</a>
+                                </div>
+                                <div class="col-lg-10"><label class="control-label">Transitions</label></div>
+                                <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-transition-editor" onclick="buildModalTransitionEditor('Add')">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-transition-editor" onclick="buildModalTransitionEditor('Remove')">Remove</a>
+                                </div>
+                                <div class="col-lg-10"><label class="control-label">Fault handlers</label></div>
+                                <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-fault-editor" onclick="buildModalFaultEditor('Add')">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-fault-editor" onclick="buildModalFaultEditor('Remove')">Remove</a>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </fieldset>
+    
+    <!-- Editor's modals-->
+    <div id="modal-requirement-editor" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Requirement assumption</h4>
+                </div>
+                <div class="modal-body">
+                    <label class="control-label">State:</label>
+                    <select id="requirement-state-selector" class="form-control state-selector"></select>
+                    <label class="control-label">Requirement to be assumed:</label>
+                    <select id="requirement-selector" class="form-control"></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="requirement-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-capability-editor" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Capability offering</h4>
+                </div>
+                <div class="modal-body">
+                    <label class="control-label">State:</label>
+                    <select id="capability-state-selector" class="form-control state-selector"></select>
+                    <label class="control-label">Offered capability:</label>
+                    <select id="capability-selector" class="form-control"></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="capability-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-transition-editor" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Transition</h4>
+                </div>
+                <div class="modal-body">
+                    <label class="control-label">Starting state:</label>
+                    <select id="transition-starting-state-selector" class="form-control state-selector"></select>
+                    <label class="control-label">Operation:</label>
+                    <select id="transition-operation-selector" class="form-control"></select>
+                    <label class="control-label transition-hide-show">Target state:</label>
+                    <select id="transition-target-state-selector" class="form-control state-selector transition-hide-show"></select>
+                    <label class="control-label transition-hide-show">Needed requirements:</label>
+                    <div class="form-group transition-hide-show">
+                        <div id="transition-requirements-checkbox" class="checkbox">
+                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
+                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="transition-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-fault-editor" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Fault handler</h4>
+                </div>
+                <div class="modal-body">
+                    <label class="control-label">Starting state:</label>
+                    <select id="fault-starting-state-selector" class="form-control state-selector"></select>
+                    <label class="control-label transition-hide-show">Faulted requirements that are handled:</label>
+                    <div class="form-group">
+                        <div id="fault-requirements-checkbox" class="checkbox">
+                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
+                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
+                        </div>
+                    </div>
+                    <label class="control-label fault-hide-show">Target state:</label>
+                    <select id="fault-target-state-selector" class="form-control state-selector fault-hide-show"></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button id="fault-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Simulator-->
+    <h1 id="simulator" class="col-lg-10 hidden">Simulator</h1>
+    <div class="form-horizontal col-lg-10 hidden">
+        <button type="button" class="btn btn-info btn-xs" data-container="body" data-toggle="popover" data-placement="right" data-content="If a management protocol have been updated, please clear the simulator." data-original-title="" title="">info</button>
+    </div>
+    <table class="table table-striped table-hover ">
+        <thead>
+            <tr>
+                <th style="width:10%"></th>
+                <th style="width:10%">State</th>
+                <th style="width:25%">Offered capabilities</th>
+                <th style="width:25%">Assumed requirements</th>
+                <th style="width:30%">Available operations</th>
+            </tr>
+        </thead>
+        <tbody id="simulator-body">
+        </tbody>
+    </table>
+    <div class="form-horizontal col-lg-10 hidden" style="text-align:center"><a class="btn btn-default btn-sm" onclick="buildSimulator()">Clear</a></div>
+
+    <!--Analyser-->
+    <h1 id="analyser" class="col-lg-10 hidden">Analyser</h1>
+    <div class="col-lg-10 hidden" style="color:red;font-weight:bold">THIS IS A PLACEHOLDER FOR ALL TO-BE-IMPLEMENTED ANALYSES</div>
+
+    <!--"About" dialog-->
+    <div id="modal-info" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">About</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        This editor has been developed in the scope of the research paper "TBD TBD TBD".
+                    </p>
+                    <center>
+                        <p>
+
+                            You can download a sample CSAR by clicking <a href="https://github.com/ranma42/MProt/blob/wip/localzip/test/MotivatingScenario.csar?raw=true">here</a>.
+                        </p>
+                    </center>
+                    <p>
+                        Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Università di Pisa, Italia).
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 	<script src="editor.js"></script>
 </body>
 </html>
