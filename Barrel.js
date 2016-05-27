@@ -502,6 +502,7 @@ function fillFaultedRequirementsCheckbox() {
  * This function is a wrapper for "Simulator.build" and permits (re)building the "Simulator" pane from scratch.
  */
 function buildSimulator() {
+    app = null;
     var sim = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
     app = sim.data;
     uiNames = sim.uiNames;

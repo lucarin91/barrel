@@ -21,22 +21,18 @@ module Simulator {
             row.appendChild(nameField);
             // Create a row-field for displaying the node state
             var stateField: Element = document.createElement("td");
-            stateField.innerHTML = "TODO STATE";
             stateField.id = "sim-state-" + id;
             row.appendChild(stateField);
             // Create a row-field for displaying the (currently) offered capabilities
             var capsField: Element = document.createElement("td");
-            capsField.innerHTML = "TODO CAPS";
             capsField.id = "sim-caps-" + id;
             row.appendChild(capsField);
             // Create a row-field for displaying the (currently) assumed requirements
             var reqsField: Element = document.createElement("td");
-            reqsField.innerHTML = "TODO REQS";
             reqsField.id = "sim-reqs-" + id;
             row.appendChild(reqsField);
             // Create a row-field for displaying the operations that can be performed
             var opsField: Element = document.createElement("td");
-            opsField.innerHTML = "TODO OPS";
             opsField.id = "sim-ops-" + id;
             row.appendChild(opsField);
         }
