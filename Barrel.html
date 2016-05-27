@@ -256,9 +256,6 @@
 
     <!--Simulator-->
     <h1 id="simulator" class="col-lg-10 hidden">Simulator</h1>
-    <div class="form-horizontal col-lg-10 hidden">
-        <button type="button" class="btn btn-info btn-xs" data-container="body" data-toggle="popover" data-placement="right" data-content="If a management protocol have been updated, please clear the simulator." data-original-title="" title="">info</button>
-    </div>
     <table class="table table-striped table-hover ">
         <thead>
             <tr>
@@ -272,7 +269,9 @@
         <tbody id="simulator-body">
         </tbody>
     </table>
-    <div class="form-horizontal col-lg-10 hidden" style="text-align:center"><a class="btn btn-default btn-sm" onclick="buildSimulator()">Clear</a></div>
+    <div class="form-horizontal col-lg-10 hidden" style="text-align:center">
+        <button type="button" class="btn btn-default btn-xs" onclick="buildSimulator()">Clear</button>
+    </div>
 
     <!--Analyser-->
     <h1 id="analyser" class="col-lg-10 hidden">Analyser</h1>

@@ -225,6 +225,7 @@ function buildManagementProtocolEditor(mProt,nodeName) {
         $(".stateDiv").removeClass("initial");
         $("#state_" + state).addClass("initial");
         mProt.setInitialState(state);
+        buildSimulator();
     };
     // Set current "initial state"
     $.each(iniStateSelector.children, function (i, n) {
@@ -247,7 +248,7 @@ function buildModalEditor(mode,what) {
     // Set the confirm button's string to 'Add' or 'Remove'
     var confirmButton = $("#" + what + "-editor-confirm")[0];
     confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "addOrRemoveRequirementOrCapability('" + mode + "','" + what + "')");
+    confirmButton.setAttribute("onclick", "addOrRemoveRequirementOrCapability('" + mode + "','" + what + "'); buildSimulator();");
 }
 
 /*
@@ -285,11 +286,21 @@ function fillSelector(mode, what) {
             opts = mProt.getState(state).getCaps()
     }
 
-    // Add an option for each of the above 
-    for (var o in opts) {
-        var option = document.createElement("option");
-        option.innerHTML = opts[o];
-        selector.appendChild(option);
+    // If there are options to show
+    if (opts.length > 0) {
+        // Add an option for each of the above
+        $("#" + what + "-selector").prop("disabled", false);
+        $("#" + what + "-editor-confirm").prop("disabled", false);
+        for (var o in opts) {
+            var option = document.createElement("option");
+            option.innerHTML = opts[o];
+            selector.appendChild(option);
+        }
+    }
+    else {
+        // Disable the selector and the confirm button
+        $("#" + what + "-selector").prop("disabled", true);
+        $("#" + what + "-editor-confirm").prop("disabled", true);
     }
 }
 
@@ -357,7 +368,7 @@ function buildModalTransitionEditor(mode) {
     // Set the confirm button's string to 'Add' or 'Remove'
     var confirmButton = $("#transition-editor-confirm")[0];
     confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "addOrRemoveTransition('" + mode + "')");
+    confirmButton.setAttribute("onclick", "addOrRemoveTransition('" + mode + "');  buildSimulator();");
 }
 
 /*
@@ -466,7 +477,7 @@ function buildModalFaultEditor(mode) {
     // Set the confirm button's string to 'Add' or 'Remove'
     var confirmButton = $("#fault-editor-confirm")[0];
     confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "alert('TODO - " + mode + "')");
+    confirmButton.setAttribute("onclick", "alert('TODO - " + mode + "'); buildSimulator();");
 }
 
 /*
