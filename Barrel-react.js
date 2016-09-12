@@ -281,6 +281,67 @@ var BarrelFaultAdder = React.createClass({
     }
 });
 
+var BarrelFaultRemover = React.createClass({
+    getInitialState: function() {
+        var states = Object.keys(this.props.mProt.getStates());
+        var targets = this.props.mProt.getFaultHandlers().filter(f => f.source == states[0]).map(f => f.target);
+        return {
+            source: states[0],
+            target: targets[0] || ""
+        };
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        this.setSource(Object.keys(nextProps.mProt.getStates())[0]);
+    },
+
+    setSource: function(source) {
+        var targets = this.props.mProt.getFaultHandlers().filter(f => f.source == source).map(f => f.target);
+        this.setState({
+            source: source,
+            target: targets[0] || ""
+        });
+    },
+
+    render: function() {
+        var states = this.props.mProt.getStates();
+        var targets = Utils.makeSet(this.props.mProt.getFaultHandlers().filter(f => f.source == this.state.source).map(f => f.target));
+
+        var apply = () => {
+            console.log(this.state);
+            console.log(this.props.mProt);
+            this.props.mProt.removeFaultHandler(this.state)
+        };
+
+        return (
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 className="modal-title">Remove fault handler</h4>
+                    </div>
+                    <div className="modal-body">
+                        <label className="control-label">Starting state:</label>
+                        <SingleSelector
+                            value={this.state.source}
+                            items={states}
+                            onChange={s => this.setSource(s)} />
+                        <label className="control-label">Target state:</label>
+                        <SingleSelector
+                            value={this.state.target}
+                            items={targets}
+                            onChange={s => this.setState({ target: s })} />
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={apply}>Apply</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
 var BarrelEditor = React.createClass({
     getInitialState: function() {
         return {
@@ -371,7 +432,7 @@ var BarrelEditor = React.createClass({
                     <BarrelFaultAdder mProt={this.state.mProt} />
                 </div>
                 <div id="modal-remove-fault-editor" className="modal fade">
-                    <BarrelStateCREditor mProt={this.state.mProt} />
+                    <BarrelFaultRemover mProt={this.state.mProt} />
                 </div>
             </div>
         );
