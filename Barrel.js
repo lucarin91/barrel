@@ -2,8 +2,6 @@ var mProt = null;
 var csar = null;
 var csarFileName = null;
 
-var fileInput = document.getElementById("file-input");
-
 var nodeTypeSelectorCallback = function (name) {
     var onend = function () {
         var doc = csar.getTypeDocuments()[name];
@@ -537,7 +535,8 @@ var onCsarRead = function () {
     // TODO!!!!!!!!!!!!!!
 }
 
-var readCsar = function () {
+var readCsar = function (evt) {
+    var fileInput = evt.target;
     csarFileName = fileInput.files[0].name;
     csar = new Csar.Csar(fileInput.files[0], onCsarRead);
 }
