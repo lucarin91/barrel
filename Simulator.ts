@@ -67,14 +67,16 @@ module Simulator {
             var reqsField: Element = table.querySelector("#sim-reqs-" + id);
             reqsField.innerHTML = "";
             for (var r in state.reqs) {
-                var reqBtn: Element = document.createElement("div");
+                var reqBtn: HTMLElement = document.createElement("div");
                 reqBtn.id = "sim-req-" + r;
                 reqBtn.className = "btn btn-xs sim-req";
                 if (app.caps[app.binding[r]])
                     reqBtn.className += " btn-success disabled";
                 else {
                     reqBtn.className += " btn-danger";
-                    reqBtn.setAttribute("onclick", "alert('TODO - requires handlers!')");
+                    reqBtn.onclick = ((id, req) =>
+                        () => update(table, new TOSCAAnalysis.UIData(app.handleFault(id, req), uiNames))
+                    )(id, r);
                 }
                 reqBtn.innerHTML = uiNames[r];
                 reqsField.appendChild(reqBtn);
@@ -92,9 +94,9 @@ module Simulator {
                 } else if (app.canPerformOp(id, o)) {
 	            // If no fault has been issued, permit interacting with available operations
                     opBtn.className += " btn-success";
-                    opBtn.onclick = function() {
-                        update(table, new TOSCAAnalysis.UIData(app.performOp(id, o), uiNames));
-                    };
+                    opBtn.onclick = ((id, o) =>
+                        () => update(table, new TOSCAAnalysis.UIData(app.performOp(id, o), uiNames))
+                    )(id,o);
                 } else {
                     opBtn.className += " btn-warning disabled";
                 }

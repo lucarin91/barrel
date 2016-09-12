@@ -185,7 +185,7 @@ module Analysis {
         }
 
         handleFault(nodeId: string, r: string) {
-            var constraints = this.unsatisfiedOpConstraints(nodeId, r);
+            var constraints = this.unsatisfiedHandlerConstraints(nodeId, r);
             if (constraints)
                 throw constraints;
 
