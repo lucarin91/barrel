@@ -12,13 +12,9 @@ var BarrelMenu = React.createClass({
                     <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
                     <ul className="dropdown-menu" role="menu">
                         <li><a className={className} onClick={exportCsar}>Export</a></li>
-                        <li><a href="#">
-                            <label>
-                                Import
-                                <input type="file" onChange={readCsar} style={{display: "none"}} />
-                            </label>
-                            </a>
-                        </li>
+                        <li><a onClick={() => this.refs.file.click()}>Import
+                            <input ref="file" type="file" onChange={readCsar} style={{display: "none"}} />
+                        </a></li>
                     </ul>
                     </li>
                 </ul>
