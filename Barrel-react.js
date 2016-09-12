@@ -363,8 +363,9 @@ var BarrelEditor = React.createClass({
             <div>
                 <fieldset className="col-lg-10">
                     <legend>
-                        <a className="legend" id="management-protocol-node-type-name" onClick={exportXMLDoc}>{this.state.name}</a>: Management Protocol
+                        <a className="legend" onClick={exportXMLDoc}>{this.state.name}</a>: Management Protocol
                         <button type="button"
+                            ref={el => el ? $(el).popover() : null}
                             className="btn btn-info btn-xs"
                             data-container="body"
                             data-toggle="popover"
