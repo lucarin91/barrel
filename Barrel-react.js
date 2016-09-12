@@ -97,7 +97,6 @@ var BarrelStateCREditor = React.createClass({
     },
 
     render: function() {
-        var mProt = this.props.mProt;
         var reqs = this.props.mProt.getReqs();
         var caps = this.props.mProt.getCaps();
         var states = this.props.mProt.getStates();
@@ -175,7 +174,6 @@ var BarrelTransitionAdder = React.createClass({
     },
 
     render: function() {
-        var mProt = this.props.mProt;
         var reqs = this.props.mProt.getReqs();
         var states = this.props.mProt.getStates();
         var mergeOp = o => o.iface + ":" + o.operation;
@@ -195,7 +193,7 @@ var BarrelTransitionAdder = React.createClass({
             this.setState(this.state);
         };
 
-        var add = () => this.props.mProt.addTransition(this.state);
+        var apply = () => this.props.mProt.addTransition(this.state);
 
         return (
             <div className="modal-dialog">
@@ -225,7 +223,7 @@ var BarrelTransitionAdder = React.createClass({
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={add}>Add</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={apply}>Apply</button>
                     </div>
                 </div>
             </div>
@@ -251,10 +249,8 @@ var BarrelFaultAdder = React.createClass({
     },
 
     render: function() {
-        var mProt = this.props.mProt;
         var states = this.props.mProt.getStates();
-
-        var add = () => this.props.mProt.addFaultHandler(this.state);
+        var apply = () => this.props.mProt.addFaultHandler(this.state);
 
         return (
             <div className="modal-dialog">
@@ -277,7 +273,7 @@ var BarrelFaultAdder = React.createClass({
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={add}>Add</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={apply}>Apply</button>
                     </div>
                 </div>
             </div>
