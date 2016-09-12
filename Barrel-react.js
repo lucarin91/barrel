@@ -47,24 +47,24 @@ var BarrelMenu = React.createClass({
     }
 });
 
-var BarrelStateSelector = React.createClass({
+var SingleSelector = React.createClass({
     getInitialState: function() {
         return {
-            selectedState: this.props.value,
+            selected: this.props.value,
         };
     },
 
     render: function() {
         var makeOption = v => <option key={v} value={v}>{v}</option>;
         var onChange = evt => {
-            this.setState({ selectedState: evt.target.value });
+            this.setState({ selected: evt.target.value });
             if (this.props.onChange)
                 this.props.onChange(evt.target.value);
         };
 
         return (
-            <select className="form-control state-selector" value={this.state.selectedState} onChange={onChange}>
-                {Object.keys(this.props.states).map(makeOption)}
+            <select className="form-control state-selector" value={this.state.selected} onChange={onChange}>
+                {Object.keys(this.props.items).map(makeOption)}
             </select>
         );
     }
@@ -73,26 +73,57 @@ var BarrelStateSelector = React.createClass({
 var MultiSelector =  React.createClass({
     render: function() {
         var makeCheckBox = (v) => (
-            <label>
-                <input type="checkbox" checked={this.props.getter[v]} onChange={evt => this.props.setter(v, evt.target.checked)} />
+            <label key={v}>
+                <input type="checkbox" checked={this.props.values(v)} onChange={evt => this.props.onChange(v, evt.target.checked)} />
                 {v}
             </label>
         );
 
-        return <div>{this.props.values.map(makeCheckBox)}</div>;
+        return <div>{Object.keys(this.props.items).map(makeCheckBox)}</div>;
     }
 });
 
 var BarrelStateCREditor = React.createClass({
     getInitialState: function() {
         return {
-            selectedState: this.props.value
+            selectedState: this.props.mProt.getInitialState()
         };
     },
 
+    componentWillReceiveProps: function(nextProps) {
+        this.setState({
+            selectedState: nextProps.mProt.getInitialState()
+        });
+    },
+
     render: function() {
-        var reqs = [];
-        var caps = [];
+        var mProt = this.props.mProt;
+        var reqs = this.props.mProt.getReqs();
+        var caps = this.props.mProt.getCaps();
+        var states = this.props.mProt.getStates();
+        var state = states[this.state.selectedState];
+        var stateReqs = state.getReqs();
+        var stateCaps = state.getCaps();
+
+        var setReq = (r, value) => {
+            if (value)
+                stateReqs[r] = true;
+            else
+                delete stateReqs[r];
+
+            state.setReqs(stateReqs);
+            this.setState(this.state);
+        };
+
+        var setCap = (c, value) => {
+            if (value)
+                stateCaps[c] = true;
+            else
+                delete stateCaps[c];
+
+            state.setCaps(stateCaps);
+            this.setState(this.state);
+        };
 
         return (
             <div className="modal-dialog">
@@ -103,17 +134,128 @@ var BarrelStateCREditor = React.createClass({
                     </div>
                     <div className="modal-body">
                         <label className="control-label">State:</label>
-                        <BarrelStateSelector cb={s => this.setState({ selectedState: s })} />
+                        <SingleSelector
+                            value={this.state.selectedState}
+                            items={states}
+                            onChange={s => this.setState({ selectedState: s })} />
                         <label className="control-label">Requirements held:</label>
-                        <MultiSelector values={reqs} />
+                        <MultiSelector items={reqs} values={r => r in stateReqs} onChange={setReq} />
                         <label className="control-label">Capabilities provided:</label>
-                        <MultiSelector values={caps} />
+                        <MultiSelector items={caps} values={r => r in stateCaps} onChange={setCap} />
                     </div>
                 </div>
             </div>
         );
     }
 });
+
+var BarrelTransitionAdder = React.createClass({
+    getInitialState: function() {
+        var states = Object.keys(this.props.mProt.getStates());
+        var ops = this.props.mProt.getOps();
+        return {
+            source: states[0],
+            target: states[0],
+            iface: ops[0].iface,
+            operation: ops[0].operation,
+            reqs: {}
+        };
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        var states = Object.keys(nextProps.mProt.getStates());
+        var ops = this.props.mProt.getOps();
+        this.setState({
+            source: states[0],
+            target: states[0],
+            iface: ops[0].iface,
+            operation: ops[0].operation,
+            reqs: {}
+        });
+    },
+
+    render: function() {
+        var mProt = this.props.mProt;
+        var reqs = this.props.mProt.getReqs();
+        var states = this.props.mProt.getStates();
+        var mergeOp = o => o.iface + ":" + o.operation;
+        var ops = Utils.makeSet(this.props.mProt.getOps().map(mergeOp));
+
+        var splitOp = s => {
+            var o = s.split(":", 2);
+            return { iface: o[0], operation: o[1] };
+        } ;
+
+        var setReq = (r, value) => {
+            if (value)
+                this.state.reqs[r] = true;
+            else
+                delete this.state.reqs[r];
+
+            this.setState(this.state);
+        };
+
+        var add = () => this.props.mProt.addTransition(this.state);
+
+        return (
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 className="modal-title">Add transition</h4>
+                    </div>
+                    <div className="modal-body">
+                        <label className="control-label">Starting state:</label>
+                        <SingleSelector
+                            value={this.state.source}
+                            items={states}
+                            onChange={s => this.setState({ source: s })} />
+                        <label className="control-label">Target state:</label>
+                        <SingleSelector
+                            value={this.state.target}
+                            items={states}
+                            onChange={s => this.setState({ target: s })} />
+                        <label className="control-label">Operation:</label>
+                        <SingleSelector
+                            value={mergeOp(this.state)}
+                            items={ops}
+                            onChange={s => this.setState(splitOp(s))} />
+                        <label className="control-label">Requirements held:</label>
+                        <MultiSelector items={reqs} values={r => r in this.state.reqs} onChange={setReq} />
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={add}>Add</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+                //     <div className="modal-dialog">
+                //         <div className="modal-content">
+                //             <div className="modal-header">
+                //                 <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                //                 <h4 className="modal-title">Transition</h4>
+                //             </div>
+                //             <div className="modal-body">
+                //                 <label className="control-label">Starting state:</label>
+                //                 <select id="transition-starting-state-selector" className="form-control state-selector"></select>
+                //                 <label className="control-label transition-hide-show">Target state:</label>
+                //                 <select id="transition-target-state-selector" className="form-control state-selector"></select>
+                //                 <label className="control-label">Operation:</label>
+                //                 <select id="transition-operation-selector" className="form-control op-selector"></select>
+                //                 <label className="control-label">Needed requirements:</label>
+                //                 <div className="form-group reqs-checkbox-group"></div>
+                //             </div>
+                //             <div className="modal-footer">
+                //                 <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                //                 <button id="transition-editor-confirm" type="button" className="btn btn-primary" data-dismiss="modal">Add</button>
+                //             </div>
+                //         </div>
+                //     </div>
+                // </div>
 
 var BarrelEditor = React.createClass({
     getInitialState: function() {
@@ -160,7 +302,10 @@ var BarrelEditor = React.createClass({
                                             <legend>Edit</legend>
                                             <div className="col-lg-10"><label className="control-label">Initial state</label></div>
                                             <div className="col-lg-10" style={{ width: "80%" }}>
-                                                <BarrelStateSelector value={this.state.mProt.getInitialState()} states={this.state.mProt.getStates()} onChange={updateInitialState} />
+                                                <SingleSelector
+                                                    value={this.state.mProt.getInitialState()}
+                                                    items={this.state.mProt.getStates()}
+                                                    onChange={updateInitialState} />
                                             </div>
                                             <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
                                             <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
@@ -189,30 +334,20 @@ var BarrelEditor = React.createClass({
                         </tbody>
                     </table>
                 </fieldset>
-                <div id="modal-state-editor" className="modal fade"></div>
-                <div id="modal-transition-adder" className="modal fade">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                                <h4 className="modal-title">Transition</h4>
-                            </div>
-                            <div className="modal-body">
-                                <label className="control-label">Starting state:</label>
-                                <select id="transition-starting-state-selector" className="form-control state-selector"></select>
-                                <label className="control-label transition-hide-show">Target state:</label>
-                                <select id="transition-target-state-selector" className="form-control state-selector"></select>
-                                <label className="control-label">Operation:</label>
-                                <select id="transition-operation-selector" className="form-control op-selector"></select>
-                                <label className="control-label">Needed requirements:</label>
-                                <div className="form-group reqs-checkbox-group"></div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                                <button id="transition-editor-confirm" type="button" className="btn btn-primary" data-dismiss="modal">Add</button>
-                            </div>
-                        </div>
-                    </div>
+                <div id="modal-state-editor" className="modal fade">
+                    <BarrelStateCREditor mProt={this.state.mProt} />
+                </div>
+                <div id="modal-add-transition-editor" className="modal fade">
+                    <BarrelTransitionAdder mProt={this.state.mProt} />
+                </div>
+                <div id="modal-remove-transition-editor" className="modal fade">
+                    <BarrelStateCREditor mProt={this.state.mProt} />
+                </div>
+                <div id="modal-add-fault-editor" className="modal fade">
+                    <BarrelStateCREditor mProt={this.state.mProt} />
+                </div>
+                <div id="modal-remove-fault-editor" className="modal fade">
+                    <BarrelStateCREditor mProt={this.state.mProt} />
                 </div>
             </div>
         );
