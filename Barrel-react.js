@@ -8,9 +8,9 @@ var BarrelMenu = React.createClass({
                     var url = URL.createObjectURL(blob);
                     setTimeout(function () {
                         var a = document.createElement("a");
-                        a.style = "display: none";
-                        a.href = url;
-                        a.download = csarFileName;
+                        a.setAttribute("style", "display: none");
+                        a.setAttribute("href", url);
+                        a.setAttribute("download", csarFileName);
                         document.body.appendChild(a);
                         a.click();
                         setTimeout(function () {
@@ -32,8 +32,8 @@ var BarrelMenu = React.createClass({
                     <li className="dropdown">
                         <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
                         <ul className="dropdown-menu" role="menu">
-                            <li><a className={className} onClick={exportCsar}>Export</a></li>
-                            <li><a onClick={() => this.refs.file.click()}>Import
+                            <li><a href="#" className={className} onClick={exportCsar}>Export</a></li>
+                            <li><a href="#" onClick={() => this.refs.file.click()}>Import
                                 <input ref="file" type="file" onChange={readCsar} style={{ display: "none" }} />
                             </a></li>
                         </ul>
