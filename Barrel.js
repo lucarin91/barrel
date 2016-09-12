@@ -444,6 +444,8 @@ var onCsarRead = function () {
     var types = csar.getTypes();
     var topology = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types);
 
+    $(".hidden").removeClass("hidden");
+
     // !-------------------------!
     // !       VISUALISER        !
     // !-------------------------!
@@ -453,7 +455,6 @@ var onCsarRead = function () {
     $("#application-name")[0].innerHTML = appName;
     $("#topology-table-body")[0].innerHTML = TOSCAAnalysis.uiApplicationToElement(topology);
     drawTopology($("#app-topology")[0], topology);
-    $(".hidden").removeClass("hidden");
 
     // !-------------------------!
     // !         EDITOR          !
