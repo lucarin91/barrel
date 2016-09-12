@@ -6,7 +6,8 @@ var nodeTypeSelectorCallback = function (name) {
     var onend = function () {
         var doc = csar.getTypeDocuments()[name];
         mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
-        drawEnvironment(name);
+        editor.setState({ name: name, mProt: mProt });
+        populateMProtGraph();
     };
 
     return function () {
@@ -431,6 +432,7 @@ function fillFaultedRequirementsCheckbox() {
  * This function is a wrapper for "Simulator.build" and permits (re)building the "Simulator" pane from scratch.
  */
 function buildSimulator() {
+    return;
     var uiData = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
     Simulator.build($("#simulator-body")[0], uiData);
 }
@@ -474,7 +476,7 @@ var onCsarRead = function () {
     // !-------------------------!
     // !        SIMULATOR        !
     // !-------------------------! 
-    buildSimulator();
+    //buildSimulator();
 
     // !-------------------------!
     // !        ANALYSER         !
@@ -668,7 +670,9 @@ function populateReqsCapsCheckboxes() {
     updateStateVals($("#modal-state-editor #state-editor-selector").val());
 }
 
-function populateMProtGraph(instanceStates) {
+function populateMProtGraph() {
+    var instanceStates = mProt.getStates();
+
     var divEnv = $("#management-protocol-display");
     divEnv.html("");
 
@@ -699,37 +703,4 @@ function populateMProtGraph(instanceStates) {
     mProt.getTransitions().forEach(drawTransition);
 
     jsPlumb.repaintEverything();
-}
-
-function drawEnvironment(nodeName) {
-    var instanceStates = mProt.getStates();
-
-    $("#management-protocol-node-type-name")[0].innerHTML = nodeName;
-    populateMProtGraph(instanceStates);
-    barrelStateSelector.setState({ instanceStates: instanceStates });
-};
-
-function exportXMLDoc() {
-    var url = URL.createObjectURL(mProt.getXML());
-    window.open(url, "_blank", "");
-}
-
-function exportCsar() {
-    mProt.save(function () {
-        csar.exportBlob(function (blob) {
-            var url = URL.createObjectURL(blob);
-            setTimeout(function () {
-                var a = document.createElement("a");
-                a.style = "display: none";
-                a.href = url;
-                a.download = csarFileName;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(function () {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
-            }, 0);
-        });
-    });
 }
