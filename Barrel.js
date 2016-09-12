@@ -1,47 +1,27 @@
 var mProt = null;
 var csar = null;
 var csarFileName = null;
-var app = null;
-var uiNames = {};
 
 var fileInput = document.getElementById("file-input");
+
+var nodeTypeSelectorCallback = function (name) {
+    var onend = function () {
+        var doc = csar.getTypeDocuments()[name];
+        mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
+        drawEnvironment(name);
+    };
+
+    return function () {
+        if (mProt != null)
+            mProt.save(onend);
+        else
+            onend();
+    };
+}
 
 // NEW FUNCTIONS ///////////////////////////////////////////////////
 
 // JointJS shape for drawing a "topology node"
-joint.shapes.devs.TopologyNode = joint.shapes.basic.Generic.extend(_.extend({}, joint.shapes.basic.PortsModelInterface, {
-    markup: '<g class="rotatable"><g class="scalable"><rect class="body"/></g><text class="label"/><g class="inPorts"/><g class="outPorts"/></g>',
-    portMarkup: '<g class="port port<%= id %>"><circle class="port-body"/><text class="port-label"/></g>',
-    defaults: joint.util.deepSupplement({
-        type: 'devs.Model',
-        size: { width: 1, height: 1 },
-        inPorts: [],
-        outPorts: [],
-        attrs: {
-            '.': { magnet: false },
-            '.body': { width: 150, height: 50, 'rx': 10, 'ry': 5 },
-            '.port-body': { r: 8, magnet: 'passive' },
-            text: { 'pointer-events': 'none' },
-            '.label': { text: 'Model', 'ref-x': .5, 'ref-y': 18, ref: '.body', 'text-anchor': 'middle' },
-            '.inPorts .port-label': { x: 4, y: -9, 'text-anchor': 'start', transform: 'rotate(330)' },
-            '.outPorts .port-label': { x: 1, y: 19, 'text-anchor': 'end', transform: 'rotate(330)' }
-        }
-    }, joint.shapes.basic.Generic.prototype.defaults),
-    getPortAttrs: function (portName, index, total, selector, type) {
-        var attrs = {};
-        var portClass = 'port' + index;
-        var portSelector = selector + '>.' + portClass;
-        var portLabelSelector = portSelector + '>.port-label';
-        var portBodySelector = portSelector + '>.port-body';
-        attrs[portLabelSelector] = { text: portName };
-        attrs[portBodySelector] = { port: { id: portName || _.uniqueId(type), type: type } };
-        attrs[portSelector] = { ref: '.body', 'ref-x': (index + 0.5) * (1 / total) };
-        if (selector === '.outPorts') {
-            attrs[portSelector]['ref-dy'] = 0;
-        }
-        return attrs;
-    }
-}));
 
 /* This function builds a JointJS environment where to draw a graph.
  * Inputs: 
@@ -87,168 +67,156 @@ function createGraph(parentElement, width, height) {
  * This function draws the current application's topology.
  * Inputs:
  * - "parentDiv" -> HTMLElement where to draw the application topology
+ * - "topology" -> TOSCAAnalysis.UIData<Analysis.Application> representing the application topology
  */
-function drawTopology(parentDiv) {
+function drawTopology(parentDiv, topology) {
     // Clean the content of the "parentDiv"
     parentDiv.innerHTML = ""
 
     // Parse the application topology
-    var nodes = EditorUtilities.parseTopology(csar.get("ServiceTemplate")[0].element);
-    var sortedNodes = EditorUtilities.sortNodes(nodes);
-        
+    var nodes = topology.data.nodes;
+    var cells = {};
+
+    var toUI = function (s) { return topology.uiNames[s] || s; };
+
+    var TopologyNode = joint.shapes.basic.Generic.extend(_.extend({}, joint.shapes.basic.PortsModelInterface, {
+        markup: '<g class="rotatable"><g class="scalable"><rect class="body"/></g><text class="label"/><g class="inPorts"/><g class="outPorts"/></g>',
+        portMarkup: '<g class="port port<%= id %>"><circle class="port-body"/><text class="port-label"/></g>',
+        defaults: joint.util.deepSupplement({
+            type: 'devs.Model',
+            size: { width: 1, height: 1 },
+            inPorts: [],
+            outPorts: [],
+            attrs: {
+                '.': { magnet: false },
+                '.body': { width: 150, height: 50, 'rx': 10, 'ry': 5 },
+                '.port-body': { r: 8, magnet: 'passive' },
+                text: { 'pointer-events': 'none' },
+                '.label': { text: 'Model', 'ref-x': .5, 'ref-y': 18, ref: '.body', 'text-anchor': 'middle' },
+                '.inPorts .port-label': { x: 4, y: -9, 'text-anchor': 'start', transform: 'rotate(330)' },
+                '.outPorts .port-label': { x: 1, y: 19, 'text-anchor': 'end', transform: 'rotate(330)' }
+            }
+        }, joint.shapes.basic.Generic.prototype.defaults),
+        getPortAttrs: function (portName, index, total, selector, type) {
+            var attrs = {};
+            var portClass = 'port' + index;
+            var portSelector = selector + '>.' + portClass;
+            var portLabelSelector = portSelector + '>.port-label';
+            var portBodySelector = portSelector + '>.port-body';
+            attrs[portLabelSelector] = { text: toUI(portName) };
+            attrs[portBodySelector] = { port: { id: portName || _.uniqueId(type), type: type } };
+            attrs[portSelector] = { ref: '.body', 'ref-x': (index + 0.5) * (1 / total) };
+            if (selector === '.outPorts') {
+                attrs[portSelector]['ref-dy'] = 0;
+            }
+            return attrs;
+        }
+    }));
+
     // Create a new environment (see createGraph function definition)
-    var width = 400;
-    var height = 110 * sortedNodes.length - 1;
-    var env = createGraph(parentDiv, 400, height);
+    var env = createGraph(parentDiv, 400, 600);
 
-    // Add a field "cell" to each node, to reference the corresponding (displayed) cell in "env"
+    // Create a cell for each node
     for (var n in nodes) {
-        // Create arrays of capabilties and requirements to be displayed on "nodes[n].cell"
-        var caps = [];
-        for (var c in nodes[n].caps) caps.push(c)
-        var reqs = [];
-        for (var r in nodes[n].reqs) reqs.push(r)
+        var name = toUI(n);
+        var caps = Object.keys(nodes[n].caps);
+        var reqs = Object.keys(nodes[n].reqs);
 
-        // Compute ad-hoc size for "nodes[n].cell"
-        var nWidth = Math.max(
-            (Math.max(caps.length, reqs.length) * 20 + 20),
-            (nodes[n].name.length * 10 + 20)
-        );
-        var nHeight = 50; 
+        // Compute ad-hoc size for
+        var nWidth = 20 + Math.max(
+            Math.max(caps.length, reqs.length) * 20,
+            name.length * 10);
+        var nHeight = 50;
 
-        // Create "nodes[n].cell", and add it to "env.graph" 
-        nodes[n].cell = new joint.shapes.devs.TopologyNode({
+        // Create cells[n], and add it to env.graph
+        cells[n] = new TopologyNode({
             size: { width: nWidth, height: nHeight },
             inPorts: caps,
             outPorts: reqs,
-            attrs: { '.label': { text: nodes[n].name } }
-        });
-        env.graph.addCells([nodes[n].cell])
+            attrs: { '.label': { text: name } }
+        }).addTo(env.graph);
 
         // Replicate "type" information in "cell" to simplify double-click handling
-        nodes[n].cell.nodeType = nodes[n].type
+        cells[n].nodeType = nodes[n].type
     }
-
-    // Create function to connect the "sourcePort" of a "source" cell to the "targetPort" of a "target" cell
-    var connect = function (source, sourcePort, target, targetPort) {
-        var link = new joint.shapes.devs.Link({
-            source: { id: source.id, selector: source.getPortSelector(sourcePort) },
-            target: { id: target.id, selector: target.getPortSelector(targetPort) },
-            smooth: true,
-            attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' } }
-        });
-        link.addTo(env.graph).reparent();
-    };
 
     // Create connections among node cells according to the parsed topology
-    for (var n in nodes) {
-        for (var r in nodes[n].reqs) {
-            var sourceCell = nodes[n].cell;
-            var sourcePort = r;
-            var targetCell = nodes[nodes[n].reqs[r].nodeId].cell;
-            var targetPort = nodes[n].reqs[r].cap;
-            connect(sourceCell, sourcePort, targetCell, targetPort)
+    for (var nodeId in nodes) {
+        for (var req in nodes[nodeId].reqs) {
+            var source = cells[nodeId];
+            var sourcePort = req;
+            var targetPort = topology.data.binding[req];
+            var target = cells[topology.data.capNodeId[targetPort]];
+
+            new joint.shapes.devs.Link({
+                source: { id: source.id, selector: source.getPortSelector(sourcePort) },
+                target: { id: target.id, selector: target.getPortSelector(targetPort) },
+                smooth: true,
+                attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' } }
+            }).addTo(env.graph).reparent();
         }
-    }
-
-    // Create function for handling double-clicks on node cells
-    var nodeDblClickCallback = function (doc, name) {
-        var onend = function () {
-            mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
-            buildManagementProtocolEditor(mProt,name);
-            drawEnvironment(mProt);
-            //$("#showXML").attr("style", "display:block;");
-        };
-
-        if (mProt != null)
-            mProt.save(onend);
-        else
-            onend();
-    }
-
-    // Create a map associating a node type's name with its XML definition
-    var nodeTypes = {}
-    var nodeTypeDefs = csar.get("NodeType");
-    for (var i = 0; i < nodeTypeDefs.length; i++) {
-        var name = nodeTypeDefs[i].element.getAttribute("name");
-        nodeTypes[name] = nodeTypeDefs[i].doc;
     }
 
     // Attaching handler (exploiting the above map)
     env.paper.on('cell:pointerdblclick', function (cellView, evt, x, y) {
         var nType = cellView.model.nodeType;
-        if (nType) nodeDblClickCallback(nodeTypes[nType], nType);
+        if (nType) nodeTypeSelectorCallback(nType);
     });
 
-    // Position nodes in "env.paper" according to their topological sorting
-    var xDelta;
-    var yDelta = 100;
-    for (var i = sortedNodes.length - 1; i >= 0; i--) {
-        xDelta = env.paper.svg.width.baseVal.value / (sortedNodes[i].length + 1);
-        for (var j = 0; j < sortedNodes[i].length; j++) {
-            var x = (j * xDelta) + (xDelta / 2);
-            var y = (sortedNodes.length - i - 1) * yDelta + yDelta / 2;
-            sortedNodes[i][j].cell.position(x, y);
-        }
-    }
+    // Layout the graph as a DAG
+    joint.layout.DirectedGraph.layout(env.graph, {
+        nodeSep: 50,
+        edgeSep: 80,
+        rankDir: "TB"
+    });
 }
 
 /*
- * This function builds the management protocol editing pane.
- * Inputs:
- * - "mProt" -> management protocol to be edited
- * - "nodeName" -> name of the node type to be edited
+ * This function sets the reqs/caps flags of a management protocol state based on the editor status.
  */
-function buildManagementProtocolEditor(mProt,nodeName) {
-    $("#management-protocol-node-type-name")[0].innerHTML = nodeName
+function setStateVals() {
+    var s = $("#modal-state-editor #state-editor-selector").val();
+    var state = mProt.getStates()[s];
+    var reqs = {};
+    var caps = {};
+    $("#modal-state-editor .req-checkbox").each(function () {
+        if (this.checked) reqs[this.labels[0].textContent] = true;
+    });
+    $("#modal-state-editor .cap-checkbox").each(function () {
+        if (this.checked) caps[this.labels[0].textContent] = true;
+    });
 
-    // Fill state selectors
-    var states = mProt.getStates();
-    var stateSelectors = $(".state-selector")
-    for (var i = 0; i < stateSelectors.length; i++) {
-        var stateSelector = stateSelectors[i];
-        // Clean selector
-        stateSelector.innerHTML = "";
-        // Populate selector
-        for (var s in states) {
-            var sOp = document.createElement("option");
-            sOp.innerHTML = states[s];
-            stateSelector.appendChild(sOp);
-        }
-    }
+    // Update management protocol
+    state.setReqs(reqs);
+    state.setCaps(caps);
 
-    // Customise initial state selector
-    var iniStateSelector = $("#initial-state-selector")[0];
-    // Add handler to update initial state
-    iniStateSelector.onclick = function () {
-        var state = iniStateSelector.value;
-        $(".stateDiv").removeClass("initial");
-        $("#state_" + state).addClass("initial");
-        mProt.setInitialState(state);
-        buildSimulator();
-    };
-    // Set current "initial state"
-    $.each(iniStateSelector.children, function (i, n) {
-        if (n.value == mProt.getInitialState())
-            n.setAttribute("selected", true)
-    })
+    // Update UI
+    for (var r in mProt.getReqs())
+        deleteRequirementAssumption(s, r);
+
+    for (var c in mProt.getCaps())
+        deleteCapabilityOffering(s, c);
+
+    for (var r in reqs)
+        drawRequirementAssumption(s, r);
+
+    for (var c in caps)
+        drawCapabilityOffering(s, c);
 }
 
 /*
- * This function builds the "modal-requirement-editor" or the "modal-capability-editor".
- * Inputs:
- * - "mode" -> if "Add" the modal is built to add a new assumption/offering; if "Remove" it is built to remove an existing one.
- * - "what" -> if "capability" the function builds the "modal-capability-editor"; if "requirement" it builds the "modal-requirement-editor".
+ * This function updates the reqs/caps flags of a state shown in the editor.
  */
-function buildModalEditor(mode,what) {
-    // Set the click handling (of "requirement/capability-state-selector") to fill the "requirement/capability-selector" depending on the "mode"
-    var selector = $("#" + what + "-state-selector")[0];
-    selector.setAttribute("onclick", "fillSelector('" + mode + "','" + what + "')");
-    selector.click();
-    // Set the confirm button's string to 'Add' or 'Remove'
-    var confirmButton = $("#" + what + "-editor-confirm")[0];
-    confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "addOrRemoveRequirementOrCapability('" + mode + "','" + what + "'); buildSimulator();");
+function updateStateVals(s) {
+    var state = mProt.getStates()[s];
+    var reqs = state.getReqs();
+    var caps = state.getCaps();
+    $("#modal-state-editor .req-checkbox").each(function () {
+        this.checked = reqs[this.labels[0].textContent] || false;
+    });
+    $("#modal-state-editor .cap-checkbox").each(function () {
+        this.checked = caps[this.labels[0].textContent] || false;
+    });
 }
 
 /*
@@ -310,7 +278,7 @@ function fillSelector(mode, what) {
  * - "mode" -> if "Add"/"Remove", the function adds/removes a requirement/capability to/from a state.
  * - "what" -> if "requirement"/"capability", the function works on requirement assumptions/capability offerings
  */
-function addOrRemoveRequirementOrCapability(mode,what) {
+function editState(mode, what) {
     // Get the pair state,requirement/capability from the selectors
     var stateName = $("#" + what + "-state-selector")[0].value;
     var whatName = $("#" + what + "-selector")[0].value;
@@ -344,7 +312,9 @@ function addOrRemoveRequirementOrCapability(mode,what) {
             deleteCapabilityOffering(stateName, whatName)
         }
         state.setCaps(caps);
-    }   
+    }
+
+    buildSimulator();
 }
 
 /*
@@ -359,7 +329,7 @@ function buildModalTransitionEditor(mode) {
     startSelector.click();
     var targetSelector = $("#transition-target-state-selector")[0];
     targetSelector.setAttribute("onclick", "fillRequirementsCheckbox()");
-    
+
 
     // Display the "target-state-selector" and the "transition-requirements-checkbox" only if "mode" is "Add"
     if (mode == 'Add') $(".transition-hide-show").show()
@@ -368,7 +338,7 @@ function buildModalTransitionEditor(mode) {
     // Set the confirm button's string to 'Add' or 'Remove'
     var confirmButton = $("#transition-editor-confirm")[0];
     confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "addOrRemoveTransition('" + mode + "');  buildSimulator();");
+    confirmButton.setAttribute("onclick", "addOrRemoveTransition('" + mode + "')");
 }
 
 /*
@@ -404,7 +374,7 @@ function fillOperationSelector(mode) {
         for (var i = 0; i < outgoingOps.length; i++)
             opts.push(outgoingOps[i].iface + ":" + outgoingOps[i].operation)
     }
-    
+
     // Add an option for each of the above 
     for (var o in opts) {
         var option = document.createElement("option");
@@ -421,7 +391,7 @@ function fillRequirementsCheckbox() {
     var targetState = $("#transition-target-state-selector")[0].value;
 
     var reqs = mProt.getReqs();
-    
+
     // Add an option for each requirement in "reqs"
     var checkbox = $("#transition-requirements-checkbox")[0];
     checkbox.innerHTML = "";
@@ -444,19 +414,22 @@ function fillRequirementsCheckbox() {
 function addOrRemoveTransition(mode) {
     var startingState = $("#transition-starting-state-selector")[0].value;
     var op = $("#transition-operation-selector")[0].value.split(":");
+    var reqs = {};
+    $.each($("#transition-requirements-checkbox")[0].getElementsByTagName("input"), function (i, el) {
+        if (el.checked) reqs[el.value] = true;
+    });
+
     if (mode == 'Add') {
         var targetState = $("#transition-target-state-selector")[0].value;
-        var reqs = []
-        $.each($("#transition-requirements-checkbox")[0].getElementsByTagName("input"), function (i, el) {
-            if (el.checked) reqs.push(el.value)
-        });
-        mProt.addTransition(startingState, targetState, op[1], op[0], reqs);
-        drawTransition(startingState, targetState, op[1], op[0], reqs);
+        mProt.addTransition(startingState, targetState, op[0], op[1], reqs);
+        drawTransition(startingState, targetState, op[0], op[1], reqs);
     }
     else if (mode == 'Remove') {
         mProt.removeTransition(startingState, op[1], op[0]);
         deleteTransition(startingState, op[1]);
     }
+
+    buildSimulator();
 }
 
 /*
@@ -477,7 +450,7 @@ function buildModalFaultEditor(mode) {
     // Set the confirm button's string to 'Add' or 'Remove'
     var confirmButton = $("#fault-editor-confirm")[0];
     confirmButton.innerHTML = mode;
-    confirmButton.setAttribute("onclick", "alert('TODO - " + mode + "'); buildSimulator();");
+    confirmButton.setAttribute("onclick", "alert('TODO - " + mode + "')");
 }
 
 /*
@@ -486,7 +459,7 @@ function buildModalFaultEditor(mode) {
 function fillFaultedRequirementsCheckbox() {
     var startingState = $("#fault-starting-state-selector")[0].value;
     var reqs = mProt.getState(startingState).getReqs();
-    
+
     var checkbox = $("#fault-requirements-checkbox")[0];
     checkbox.innerHTML = "";
 
@@ -513,109 +486,45 @@ function fillFaultedRequirementsCheckbox() {
  * This function is a wrapper for "Simulator.build" and permits (re)building the "Simulator" pane from scratch.
  */
 function buildSimulator() {
-    app = null;
-    var sim = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
-    app = sim.data;
-    uiNames = sim.uiNames;
-    Simulator.build($("#simulator-body")[0], app, uiNames)
+    var uiData = TOSCAAnalysis.serviceTemplateToApplication(csar.get("ServiceTemplate")[0].element, csar.getTypes());
+    Simulator.build($("#simulator-body")[0], uiData);
 }
 
-/*
- * This function is a wrapper for "Simulator.update" and permits updating the "Simulator".
- */
-function updateSimulator() {
-    Simulator.update($("#simulator-body")[0], app, uiNames)
-}
 ////////////////////////////////////////////////////////////////////
 
-var nodeSelectorCallback = function (doc, name) {
-    var onend = function () {
-        mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
-        drawEnvironment(mProt);
-        buildManagementProtocolEditor(mProt, name);
-    };
-
-    return function() {
-	    if (mProt != null)
-	        mProt.save(onend);
-	    else
-	        onend();
-    };
-}
-
-var onCsarRead = function() {
-    // Create a map associating a node type's name with its XML definition
-    var nodeTypes = {}
-    var nodeTypeDefs = csar.get("NodeType");
-    for (var i = 0; i < nodeTypeDefs.length; i++) {
-        var name = nodeTypeDefs[i].element.getAttribute("name");
-        nodeTypes[name] = nodeTypeDefs[i].doc;
-    }
+var onCsarRead = function () {
+    var serviceTemplate = csar.get("ServiceTemplate")[0].element;
+    var types = csar.getTypes();
+    var topology = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types);
 
     // !-------------------------!
     // !       VISUALISER        !
     // !-------------------------!
     var appName = "Unnamed";
-    if (csar.get("ServiceTemplate")[0].element.hasAttribute("name"))
-        appName = csar.get("ServiceTemplate")[0].element.getAttribute("name");
+    if (serviceTemplate.hasAttribute("name"))
+        appName = serviceTemplate.getAttribute("name");
     $("#application-name")[0].innerHTML = appName;
-    drawTopology($("#app-topology")[0]);
+    $("#topology-table-body")[0].innerHTML = TOSCAAnalysis.uiApplicationToElement(topology);
+    drawTopology($("#app-topology")[0], topology);
     $(".hidden").removeClass("hidden");
-
-    
-    // Fill topology table
-    var table = $("#topology-table-body")[0];
-    table.innerHTML = "";
-    var topology = EditorUtilities.parseTopology(csar.get("ServiceTemplate")[0].element);
-    for (var n in topology) {
-        // Create a new row for the current node
-        var row = document.createElement("tr");
-        row.className = "active" + " row-" + topology[n].type;
-        table.appendChild(row);
-        // Create a field for storing the current node's name
-        var node = document.createElement("td");
-        node.innerHTML = topology[n].name;
-        row.appendChild(node);
-        // Create a field for storing the current node's type
-        var nodeType = document.createElement("td");
-        nodeType.innerHTML = topology[n].type;
-        row.appendChild(nodeType);
-        // Create a field for storing the current node's capabilities
-        var caps = document.createElement("td");
-        var capList = Object.keys(topology[n].caps);
-        for (var i = 0; i < capList.length; i++) 
-            caps.innerHTML += capList[i] + "<br>"
-        if (caps.innerHTML == "") caps.innerHTML = "-"
-        row.appendChild(caps);
-        // Create a field for storing the current node's requirements
-        var reqs = document.createElement("td");
-        var reqList = Object.keys(topology[n].reqs);
-        for (var i = 0; i < reqList.length; i++)
-            reqs.innerHTML += reqList[i] + "<br>"
-        if (reqs.innerHTML == "") reqs.innerHTML = "-"
-        row.appendChild(reqs);
-        // Create a management protocol editor to easily access the current node's operations
-        mProt = new ManagementProtocol.ManagementProtocolEditor(nodeTypes[topology[n].type], topology[n].type);
-        // Create a field for storing the current node's operations
-        var ops = document.createElement("td");
-        var opList = mProt.getOps();
-        for (var i = 0; i < opList.length; i++)
-            ops.innerHTML += opList[i].iface + ":" + opList[i].operation + "<br>"
-        if (ops.innerHTML == "") reqs.innerHTML = "-"
-        row.appendChild(ops);
-    }
 
     // !-------------------------!
     // !         EDITOR          !
     // !-------------------------!
 
-    // Initialise editor to display the management protocol of the last processed node
-    buildManagementProtocolEditor(mProt, topology[n].type);
-    drawEnvironment(mProt);
+    var first = true;
 
     // Handle click on rows by opening the corresponding management protocol editor
-    for (var name in nodeTypes) 
-        $(".row-" + name).click(nodeSelectorCallback(nodeTypes[name], name));
+    for (var name in types) {
+        var onclick = nodeTypeSelectorCallback(name);
+        $(".row-" + name).click(onclick);
+
+        // Initialise editor to display the management protocol of the first processed node
+        if (first) {
+            onclick();
+            first = false;
+        }
+    }
 
     // !-------------------------!
     // !        SIMULATOR        !
@@ -628,33 +537,28 @@ var onCsarRead = function() {
     // TODO!!!!!!!!!!!!!!
 }
 
-var readCsar = function() {
-    //$("#nodeTypeSelector").html("");
-    mProt = null;
-    drawEnvironment(mProt);
+var readCsar = function () {
     csarFileName = fileInput.files[0].name;
     csar = new Csar.Csar(fileInput.files[0], onCsarRead);
 }
 
-fileInput.addEventListener('change', readCsar, false);
-
 function initialPositioning(divs) {
     var x = 20;
     var y = 20;
-    var deltaX = ($(window).width()-200)/4;
-    var deltaY = ($(window).height()-100)/2;
-    for (i=0; i<divs.length; i++) {
-	console.log("x:"+x+";y:"+y);
-	divs[i].setAttribute("style","left:"+x+"px;top:"+y+"px");
-	y = y + deltaY;
-	if(i%2 == 1) {
-	    x = (x + deltaX);
-	    y = 20;
-	}
+    var deltaX = ($(window).width() - 200) / 4;
+    var deltaY = ($(window).height() - 100) / 2;
+    for (i = 0; i < divs.length; i++) {
+        console.log("x:" + x + ";y:" + y);
+        divs[i].setAttribute("style", "left:" + x + "px;top:" + y + "px");
+        y = y + deltaY;
+        if (i % 2 == 1) {
+            x = (x + deltaX);
+            y = 20;
+        }
     }
 }
 
-function createState(divEnv,stateName) {
+function createState(divEnv, stateName) {
     //creating main state div
     //whose id is "state_<stateName>"
     var divState = document.createElement("div");
@@ -680,64 +584,64 @@ function createState(divEnv,stateName) {
     off.id = divState.id + "_Offers";
     off.innerHTML = "Offers:";
     divState.appendChild(off);
-    
+
     //attaching jsPlumb anchors
     jsPlumb.draggable(divState.id, {
-	    containment: "parent"
+        containment: "parent"
     });
-    
+
     return divState;
 };
 
-function drawRequirementAssumption(isName,reqName) {
+function drawRequirementAssumption(isName, reqName) {
     var reqDiv = document.createElement("div");
-    reqDiv.id = "state_"+isName+"_ReliesOn_"+reqName;
+    reqDiv.id = "state_" + isName + "_ReliesOn_" + reqName;
     reqDiv.innerHTML = "- " + reqName;
-    $("#state_"+isName+"_ReliesOn").append(reqDiv);
+    $("#state_" + isName + "_ReliesOn").append(reqDiv);
 };
 
-function drawCapabilityOffering(isName,capName) {
+function drawCapabilityOffering(isName, capName) {
     var capDiv = document.createElement("div");
-    capDiv.id = "state_"+isName+"_Offers_"+capName;
+    capDiv.id = "state_" + isName + "_Offers_" + capName;
     capDiv.innerHTML = "- " + capName;
-    $("#state_"+isName+"_Offers").append(capDiv);
+    $("#state_" + isName + "_Offers").append(capDiv);
 };
 
-function deleteRequirementAssumption(isName,reqName) {
-    var reqDiv = $("#state_"+isName+"_ReliesOn_"+reqName);
+function deleteRequirementAssumption(isName, reqName) {
+    var reqDiv = $("#state_" + isName + "_ReliesOn_" + reqName);
     reqDiv.remove();
 };
 
-function deleteCapabilityOffering(isName,capName) {
-    var capDiv = $("#state_"+isName+"_Offers_"+capName);
+function deleteCapabilityOffering(isName, capName) {
+    var capDiv = $("#state_" + isName + "_Offers_" + capName);
     capDiv.remove();
 };
 
-function drawTransition(source, target, operationName, interfaceName, reqs) {
-    var sourceState = "state_" + source;
-    var targetState = "state_" + target;
-    var transLabel = "<b>" + interfaceName + ":" + operationName + "</b>";
-    
-    if (reqs.length != 0)
-		transLabel += "<br> Relies on: {" + reqs.join(", ") + "}";
-    
-    var c = jsPlumb.connect({
-		source: sourceState,
-        target: targetState,
-		anchor: "Continuous",
-		connector: ["StateMachine", { curviness: 50 }],
-		endpoint: "Blank",
-		paintStyle: { strokeStyle:"#112835", lineWidth:2 },
-		hoverPaintStyle:{ strokeStyle:"#3399FF" },
-		overlays:[ 
-			["Arrow" , { location:1 }], 
-			["Label", { label:transLabel, id:"label", location: 0.4, cssClass: "transLabel" }]
-		]
-    });
-    
-    c.setParameter({ id: sourceState + "_" + interfaceName + "_" + operationName });
+function drawTransition(transition) {
+    var sourceState = "state_" + transition.source;
+    var targetState = "state_" + transition.target;
+    var transLabel = "<b>" + transition.iface + ":" + transition.operation + "</b>";
+    var reqs = Object.keys(transition.reqs);
+    reqs.sort();
 
-	jsPlumb.repaintEverything();
+    if (reqs.length != 0)
+        transLabel += "<br> Relies on: {" + reqs.join(", ") + "}";
+
+    var c = jsPlumb.connect({
+        source: sourceState,
+        target: targetState,
+        anchor: "Continuous",
+        connector: ["StateMachine", { curviness: 50 }],
+        endpoint: "Blank",
+        paintStyle: { strokeStyle: "#112835", lineWidth: 2 },
+        hoverPaintStyle: { strokeStyle: "#3399FF" },
+        overlays: [
+            ["Arrow", { location: 1 }],
+            ["Label", { label: transLabel, id: "label", location: 0.4, cssClass: "transLabel" }]
+        ]
+    });
+
+    jsPlumb.repaintEverything();
 };
 
 // PROVA ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -746,7 +650,7 @@ function drawHandler(source, target, reqs) {
     var targetState = "state_" + target;
     var handlerLabel = "<b> {" + reqs.join(", ") + "} </b>";
     var handlerId = sourceState + "_" + reqs.join("-")
-    
+
     var c = jsPlumb.connect({
         source: sourceState,
         target: targetState,
@@ -756,29 +660,29 @@ function drawHandler(source, target, reqs) {
         paintStyle: { strokeStyle: "#95a5a6", lineWidth: 2 },
         hoverPaintStyle: { strokeStyle: "#3399FF" },
         overlays: [
-			["Arrow", { location: 1 }],
-			["Label", { label: handlerLabel, id: "label", location: 0.4, cssClass: "handlerLabel" }]
+            ["Arrow", { location: 1 }],
+            ["Label", { label: handlerLabel, id: "label", location: 0.4, cssClass: "handlerLabel" }]
         ]
     });
 
     c.setParameter({ id: handlerId });
-    
+
     jsPlumb.repaintEverything();
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function deleteTransition(sourceState,operationName){
+function deleteTransition(sourceState, operationName) {
     var sourceElement = "state_" + sourceState;
     var c = null;
-    
+
     var connections = jsPlumb.getConnections();
-    for (i=0; i<connections.length; i++) {
-	var overlays = connections[i].getOverlays();
-	for (j=0; j<overlays.length; j++) {
-	    if (overlays[j].type == "Label"
-		&& overlays[j].label.indexOf(operationName)!=-1)
-		c = connections[i];
-	}
+    for (i = 0; i < connections.length; i++) {
+        var overlays = connections[i].getOverlays();
+        for (j = 0; j < overlays.length; j++) {
+            if (overlays[j].type == "Label"
+                && overlays[j].label.indexOf(operationName) != -1)
+                c = connections[i];
+        }
     }
     jsPlumb.detach(c);
 }
@@ -787,59 +691,98 @@ function updateInitialState(newInitialState) {
     $(".initial").remove("initial");
     $(".stateDiv").removeClass("initial");
     $("#state_" + newInitialState).addClass("initial");
+    mProt.setInitialState(newInitialState);
+    buildSimulator();
 }
 
-function drawEnvironment(mProt) {
-    //clear environment
+function populateOpsSelectors() {
+    var opsOptions =
+        Object.keys(mProt.getOps())
+            .map(function (v) { return "<option>" + v + "</option>" })
+            .join("");
+
+    $(".op-selector").html(stateOptions);
+}
+
+function populateStateSelectors(instanceStates) {
+    var stateOptions =
+        Object.keys(instanceStates)
+            .map(function (v) { return "<option>" + v + "</option>" })
+            .join("");
+
+    $(".state-selector").html(stateOptions);
+
+    // Customise initial state selector
+    var iniStateSelector = $("#initial-state-selector")[0];
+    // Add handler to update initial state
+    iniStateSelector.onclick = function () { updateInitialState(iniStateSelector.value); };
+    // Initialise current initial state
+    var iniState = mProt.getInitialState();
+    $.each(iniStateSelector.children, function (i, n) {
+        if (n.value == iniState)
+            n.setAttribute("selected", true);
+    });
+}
+
+function populateReqsCapsCheckboxes() {
+    var reqsCheckboxes =
+        Object.keys(mProt.getReqs())
+            .map(function (v) { return "<label><input class='req-checkbox' type='checkbox'>" + v + "</label>" })
+            .join("");
+
+    $(".reqs-checkbox-group").html(reqsCheckboxes);
+
+    var capsCheckboxes =
+        Object.keys(mProt.getCaps())
+            .map(function (v) { return "<label><input class='cap-checkbox' type='checkbox'>" + v + "</label>" })
+            .join("");
+
+    $(".caps-checkbox-group").html(capsCheckboxes);
+
+    updateStateVals($("#modal-state-editor #state-editor-selector").val());
+}
+
+function populateMProtGraph(instanceStates) {
     var divEnv = $("#management-protocol-display");
-    $("#toolbox").attr("style","display:none");
     divEnv.html("");
+
     jsPlumb.reset();
 
-    if (mProt == null)
-	return;
-    
+    // Create editor divs
     var stateDivs = [];
-    
-    //instance states
-    var instanceStates = mProt.getStates();
-    if (instanceStates.length==0) {
-	alert("The imported NodeType has no instance states");
-	return;
+
+    for (var stateName in instanceStates) {
+        var state = instanceStates[stateName];
+        var divState = createState(divEnv, stateName);
+        stateDivs.push(divState);
+
+        for (var req in state.getReqs())
+            drawRequirementAssumption(stateName, req);
+
+        for (var cap in state.getCaps())
+            drawCapabilityOffering(stateName, cap);
+
+        var iniState = mProt.getInitialState();
+        if (iniState != null)
+            updateInitialState(iniState);
     }
 
-    for(var i=0; i < instanceStates.length; i++) {
-	var stateName = instanceStates[i];
-	var state = mProt.getState(stateName);
-	var divState = createState(divEnv, stateName);
-	stateDivs.push(divState);
-	
-	var reqList = state.getReqs();
-	for(var j=0; j<reqList.length; j++)
-	    drawRequirementAssumption(stateName, reqList[j]);
-
-	var capList = state.getCaps();
-	for(var j=0; j<capList.length; j++)
-	    drawCapabilityOffering(stateName,capList[j]);
-
-	var iniState = mProt.getInitialState();
-	if (iniState != null)
-	    updateInitialState(iniState);
-    }		
-	
     initialPositioning(stateDivs);
     jsPlumb.repaintEverything();
-    
-	var transitions = mProt.getTransitions();
-	for (var i=0; i<transitions.length; i++) {
-	    drawTransition(transitions[i].source,
-			   transitions[i].target,
-			   transitions[i].operation,
-			   transitions[i].iface,
-			   transitions[i].reqs);
-	}
-    
+
+    mProt.getTransitions().forEach(drawTransition);
+
     jsPlumb.repaintEverything();
+}
+
+function drawEnvironment(nodeName) {
+    var instanceStates = mProt.getStates();
+
+    $("#management-protocol-node-type-name")[0].innerHTML = nodeName;
+    populateMProtGraph(instanceStates);
+    populateStateSelectors(instanceStates);
+    populateReqsCapsCheckboxes();
+    populateOpsSelectors();
 };
 
 function exportXMLDoc() {
@@ -849,20 +792,20 @@ function exportXMLDoc() {
 
 function exportCsar() {
     mProt.save(function () {
-	csar.exportBlob(function (blob) {
-	    var url = URL.createObjectURL(blob);
-	    setTimeout(function () {
-		var a = document.createElement("a");
-		a.style = "display: none";
-		a.href = url;
-		a.download = csarFileName;
-		document.body.appendChild(a);
-		a.click();
-		setTimeout(function() {
-		    document.body.removeChild(a);
-		    window.URL.revokeObjectURL(url);
-		}, 0);
-	    }, 0);
-	});
+        csar.exportBlob(function (blob) {
+            var url = URL.createObjectURL(blob);
+            setTimeout(function () {
+                var a = document.createElement("a");
+                a.style = "display: none";
+                a.href = url;
+                a.download = csarFileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }, 0);
+        });
     });
 }

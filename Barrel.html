@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-	<title>Barrel</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <title>Barrel</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
     <!--LINKS-->
     <link rel="shortcut icon" href="img/barrel_icon.ico"/>
-	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="css/joint.css" rel="stylesheet" type="text/css">
     <link href="css/devs.css" rel="stylesheet" type="text/css">
     <link href="css/editor.css" rel="stylesheet" type="text/css">
@@ -22,18 +22,18 @@
     <script type="text/javascript" src="lib/dagre/dist/dagre.core.min.js"></script>
     <script type="text/javascript" src="lib/joint.layout.DirectedGraph.min.js"></script>
     <script type="text/javascript" src="lib/jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
-	<script type="text/javascript" src="lib/zip.js"></script>
-	<script type="text/javascript" src="lib/zip-fs.js"></script>
-	<!--Typescript generated-->
-	<script src="TOSCA.js"></script>
-    <script src="csar.js"></script>
-    <script src="EditorUtilities.js"></script>
+    <script type="text/javascript" src="lib/zip.js"></script>
+    <script type="text/javascript" src="lib/zip-fs.js"></script>
+    <!--Typescript generated-->
+    <script src="TOSCA.js"></script>
+    <script src="Csar.js"></script>
     <script src="ManagementProtocols.js"></script>
-	<script src="TOSCAAnalysis.js"></script>
+    <script src="TOSCAAnalysis.js"></script>
     <script src="Analysis.js"></script>
     <script src="Simulator.js"></script>
+    <script src="Utils.js"></script>
     <!--JS Inline-->
-	<script type="text/javascript">
+    <script type="text/javascript">
         function qualifyURL(url) {
             var img = document.createElement('img');
 	        img.src = url; // set string url
@@ -41,9 +41,7 @@
 	        img.src = null; // no server request
 	        return url;
         }
-        zip.workerScriptsPath = qualifyURL("lib/");
-	</script>
-    <script>
+        zip.workerScriptsPath = qualifyURL("lib/z-worker.js").slice(0, -("z-worker.js".length));
         $(document).ready(function(){
             $('[data-toggle="popover"]').popover();
         });
@@ -67,7 +65,7 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">CSAR<span class="caret"></span></a>
                     <ul class="dropdown-menu" role="menu">
                         <li><a class="hidden" onclick="exportCsar()">Export</a></li>
-                        <li><a onclick="$('#file-input')[0].click()">Import <input type="file" id="file-input" style="display: none"/></a></li>
+                        <li><a onclick="$('#file-input')[0].click()">Import <input type="file" id="file-input" onchange="readCsar()" style="display: none"/></a></li>
                     </ul>
                     </li>
                 </ul>
@@ -133,13 +131,13 @@
                                 <div class="col-lg-10" style="width:80%"><select class="form-control state-selector" id="initial-state-selector"></select></div>
                                 <div class="col-lg-10"><label class="control-label">Requirement assumptions</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
-                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-requirement-editor" onclick="buildModalEditor('Add','requirement')">Add</a>
-                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-requirement-editor" onclick="buildModalEditor('Remove','requirement')">Remove</a>
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
                                 </div>
                                 <div class="col-lg-10"><label class="control-label">Provisioned capabilities</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
-                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-capability-editor" onclick="buildModalEditor('Add','capability')">Add</a>
-                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-capability-editor" onclick="buildModalEditor('Remove','capability')">Remove</a>
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
                                 </div>
                                 <div class="col-lg-10"><label class="control-label">Transitions</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
@@ -160,47 +158,29 @@
     </fieldset>
     
     <!-- Editor's modals-->
-    <div id="modal-requirement-editor" class="modal fade">
+    <div id="modal-state-editor" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">Requirement assumption</h4>
+                    <h4 class="modal-title">State</h4>
                 </div>
                 <div class="modal-body">
                     <label class="control-label">State:</label>
-                    <select id="requirement-state-selector" class="form-control state-selector"></select>
-                    <label class="control-label">Requirement to be assumed:</label>
-                    <select id="requirement-selector" class="form-control"></select>
+                    <select id="state-editor-selector" class="form-control state-selector" onclick="updateStateVals(this.value)"></select>
+                    <label class="control-label">Requirements held:</label>
+                    <div class="form-group reqs-checkbox-group"></div>
+                    <label class="control-label">Capabilities provided:</label>
+                    <div class="form-group caps-checkbox-group"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="requirement-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="setStateVals()">Apply</button>
                 </div>
             </div>
         </div>
     </div>
-    <div id="modal-capability-editor" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">Capability offering</h4>
-                </div>
-                <div class="modal-body">
-                    <label class="control-label">State:</label>
-                    <select id="capability-state-selector" class="form-control state-selector"></select>
-                    <label class="control-label">Offered capability:</label>
-                    <select id="capability-selector" class="form-control"></select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="capability-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="modal-transition-editor" class="modal fade">
+    <div id="modal-transition-adder" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -210,48 +190,16 @@
                 <div class="modal-body">
                     <label class="control-label">Starting state:</label>
                     <select id="transition-starting-state-selector" class="form-control state-selector"></select>
-                    <label class="control-label">Operation:</label>
-                    <select id="transition-operation-selector" class="form-control"></select>
                     <label class="control-label transition-hide-show">Target state:</label>
-                    <select id="transition-target-state-selector" class="form-control state-selector transition-hide-show"></select>
-                    <label class="control-label transition-hide-show">Needed requirements:</label>
-                    <div class="form-group transition-hide-show">
-                        <div id="transition-requirements-checkbox" class="checkbox">
-                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
-                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
-                        </div>
-                    </div>
+                    <select id="transition-target-state-selector" class="form-control state-selector"></select>
+                    <label class="control-label">Operation:</label>
+                    <select id="transition-operation-selector" class="form-control op-selector"></select>
+                    <label class="control-label">Needed requirements:</label>
+                    <div class="form-group reqs-checkbox-group"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="transition-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="modal-fault-editor" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">Fault handler</h4>
-                </div>
-                <div class="modal-body">
-                    <label class="control-label">Starting state:</label>
-                    <select id="fault-starting-state-selector" class="form-control state-selector"></select>
-                    <label class="control-label transition-hide-show">Faulted requirements that are handled:</label>
-                    <div class="form-group">
-                        <div id="fault-requirements-checkbox" class="checkbox">
-                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
-                            <label><input id="checkbox" value="Checkbok" type="checkbox"> Checkbox</label>
-                        </div>
-                    </div>
-                    <label class="control-label fault-hide-show">Target state:</label>
-                    <select id="fault-target-state-selector" class="form-control state-selector fault-hide-show"></select>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button id="fault-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal"></button>
+                    <button id="transition-editor-confirm" type="button" class="btn btn-primary" data-dismiss="modal" onclick="addTransition()">Add</button>
                 </div>
             </div>
         </div>
@@ -299,7 +247,7 @@
                         </p>
                     </center>
                     <p>
-                        Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Università di Pisa, Italia).
+                        Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Universit&agrave; di Pisa, Italia).
                     </p>
                 </div>
                 <div class="modal-footer">
