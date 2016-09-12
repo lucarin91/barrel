@@ -26,4 +26,27 @@ var BarrelMenu = React.createClass({
     }
 });
 
+var BarrelStateSelector = React.createClass({
+    getInitialState: function() {
+        return {
+            selectedState: "",
+            instanceStates: {}
+        };
+    },
+
+    render: function() {
+        var makeOption = v => <option key={v} value={v}>{v}</option>;
+
+        return (
+            <select
+                className="form-control state-selector"
+                value={this.state.selectedState}
+                onChange={evt => {this.setState({ selectedState: evt.target.value }); if (this.props.onChange) this.props.onChange(evt.target.value); }}>
+                {Object.keys(this.state.instanceStates).map(makeOption)}
+            </select>
+        );
+    }
+});
+
 ReactDOM.render(<BarrelMenu />, document.getElementById('barrelMenu'));
+barrelStateSelector = ReactDOM.render(<BarrelStateSelector onChange={updateInitialState} />, document.getElementById('barrelStateSelector'));

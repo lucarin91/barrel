@@ -114,7 +114,9 @@
                             <fieldset>
                                 <legend>Edit</legend>
                                 <div class="col-lg-10"><label class="control-label">Initial state</label></div>
-                                <div class="col-lg-10" style="width:80%"><select class="form-control state-selector" id="initial-state-selector"></select></div>
+                                <div class="col-lg-10" style="width:80%">
+                                    <div id="barrelStateSelector"></div>
+                                </div>
                                 <div class="col-lg-10"><label class="control-label">Requirement assumptions</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
                                     <a class="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
@@ -123,17 +125,17 @@
                                 <div class="col-lg-10"><label class="control-label">Provisioned capabilities</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
                                     <a class="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                                    <a class="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
                                 </div>
                                 <div class="col-lg-10"><label class="control-label">Transitions</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
-                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-transition-editor" onclick="buildModalTransitionEditor('Add')">Add</a>
-                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-transition-editor" onclick="buildModalTransitionEditor('Remove')">Remove</a>
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
+                                    <a class="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
                                 </div>
                                 <div class="col-lg-10"><label class="control-label">Fault handlers</label></div>
                                 <div class="col-lg-10 btn-group btn-group-justified" style="width:80%">
-                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-fault-editor" onclick="buildModalFaultEditor('Add')">Add</a>
-                                    <a class="btn btn-info" data-toggle="modal" data-target="#modal-fault-editor" onclick="buildModalFaultEditor('Remove')">Remove</a>
+                                    <a class="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
+                                    <a class="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
                                 </div>
                             </fieldset>
                         </form>

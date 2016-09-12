@@ -218,59 +218,6 @@ function updateStateVals(s) {
 }
 
 /*
- * This function fills the requirement selector in "modal-requirement/capability-editor".
- * Inputs:
- * - "mode" -> if "Add" the function fills the selector with the requirements/capability that can still be assumed/offered; if "Remove" it fills the selector with the requirements/capabilities that can be removed
- * - "what" -> if "capability" the function fills the selector with capability offerings; if "requirement" it fills the selector with requirement assumptions.
- */
-function fillSelector(mode, what) {
-    var selector = $("#" + what + "-selector")[0];
-    // Clean "selector"
-    selector.innerHTML = "";
-
-    // Get the state to be edited
-    var state = $("#" + what + "-state-selector")[0].value;
-
-    // Get options (requirement/capabilities that can be added/removed) to fill the selector
-    var opts;
-    if (what == "requirement") {
-        if (mode == 'Add') {
-            opts = mProt.getReqs();
-            var assumed = mProt.getState(state).getReqs()
-            opts = $(opts).not(assumed).get()
-        }
-        else
-            opts = mProt.getState(state).getReqs()
-    }
-    else if (what == "capability") {
-        if (mode == 'Add') {
-            opts = mProt.getCaps();
-            var offered = mProt.getState(state).getCaps()
-            opts = $(opts).not(offered).get()
-        }
-        else
-            opts = mProt.getState(state).getCaps()
-    }
-
-    // If there are options to show
-    if (opts.length > 0) {
-        // Add an option for each of the above
-        $("#" + what + "-selector").prop("disabled", false);
-        $("#" + what + "-editor-confirm").prop("disabled", false);
-        for (var o in opts) {
-            var option = document.createElement("option");
-            option.innerHTML = opts[o];
-            selector.appendChild(option);
-        }
-    }
-    else {
-        // Disable the selector and the confirm button
-        $("#" + what + "-selector").prop("disabled", true);
-        $("#" + what + "-editor-confirm").prop("disabled", true);
-    }
-}
-
-/*
  * This function adds/removes a requirement/capability to/from a state (by exploiting the information in "modal-requirement/capability-editor").
  * Inputs:
  * - "mode" -> if "Add"/"Remove", the function adds/removes a requirement/capability to/from a state.
@@ -703,26 +650,6 @@ function populateOpsSelectors() {
     $(".op-selector").html(stateOptions);
 }
 
-function populateStateSelectors(instanceStates) {
-    var stateOptions =
-        Object.keys(instanceStates)
-            .map(function (v) { return "<option>" + v + "</option>" })
-            .join("");
-
-    $(".state-selector").html(stateOptions);
-
-    // Customise initial state selector
-    var iniStateSelector = $("#initial-state-selector")[0];
-    // Add handler to update initial state
-    iniStateSelector.onclick = function () { updateInitialState(iniStateSelector.value); };
-    // Initialise current initial state
-    var iniState = mProt.getInitialState();
-    $.each(iniStateSelector.children, function (i, n) {
-        if (n.value == iniState)
-            n.setAttribute("selected", true);
-    });
-}
-
 function populateReqsCapsCheckboxes() {
     var reqsCheckboxes =
         Object.keys(mProt.getReqs())
@@ -779,9 +706,7 @@ function drawEnvironment(nodeName) {
 
     $("#management-protocol-node-type-name")[0].innerHTML = nodeName;
     populateMProtGraph(instanceStates);
-    populateStateSelectors(instanceStates);
-    populateReqsCapsCheckboxes();
-    populateOpsSelectors();
+    barrelStateSelector.setState({ instanceStates: instanceStates });
 };
 
 function exportXMLDoc() {
