@@ -28,13 +28,13 @@
     <script type="text/javascript" src="lib/zip.js"></script>
     <script type="text/javascript" src="lib/zip-fs.js"></script>
     <!--Typescript generated-->
-    <script src="TOSCA.js"></script>
-    <script src="Csar.js"></script>
-    <script src="ManagementProtocols.js"></script>
-    <script src="TOSCAAnalysis.js"></script>
-    <script src="Analysis.js"></script>
-    <script src="Simulator.js"></script>
-    <script src="Utils.js"></script>
+    <script type="text/javascript" src="TOSCA.js"></script>
+    <script type="text/javascript" src="Csar.js"></script>
+    <script type="text/javascript" src="ManagementProtocols.js"></script>
+    <script type="text/javascript" src="TOSCAAnalysis.js"></script>
+    <script type="text/javascript" src="Analysis.js"></script>
+    <script type="text/javascript" src="Simulator.js"></script>
+    <script type="text/javascript" src="Utils.js"></script>
     <!--JS Inline-->
     <script type="text/javascript">
         function qualifyURL(url) {
@@ -58,24 +58,7 @@
                 <a class="navbar-brand" href="#">Barrel</a>
             </div>
 
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li><a href="#visualiser" class="hidden">Visualise</a></li>
-                    <li><a href="#editor" class="hidden">Edit</a></li>
-                    <li><a href="#simulator" class="hidden">Simulate</a></li>
-                    <li><a href="#analyser" class="hidden">Analyse</a></li>
-                    <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">CSAR<span class="caret"></span></a>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a class="hidden" onclick="exportCsar()">Export</a></li>
-                        <li><a onclick="$('#file-input')[0].click()">Import <input type="file" id="file-input" onchange="readCsar()" style="display: none"/></a></li>
-                    </ul>
-                    </li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a data-toggle="modal" data-target="#modal-info">About</a></li>
-                </ul>
-            </div>
+        <div id="barrelMenu"></div>
         </div>
     </nav>
 
@@ -259,6 +242,8 @@
             </div>
         </div>
     </div>
-	<script src="Barrel.js"></script>
+    <!-- UI + react UI -->
+	<script type="text/javascript" src="Barrel.js"></script>
+    <script type="text/babel" src="Barrel-react.js"></script>
 </body>
 </html>
