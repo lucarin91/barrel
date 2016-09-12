@@ -233,29 +233,57 @@ var BarrelTransitionAdder = React.createClass({
     }
 });
 
-                //     <div className="modal-dialog">
-                //         <div className="modal-content">
-                //             <div className="modal-header">
-                //                 <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                //                 <h4 className="modal-title">Transition</h4>
-                //             </div>
-                //             <div className="modal-body">
-                //                 <label className="control-label">Starting state:</label>
-                //                 <select id="transition-starting-state-selector" className="form-control state-selector"></select>
-                //                 <label className="control-label transition-hide-show">Target state:</label>
-                //                 <select id="transition-target-state-selector" className="form-control state-selector"></select>
-                //                 <label className="control-label">Operation:</label>
-                //                 <select id="transition-operation-selector" className="form-control op-selector"></select>
-                //                 <label className="control-label">Needed requirements:</label>
-                //                 <div className="form-group reqs-checkbox-group"></div>
-                //             </div>
-                //             <div className="modal-footer">
-                //                 <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                //                 <button id="transition-editor-confirm" type="button" className="btn btn-primary" data-dismiss="modal">Add</button>
-                //             </div>
-                //         </div>
-                //     </div>
-                // </div>
+var BarrelFaultAdder = React.createClass({
+    getInitialState: function() {
+        var states = Object.keys(this.props.mProt.getStates());
+        return {
+            source: states[0],
+            target: states[0]
+        };
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        var states = Object.keys(nextProps.mProt.getStates());
+        this.setState({
+            source: states[0],
+            target: states[0]
+        });
+    },
+
+    render: function() {
+        var mProt = this.props.mProt;
+        var states = this.props.mProt.getStates();
+
+        var add = () => this.props.mProt.addFaultHandler(this.state);
+
+        return (
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 className="modal-title">Add transition</h4>
+                    </div>
+                    <div className="modal-body">
+                        <label className="control-label">Starting state:</label>
+                        <SingleSelector
+                            value={this.state.source}
+                            items={states}
+                            onChange={s => this.setState({ source: s })} />
+                        <label className="control-label">Target state:</label>
+                        <SingleSelector
+                            value={this.state.target}
+                            items={states}
+                            onChange={s => this.setState({ target: s })} />
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={add}>Add</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
 
 var BarrelEditor = React.createClass({
     getInitialState: function() {
@@ -344,7 +372,7 @@ var BarrelEditor = React.createClass({
                     <BarrelStateCREditor mProt={this.state.mProt} />
                 </div>
                 <div id="modal-add-fault-editor" className="modal fade">
-                    <BarrelStateCREditor mProt={this.state.mProt} />
+                    <BarrelFaultAdder mProt={this.state.mProt} />
                 </div>
                 <div id="modal-remove-fault-editor" className="modal fade">
                     <BarrelStateCREditor mProt={this.state.mProt} />
