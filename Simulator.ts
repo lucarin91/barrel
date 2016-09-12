@@ -5,7 +5,10 @@
 /// <reference path="TOSCAAnalysis.ts" />
 
 module Simulator {
-    export function build(table: Element, app: Analysis.Application, uiNames: TOSCAAnalysis.UINames) {
+    export function build(table: Element, uiData: TOSCAAnalysis.UIData<Analysis.Application>) {
+        var app = uiData.data;
+        var uiNames = uiData.uiNames;
+
         // Clear table
         table.innerHTML = "";
         // For each node in "app"
@@ -36,14 +39,17 @@ module Simulator {
             opsField.id = "sim-ops-" + id;
             row.appendChild(opsField);
         }
-        update(table, app, uiNames);
+        update(table, uiData);
     }
 
-    export function update(table: Element, app: Analysis.Application, uiNames: TOSCAAnalysis.UINames) {
+    export function update(table: Element, uiData: TOSCAAnalysis.UIData<Analysis.Application>) {
+        var app = uiData.data;
+        var uiNames = uiData.uiNames;
+
         // For each node in app
         for (var id in app.nodes) {
             var node: Analysis.Node = app.nodes[id];
-            var state: Analysis.State = node.getState();
+            var state: Analysis.State = node.state;
             // Display the node state
             var stateField: Element = table.querySelector("#sim-state-" + id);
             stateField.innerHTML = node.stateId;
@@ -77,21 +83,21 @@ module Simulator {
             var opsField: Element = table.querySelector("#sim-ops-" + id);
             opsField.innerHTML = "";
             for (var o in state.ops) {
-                var opBtn: Element = document.createElement("div");
+                var opBtn: HTMLElement = document.createElement("div");
                 opBtn.id = "sim-op-" + o;
                 opBtn.className = "btn btn-xs sim-op";
-                if (app.isConsistent()) {
-                    // If no fault has been issued, permit interacting with available operations
-                    if (app.canPerformOp(id, o)) {
-                        opBtn.className += " btn-success";
-                        opBtn.setAttribute("onclick", "app.performOp('" + id + "','" + o + "');updateSimulator();");
-                    }
-                    else
-                        opBtn.className += " btn-warning disabled";
-                }
-                else
-                    //Otherwise, disable all operations.
+                if (!app.isConsistent) {
+                    // App state is inconsistent, disable all operations.
                     opBtn.className += " btn-default disabled";
+                } else if (app.canPerformOp(id, o)) {
+	            // If no fault has been issued, permit interacting with available operations
+                    opBtn.className += " btn-success";
+                    opBtn.onclick = function() {
+                        update(table, new TOSCAAnalysis.UIData(app.performOp(id, o), uiNames));
+                    };
+                } else {
+                    opBtn.className += " btn-warning disabled";
+                }
                 opBtn.innerHTML = o;
                 opsField.appendChild(opBtn);
             }
