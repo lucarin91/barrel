@@ -2,25 +2,12 @@ var BarrelMenu = React.createClass({
     render: function() {
         var className = csar ? "" : "hidden";
 
-        var exportCsar = () => {
-            mProt.save(function () {
-                csar.exportBlob(function (blob) {
-                    var url = URL.createObjectURL(blob);
-                    setTimeout(function () {
-                        var a = document.createElement("a");
-                        a.setAttribute("style", "display: none");
-                        a.setAttribute("href", url);
-                        a.setAttribute("download", csarFileName);
-                        document.body.appendChild(a);
-                        a.click();
-                        setTimeout(function () {
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(url);
-                        }, 0);
-                    }, 0);
-                });
-            });
-        };
+        var exportCsar =
+            () => mProt.save(
+                () => csar.exportBlob(
+                    blob => saveAs(blob.slice(0, blob.size, "application/octet-stream"), csarFileName, true)
+                )
+            );
 
         return (
             <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
