@@ -1,7 +1,5 @@
 var BarrelMenu = React.createClass({
     render: function() {
-        var className = csar ? "" : "hidden";
-
         var exportCsar =
             () => mProt.save(
                 () => csar.exportBlob(
@@ -12,14 +10,14 @@ var BarrelMenu = React.createClass({
         return (
             <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul className="nav navbar-nav">
-                    <li><a data-toggle="tab" href="#visualiser" className={className}>Visualise</a></li>
-                    <li><a data-toggle="tab" href="#editor" className={className}>Edit</a></li>
-                    <li><a data-toggle="tab" href="#simulator" className={className}>Simulate</a></li>
-                    <li><a data-toggle="tab" href="#analyser" className={className}>Analyse</a></li>
+                    <li><a data-toggle="tab" href="#visualiser" className="hidden">Visualise</a></li>,
+                    <li><a data-toggle="tab" href="#editor" className="hidden">Edit</a></li>,
+                    <li><a data-toggle="tab" href="#simulator" className="hidden">Simulate</a></li>,
+                    <li><a data-toggle="tab" href="#analyser" className="hidden">Analyse</a></li>,
                     <li className="dropdown">
                         <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
                         <ul className="dropdown-menu" role="menu">
-                            <li><a href="#" className={className} onClick={exportCsar}>Export</a></li>
+                            <li><a href="#" className="hidden" onClick={exportCsar}>Export</a></li>
                             <li><a href="#" onClick={() => this.refs.file.click()}>Import
                                 <input ref="file" type="file" onChange={readCsar} style={{ display: "none" }} />
                             </a></li>
