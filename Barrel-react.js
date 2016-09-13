@@ -198,18 +198,126 @@ var BarrelTransitionAdder = React.createClass({
                             value={this.state.source}
                             items={states}
                             onChange={s => this.setState({ source: s })} />
-                        <label className="control-label">Target state:</label>
-                        <SingleSelector
-                            value={this.state.target}
-                            items={states}
-                            onChange={s => this.setState({ target: s })} />
                         <label className="control-label">Operation:</label>
                         <SingleSelector
                             value={mergeOp(this.state)}
                             items={ops}
                             onChange={s => this.setState(splitOp(s))} />
+                        <label className="control-label">Target state:</label>
+                        <SingleSelector
+                            value={this.state.target}
+                            items={states}
+                            onChange={s => this.setState({ target: s })} />
                         <label className="control-label">Requirements held:</label>
                         <MultiSelector items={reqs} values={r => r in this.state.reqs} onChange={setReq} />
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={apply}>Apply</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+var BarrelTransitionRemover = React.createClass({
+    getInitialState: function() {
+        var trans = this.props.mProt.getTransitions();
+        if (trans.length != 0)
+            return trans[0];
+
+        return {
+            source: "",
+            target: "",
+            iface: "",
+            operation: "",
+            reqs: {}
+        };
+    },
+
+    setStateAndComputeDeps: function(nextState) {
+        this.setState(nextState);
+        var trans = this.props.mProt.getTransitions();
+
+        var sameSource = trans.filter(t => t.source == this.state.source);
+        if (sameSource.length == 0) return this.setState(trans[0]);
+
+        var sameOp = sameSource.filter(t => t.iface == this.state.iface && t.operation == this.state.operation);
+        if (sameOp.length == 0) return this.setState(sameSource[0]);
+
+        var sameTarget = sameOp.filter(t => t.target == this.state.target);
+        if (sameTarget.length == 0) return this.setState(sameOp[0]);
+        
+        var sameReqs = sameTarget.filter(t => Utils.setEquals(t.reqs == this.state.reqs));
+        if (sameReqs.length == 0) return this.setState(sameTarget[0]);
+
+        this.setState(sameReqs[0]);
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        this.setStateAndComputeDeps({});
+    },
+
+    render: function() {
+        var trans = this.props.mProt.getTransitions();
+        var states = Utils.makeSet(trans.map(t => t.source));
+        var sameSource = trans.filter(t => t.source == this.state.source);
+        var sameOp = sameSource.filter(t => t.iface == this.state.iface && t.operation == this.state.operation);
+        var sameTarget = sameOp.filter(t => t.target == this.state.target);
+
+        var splitOp = s => {
+            var o = s.split(":", 2);
+            return { iface: o[0], operation: o[1] };
+        };
+        var mergeOp = o => o.iface + ":" + o.operation;
+        var ops = Utils.makeSet(sameSource.map(mergeOp));
+        var currOp = mergeOp(this.state);
+
+        var targets = Utils.makeSet(sameOp.map(t => t.target));
+
+        var splitReqs = s => Utils.makeSet(s.split("+"));
+        var mergeReqs = reqSet => {
+            var reqList = Object.keys(reqSet);
+            reqList.sort();
+            return reqList.join("+");
+        };
+        var currReqs = mergeReqs(this.state.reqs);
+        var reqs = Utils.makeSet(sameTarget.map(t => mergeReqs(t.reqs)));
+
+        var apply = () => {
+            this.props.mProt.removeTransition(this.state)
+            editor.refreshMProt();
+        };
+
+        return (
+            <div className="modal-dialog">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 className="modal-title">Remove transition</h4>
+                    </div>
+                    <div className="modal-body">
+                        <label className="control-label">Starting state:</label>
+                        <SingleSelector
+                            value={this.state.source}
+                            items={states}
+                            onChange={s => this.setStateAndComputeDeps({ source: s })} />
+                        <label className="control-label">Operation:</label>
+                        <SingleSelector
+                            value={currOp}
+                            items={ops}
+                            onChange={s => this.setStateAndComputeDeps(splitOp(s))} />
+                        <label className="control-label">Target state:</label>
+                        <SingleSelector
+                            value={this.state.target}
+                            items={targets}
+                            onChange={s => this.setStateAndComputeDeps({ target: s })} />
+                        <label className="control-label">Requirements:</label>
+                        <SingleSelector
+                            value={currReqs}
+                            items={reqs}
+                            onChange={s => this.setStateAndComputeDeps({ reqs: splitReqs(s) })} />
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
@@ -474,7 +582,9 @@ var BarrelEditor = React.createClass({
                 <tbody>
                   <tr>
                     <td style={{ width: "70%" }}>
-                      <pre id="management-protocol-display"></pre>
+                      <pre>
+                        <BarrelMProtGraph ref="mProtGraph" />
+                      </pre>
                     </td>
                     <td style={{ width: "30%" }}>
                       <form className="form-horizontal">
@@ -485,7 +595,10 @@ var BarrelEditor = React.createClass({
                           <SingleSelector
                             value={this.state.mProt.getInitialState()}
                             items={this.state.mProt.getStates()}
-                            onChange={updateInitialState} />
+                            onChange={newInitialState => {
+                                mProt.setInitialState(newInitialState);
+                                this.refreshMProt();
+                            }} />
                           </div>
                           <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
                           <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
@@ -520,7 +633,7 @@ var BarrelEditor = React.createClass({
                 <BarrelTransitionAdder mProt={this.state.mProt} />
               </div>
               <div id="modal-remove-transition-editor" className="modal fade">
-                <BarrelStateCREditor mProt={this.state.mProt} />
+                <BarrelTransitionRemover mProt={this.state.mProt} />
               </div>
               <div id="modal-add-fault-editor" className="modal fade">
                 <BarrelFaultAdder mProt={this.state.mProt} />
