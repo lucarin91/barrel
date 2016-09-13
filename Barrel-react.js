@@ -346,80 +346,66 @@ var BarrelEditor = React.createClass({
 
         return (
             <div>
-                <fieldset className="col-lg-10">
-                    <legend>
-                        <a className="legend" onClick={exportXMLDoc}>{this.state.name}</a>: Management Protocol
-                        <button type="button"
-                            ref={el => el ? $(el).popover() : null}
-                            className="btn btn-info btn-xs"
-                            data-container="body"
-                            data-toggle="popover"
-                            data-placement="right"
-                            data-content="To edit a management protocol, (i) double click on a topology node, or (ii) click on row of the corresponding table."
-                            data-original-title=""
-                            title="">
-                            info
-                        </button>
-                    </legend>
-                    <table className="table">
-                        <tbody>
-                            <tr>
-                                <td style={{ width: "70%" }}>
-                                    <pre id="management-protocol-display"></pre>
-                                </td>
-                                <td style={{ width: "30%" }}>
-                                    <form className="form-horizontal">
-                                        <fieldset>
-                                            <legend>Edit</legend>
-                                            <div className="col-lg-10"><label className="control-label">Initial state</label></div>
-                                            <div className="col-lg-10" style={{ width: "80%" }}>
-                                                <SingleSelector
-                                                    value={this.state.mProt.getInitialState()}
-                                                    items={this.state.mProt.getStates()}
-                                                    onChange={updateInitialState} />
-                                            </div>
-                                            <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
-                                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                                                <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                                            </div>
-                                            <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
-                                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                                            </div>
-                                            <div className="col-lg-10"><label className="control-label">Transitions</label></div>
-                                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
-                                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
-                                            </div>
-                                            <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
-                                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
-                                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
-                                            </div>
-                                        </fieldset>
-                                    </form>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </fieldset>
-                <div id="modal-state-editor" className="modal fade">
-                    <BarrelStateCREditor mProt={this.state.mProt} />
-                </div>
-                <div id="modal-add-transition-editor" className="modal fade">
-                    <BarrelTransitionAdder mProt={this.state.mProt} />
-                </div>
-                <div id="modal-remove-transition-editor" className="modal fade">
-                    <BarrelStateCREditor mProt={this.state.mProt} />
-                </div>
-                <div id="modal-add-fault-editor" className="modal fade">
-                    <BarrelFaultAdder mProt={this.state.mProt} />
-                </div>
-                <div id="modal-remove-fault-editor" className="modal fade">
-                    <BarrelFaultRemover mProt={this.state.mProt} />
-                </div>
+              <h1 className="legend"><b>{this.state.name}</b></h1>
+              <h4>Management Protocol <a className="btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a></h4>
+              <table className="table">
+                <tbody>
+                  <tr>
+                    <td style={{ width: "70%" }}>
+                      <pre id="management-protocol-display"></pre>
+                    </td>
+                    <td style={{ width: "30%" }}>
+                      <form className="form-horizontal">
+                        <fieldset>
+                          <legend>Edit</legend>
+                          <div className="col-lg-10"><label className="control-label">Initial state</label></div>
+                          <div className="col-lg-10" style={{ width: "80%" }}>
+                          <SingleSelector
+                            value={this.state.mProt.getInitialState()}
+                            items={this.state.mProt.getStates()}
+                            onChange={updateInitialState} />
+                          </div>
+                          <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
+                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                            <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                          </div>
+                          <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
+                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                          </div>
+                          <div className="col-lg-10"><label className="control-label">Transitions</label></div>
+                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
+                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
+                          </div>
+                          <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
+                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
+                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
+                          </div>
+                        </fieldset>
+                      </form>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div id="modal-state-editor" className="modal fade">
+                <BarrelStateCREditor mProt={this.state.mProt} />
+              </div>
+              <div id="modal-add-transition-editor" className="modal fade">
+                <BarrelTransitionAdder mProt={this.state.mProt} />
+              </div>
+              <div id="modal-remove-transition-editor" className="modal fade">
+                <BarrelStateCREditor mProt={this.state.mProt} />
+              </div>
+              <div id="modal-add-fault-editor" className="modal fade">
+                <BarrelFaultAdder mProt={this.state.mProt} />
+              </div>
+              <div id="modal-remove-fault-editor" className="modal fade">
+                <BarrelFaultRemover mProt={this.state.mProt} />
+              </div>
             </div>
         );
     }
