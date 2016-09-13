@@ -2,15 +2,15 @@ var SimulatorNodeCapabilities = React.createClass({
   render: function() {
     var caps = Object.keys(this.props.caps);
     return (
-      <td>
+      <td> {
         caps.map(function (capId) {
           return (
             <div className="btn btn-xs btn-success disabled">
               {this.props.getUIName(capId)}
             </div>
           );
-        });
-      </td>
+        })
+      }</td>
     );
   }
 });
@@ -20,7 +20,7 @@ var SimulatorNodeRequirements = React.createClass({
     var reqs = Object.keys(this.props.reqs);
     var isFault = (reqId) => this.props.faults[reqId] || false;
     return (
-      <td>
+      <td> {
         reqs.map(function(reqId) {
           if(isFault(reqId))
             return (
@@ -34,8 +34,8 @@ var SimulatorNodeRequirements = React.createClass({
                 {this.props.getUIName(reqId)}
               </div>
             );
-        });
-      </td>
+        })
+      }</td>
     );
   }
 });
@@ -44,7 +44,7 @@ var SimulatorNodeOperations = React.createClass({
   render: function() {
     var ops = Object.keys(this.props.ops);
     return (
-      <td>
+      <td> {
         ops.map(function (opId) {
           return (
             <div
@@ -54,8 +54,8 @@ var SimulatorNodeOperations = React.createClass({
               {this.props.getUIName(opId)}
             </div>
           );
-        });
-      </td>
+        })
+      }</td>
     );
   }
 });
@@ -81,7 +81,7 @@ var SimulatorNode = React.createClass({
           nodeId={this.props.nodeId}
           ops={this.props.node.state.ops}
           simulator={this.props.simulator}
-        </td>
+        />
       </tr>
     );
   }
