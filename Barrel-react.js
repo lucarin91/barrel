@@ -335,6 +335,116 @@ var BarrelFaultRemover = React.createClass({
     }
 });
 
+var BarrelMProtGraphState = React.createClass({
+    render: function() {
+        var makeDraggable = el => { if (el) jsPlumb.draggable(el, { containment: "parent" }); };
+        var initial = mProt.getInitialState() == this.props.name;
+
+        return (
+            <div
+                ref={makeDraggable}
+                id={"state_" + this.props.name}
+                className={"stateDiv" + (initial ? " initial" : "")}
+                style={{ left: this.props.left, top: this.props.top }}>
+                <div>{this.props.name}</div>
+                <div className="reliesOnOffersDiv">
+                    Relies on:
+                    {Object.keys(this.props.state.getReqs()).map(x => <div>- {x}</div>)}
+                </div>
+                <div className="reliesOnOffersDiv">
+                    Offers:
+                    {Object.keys(this.props.state.getCaps()).map(x => <div>- {x}</div>)}
+                </div>
+            </div>
+        );
+    }
+});
+
+var BarrelMProtGraph = React.createClass({
+     drawTransitions: function() {
+        mProt.getTransitions().forEach(transition => {
+            var sourceState = "state_" + transition.source;
+            var targetState = "state_" + transition.target;
+            var transLabel = "<b>" + transition.iface + ":" + transition.operation + "</b>";
+            var reqs = Object.keys(transition.reqs);
+            reqs.sort();
+
+            if (reqs.length != 0)
+                transLabel += "<br> Relies on: {" + reqs.join(", ") + "}";
+
+            jsPlumb.connect({
+                source: sourceState,
+                target: targetState,
+                anchor: "Continuous",
+                connector: ["StateMachine", { curviness: 50 }],
+                endpoint: "Blank",
+                paintStyle: { strokeStyle: "#112835", lineWidth: 2 },
+                hoverPaintStyle: { strokeStyle: "#3399FF" },
+                overlays: [
+                    ["Arrow", { location: 1 }],
+                    ["Label", { label: transLabel, id: "label", location: 0.4, cssClass: "transLabel" }]
+                ]
+            });
+        });
+    },
+
+    drawHandlers: function() {
+        mProt.getFaultHandlers().forEach(handler => {
+            var sourceState = "state_" + handler.source;
+            var targetState = "state_" + handler.target;
+
+            jsPlumb.connect({
+                source: sourceState,
+                target: targetState,
+                anchor: "Continuous",
+                connector: ["StateMachine", { curviness: 50 }],
+                endpoint: "Blank",
+                paintStyle: { strokeStyle: "#95a5a6", lineWidth: 2 },
+                hoverPaintStyle: { strokeStyle: "#3399FF" },
+                overlays: [["Arrow", { location: 1 }]]
+            });
+        });
+    },
+
+    refresh: function() {
+        this.forceUpdate();
+    },
+
+    render: function() {
+        jsPlumb.reset();
+
+        // TODO: refactor layout computation
+        var firstRow = true;
+        var x = 20;
+        var y = 20;
+        var deltaX = ($(window).width() - 200) / 4;
+        var deltaY = ($(window).height() - 100) / 2;
+
+        var instanceStates = mProt.getStates();
+        var states = [];
+        for (var s in instanceStates) {
+            states.push(<BarrelMProtGraphState name={s} state={instanceStates[s]} left={x + "px"} top={y + "px"}/>)
+
+            firstRow = !firstRow;
+            if (firstRow) {
+                x = (x + deltaX);
+                y = 20;
+            } else {
+                y = y + deltaY;
+            }
+        }
+
+        var redrawConnections = () => {
+            jsPlumb.getConnections().forEach(c => jsPlumb.detach(c));
+            this.drawTransitions();
+            this.drawHandlers();
+            jsPlumb.repaintEverything();
+        };
+
+        return <div ref={redrawConnections} className="mprot-graph">{states}</div>;
+    }
+});
+
 var BarrelEditor = React.createClass({
     getInitialState: function() {
         return {
@@ -344,6 +454,7 @@ var BarrelEditor = React.createClass({
     },
 
     refreshMProt: function() {
+        this.refs.mProtGraph.refresh();
     },
 
     render: function() {
