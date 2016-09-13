@@ -11,7 +11,7 @@ var nodeTypeSelectorCallback = function (name) {
         var doc = csar.getTypeDocuments()[name];
         mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
         editor.setState({ name: name, mProt: mProt });
-        populateMProtGraph();
+        editor.refreshMProt();
     };
 
     return function () {

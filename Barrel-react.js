@@ -97,6 +97,7 @@ var BarrelStateCREditor = React.createClass({
 
             state.setReqs(stateReqs);
             this.setState(this.state);
+            editor.refreshMProt();
         };
 
         var setCap = (c, value) => {
@@ -107,6 +108,7 @@ var BarrelStateCREditor = React.createClass({
 
             state.setCaps(stateCaps);
             this.setState(this.state);
+            editor.refreshMProt();
         };
 
         return (
@@ -167,7 +169,7 @@ var BarrelTransitionAdder = React.createClass({
         var splitOp = s => {
             var o = s.split(":", 2);
             return { iface: o[0], operation: o[1] };
-        } ;
+        };
 
         var setReq = (r, value) => {
             if (value)
@@ -178,7 +180,10 @@ var BarrelTransitionAdder = React.createClass({
             this.setState(this.state);
         };
 
-        var apply = () => this.props.mProt.addTransition(this.state);
+        var apply = () => {
+            this.props.mProt.addTransition(this.state);
+            editor.refreshMProt();
+        };
 
         return (
             <div className="modal-dialog">
@@ -235,14 +240,18 @@ var BarrelFaultAdder = React.createClass({
 
     render: function() {
         var states = this.props.mProt.getStates();
-        var apply = () => this.props.mProt.addFaultHandler(this.state);
+
+        var apply = () => {
+            this.props.mProt.addFaultHandler(this.state);
+            editor.refreshMProt();
+        };
 
         return (
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
                         <button type="button" className="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h4 className="modal-title">Add transition</h4>
+                        <h4 className="modal-title">Add fault handler</h4>
                     </div>
                     <div className="modal-body">
                         <label className="control-label">Starting state:</label>
@@ -293,9 +302,8 @@ var BarrelFaultRemover = React.createClass({
         var targets = Utils.makeSet(this.props.mProt.getFaultHandlers().filter(f => f.source == this.state.source).map(f => f.target));
 
         var apply = () => {
-            console.log(this.state);
-            console.log(this.props.mProt);
             this.props.mProt.removeFaultHandler(this.state)
+            editor.refreshMProt();
         };
 
         return (
@@ -333,6 +341,9 @@ var BarrelEditor = React.createClass({
             name: "",
             mProt: null
         };
+    },
+
+    refreshMProt: function() {
     },
 
     render: function() {
