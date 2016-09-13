@@ -445,6 +445,7 @@ var onCsarRead = function () {
     var topology = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types);
 
     $(".hidden").removeClass("hidden");
+    $("[href='#visualiser']").click();
 
     // !-------------------------!
     // !       VISUALISER        !
