@@ -10,10 +10,10 @@ var BarrelMenu = React.createClass({
         return (
             <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul className="nav navbar-nav">
-                    <li><a data-toggle="tab" href="#visualiser" className="hidden">Visualise</a></li>,
-                    <li><a data-toggle="tab" href="#editor" className="hidden">Edit</a></li>,
-                    <li><a data-toggle="tab" href="#simulator" className="hidden">Simulate</a></li>,
-                    <li><a data-toggle="tab" href="#analyser" className="hidden">Analyse</a></li>,
+                    <li><a data-toggle="tab" href="#visualiser" className="hidden">Visualise</a></li>
+                    <li><a data-toggle="tab" href="#editor" className="hidden">Edit</a></li>
+                    <li><a data-toggle="tab" href="#simulator" className="hidden">Simulate</a></li>
+                    <li><a data-toggle="tab" href="#analyser" className="hidden">Analyse</a></li>
                     <li className="dropdown">
                         <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
                         <ul className="dropdown-menu" role="menu">
