@@ -1,36 +1,51 @@
-var Visualiser = React.createClass({
-    getInitialState: function() {
-        return {
-            app: this.props.initialApp
-        };
-    },
+var TopologyRow = React.createClass({
+  render: function() {
+    return (<tr>
+      <td>{this.props.name}</td>
+      <td>{this.props.type}</td>
+      <td>{this.props.caps}</td>
+      <td>{this.props.reqs}</td>
+      <td>{this.props.ops}</td>
+    </tr>);
+  }
+})
 
-    render: function() {
-        return (
-            <div>
-                <table className="table table-striped table-hover ">
-                    <thead>
-                        <tr>
-                            <th style="width:10%"></th>
-                            <th style="width:10%">State</th>
-                            <th style="width:25%">Offered capabilities</th>
-                            <th style="width:25%">Assumed requirements</th>
-                            <th style="width:30%">Available operations</th>
-                        </tr>
-                    </thead>
-                    <tbody id="simulator-body">
-                        <button type="button" className="btn btn-default btn-xs" onClick={() => this.setState({ app: app.performOp(id, o) })}>
-                            Clear
-                        </button>
-                    </tbody>
-                </table>
+var TopologyTable = React.createClass({
+  render: function() {
+		// Setting the stage
+    var getUIName = id => this.props.uiData.uiNames[id] || id;
+		var setToList = set => Object.keys(set).map(getUIName).join("<br>");
 
-                <div className="form-horizontal col-lg-10 hidden" style="text-align:center">
-                    <button type="button" className="btn btn-default btn-xs" onClick={() => this.setState(this.getInitialState())}>
-                        Clear
-                    </button>
-                </div>
-            </div>
-        );
-    }
+		var nodes = this.props.uiData.data.nodes;
+		var nodeIds = Object.keys(nodes);
+
+		// Rendering
+		return (
+      <table className="table table-striped table-hover hidden">
+        <thead>
+            <tr className="btn-primary disabled">
+                <th>Node</th>
+                <th>Node type</th>
+                <th>Capabilities</th>
+                <th>Requirements</th>
+                <th>Operations</th>
+            </tr>
+        </thead>
+        <tbody> {
+          nodeIds.map(id =>
+            <TopologyRow
+              key={id}
+              name={getUIName(id)}
+              type={nodes[id].type}
+              caps={setToList(nodes[id].caps)}
+              reqs={setToList(nodes[id].reqs)}
+              ops={setToList(nodes[id].ops)} />
+          )
+      	}
+        </tbody>
+    </table>
+  );
+ }
 });
+
+//nodeTable = ReactDOM.render(<TopologyTable />, document.getElementById('topology-table-body'));
