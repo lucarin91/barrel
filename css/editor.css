@@ -22,7 +22,7 @@ a, a:hover, h1 {
 }
 
 /** EDITOR **/
-#management-protocol-display {
+.mprot-graph {
 	position: relative;
 	width: 96%;
 	height: 500px;
@@ -112,46 +112,8 @@ a, a:hover, h1 {
 	position: relative;
 	width: 100%;
 }
-.reliesOnOffersDiv div{
+.reliesOnOffersDiv div {
 	font-weight: normal;
-}
-
-/*TOOLBOX*/
-#toolbox {
-	display: none;
-}
-
-#toolbox h3 {
-	text-transform: uppercase;
-    font-weight: bold;
-	font-size: 12pt;
-    text-decoration: none;
-	text-align: center;
-}
-
-#toolbox h4,h5 {
-	margin-top: 5px;
-	margin-bottom: 0px;
-	margin-left: 0px;
-	margin-right: 0px;
-	padding: 2px 5px;
-}
-
-#toolbox_selected {
-	text-align: left;
-	font-size: 12pt;
-	text-decoration: underline;
-}
-
-.toolboxOption {
-	margin: 0px 0px;
-	padding: 2px 5px;
-	font-size: 10pt;
-	font-weight: normal;
-	cursor: pointer;
-}
-.toolboxOption:hover {
-	background-color: #C3F1FF;
 }
 
 /*POPUP SELECTOR*/
@@ -359,11 +321,6 @@ a, a:hover, h1 {
 	font-weight: bold;
 	background-color: #FF3333;
 	color: yellow;
-}
-
-#popup_analyzer_Exit {
-    left: 50%;
-    margin: 5px 0px 0px -25px;
 }
 
 /** jsPlumb SETTING **/
