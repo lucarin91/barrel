@@ -1,3 +1,7 @@
+var editor = null;
+var simulator = null;
+var nodeTable = null; 
+
 var mProt = null;
 var csar = null;
 var csarFileName = null;
@@ -23,12 +27,12 @@ var nodeTypeSelectorCallback = function (name) {
 // JointJS shape for drawing a "topology node"
 
 /* This function builds a JointJS environment where to draw a graph.
- * Inputs: 
+ * Inputs:
  * - "parentElement" -> DOM element inside of which the environment has to be created
  * - "width" -> width (in pixels) of the environment to create
  * - "height" -> height (in pixels) of the environment to create
  * Returns:
- * - A map with the created "joint.dia.Paper" and "joint.dia.Graph" elements 
+ * - A map with the created "joint.dia.Paper" and "joint.dia.Graph" elements
  */
 function createGraph(parentElement, width, height) {
     // Create the "joint.dia.Graph" to be returned
@@ -288,7 +292,7 @@ function buildModalTransitionEditor(mode) {
 }
 
 /*
- * This function fills the operation selector in "modal-transition-editor" 
+ * This function fills the operation selector in "modal-transition-editor"
  * Inputs:
  * - "mode" -> if "Add" the function fills the selector with the operations that can still outgo from the selected state; if "Remove" it fills the selector with the operations that already outgo from the selected state
  */
@@ -321,7 +325,7 @@ function fillOperationSelector(mode) {
             opts.push(outgoingOps[i].iface + ":" + outgoingOps[i].operation)
     }
 
-    // Add an option for each of the above 
+    // Add an option for each of the above
     for (var o in opts) {
         var option = document.createElement("option");
         option.innerHTML = opts[o];
@@ -353,7 +357,7 @@ function fillRequirementsCheckbox() {
 }
 
 /*
- * This function adds or removes a transition from the current management protocol. 
+ * This function adds or removes a transition from the current management protocol.
  * Inputs:
  * - "mode" -> if "Add", the function adds a novel transition to the management protocol; if "Remove", it removes a transition from such protocol.
  */
@@ -477,12 +481,12 @@ var onCsarRead = function () {
 
     // !-------------------------!
     // !        SIMULATOR        !
-    // !-------------------------! 
+    // !-------------------------!
     //buildSimulator();
 
     // !-------------------------!
     // !        ANALYSER         !
-    // !-------------------------! 
+    // !-------------------------!
     // TODO!!!!!!!!!!!!!!
 }
 
