@@ -75,22 +75,25 @@ var MultiSelector =  React.createClass({
 });
 
 var BarrelStateCREditor = React.createClass({
-    getInitialState: function() {
+    makeState: function(props) {
         return {
-            selectedState: this.props.mProt.getInitialState()
+            selectedState: props.editor.state.mProt.getInitialState()
         };
     },
 
+    getInitialState: function() {
+        return this.makeState(this.props);
+    },
+
     componentWillReceiveProps: function(nextProps) {
-        this.setState({
-            selectedState: nextProps.mProt.getInitialState()
-        });
+        this.setState(this.makeState(nextProps));
     },
 
     render: function() {
-        var reqs = this.props.mProt.getReqs();
-        var caps = this.props.mProt.getCaps();
-        var states = this.props.mProt.getStates();
+        var mProt = this.props.editor.state.mProt
+        var reqs = mProt.getReqs();
+        var caps = mProt.getCaps();
+        var states = mProt.getStates();
         var state = states[this.state.selectedState];
         var stateReqs = state.getReqs();
         var stateCaps = state.getCaps();
@@ -103,7 +106,7 @@ var BarrelStateCREditor = React.createClass({
 
             state.setReqs(stateReqs);
             this.setState(this.state);
-            editor.refreshMProt();
+            this.props.editor.refresh();
         };
 
         var setCap = (c, value) => {
@@ -114,7 +117,7 @@ var BarrelStateCREditor = React.createClass({
 
             state.setCaps(stateCaps);
             this.setState(this.state);
-            editor.refreshMProt();
+            this.props.editor.refresh();
         };
 
         return (
@@ -142,9 +145,9 @@ var BarrelStateCREditor = React.createClass({
 });
 
 var BarrelTransitionAdder = React.createClass({
-    getInitialState: function() {
-        var states = Object.keys(this.props.mProt.getStates());
-        var ops = this.props.mProt.getOps();
+    makeState: function(props) {
+        var states = Object.keys(props.editor.state.mProt.getStates());
+        var ops = props.editor.state.mProt.getOps();
         return {
             source: states[0],
             target: states[0],
@@ -154,23 +157,20 @@ var BarrelTransitionAdder = React.createClass({
         };
     },
 
+    getInitialState: function() {
+        return this.makeState(this.props);
+    },
+
     componentWillReceiveProps: function(nextProps) {
-        var states = Object.keys(nextProps.mProt.getStates());
-        var ops = this.props.mProt.getOps();
-        this.setState({
-            source: states[0],
-            target: states[0],
-            iface: ops[0].iface,
-            operation: ops[0].operation,
-            reqs: {}
-        });
+        this.setState(this.makeState(nextProps));
     },
 
     render: function() {
-        var reqs = this.props.mProt.getReqs();
-        var states = this.props.mProt.getStates();
+        var mProt = this.props.editor.state.mProt;
+        var reqs = mProt.getReqs();
+        var states = mProt.getStates();
         var mergeOp = o => o.iface + ":" + o.operation;
-        var ops = Utils.makeSet(this.props.mProt.getOps().map(mergeOp));
+        var ops = Utils.makeSet(mProt.getOps().map(mergeOp));
 
         var splitOp = s => {
             var o = s.split(":", 2);
@@ -187,8 +187,8 @@ var BarrelTransitionAdder = React.createClass({
         };
 
         var apply = () => {
-            this.props.mProt.addTransition(this.state);
-            editor.refreshMProt();
+            this.props.editor.state.mProt.addTransition(this.state);
+            this.props.editor.refresh();
         };
 
         return (
@@ -228,45 +228,47 @@ var BarrelTransitionAdder = React.createClass({
 });
 
 var BarrelTransitionRemover = React.createClass({
-    getInitialState: function() {
-        var trans = this.props.mProt.getTransitions();
-        if (trans.length != 0)
-            return trans[0];
-
-        return {
+    makeState: function(props, baseState) {
+        var trans = props.editor.state.mProt.getTransitions();
+        if (trans.length == 0) return {
             source: "",
             target: "",
             iface: "",
             operation: "",
             reqs: {}
         };
+
+        var sameSource = trans.filter(t => t.source == baseState.source);
+        if (sameSource.length == 0) return trans[0];
+
+        var sameOp = sameSource.filter(t => t.iface == baseState.iface && t.operation == baseState.operation);
+        if (sameOp.length == 0) return sameSource[0];
+
+        var sameTarget = sameOp.filter(t => t.target == baseState.target);
+        if (sameTarget.length == 0) return sameOp[0];
+
+        var sameReqs = sameTarget.filter(t => Utils.setEquals(t.reqs == baseState.reqs));
+        if (sameReqs.length == 0) return sameTarget[0];
+
+        return sameReqs[0];
+    },
+
+    getInitialState: function() {
+        return this.makeState(this.props, {});
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        this.setState(this.makeState(nextProps, {}));
     },
 
     setStateAndComputeDeps: function(nextState) {
         this.setState(nextState);
-        var trans = this.props.mProt.getTransitions();
-
-        var sameSource = trans.filter(t => t.source == this.state.source);
-        if (sameSource.length == 0) return this.setState(trans[0]);
-
-        var sameOp = sameSource.filter(t => t.iface == this.state.iface && t.operation == this.state.operation);
-        if (sameOp.length == 0) return this.setState(sameSource[0]);
-
-        var sameTarget = sameOp.filter(t => t.target == this.state.target);
-        if (sameTarget.length == 0) return this.setState(sameOp[0]);
-        
-        var sameReqs = sameTarget.filter(t => Utils.setEquals(t.reqs == this.state.reqs));
-        if (sameReqs.length == 0) return this.setState(sameTarget[0]);
-
-        this.setState(sameReqs[0]);
-    },
-
-    componentWillReceiveProps: function(nextProps) {
-        this.setStateAndComputeDeps({});
+        this.setState(this.makeState(this.props, this.state));
     },
 
     render: function() {
-        var trans = this.props.mProt.getTransitions();
+        var mProt = this.props.editor.state.mProt;
+        var trans = mProt.getTransitions();
         var states = Utils.makeSet(trans.map(t => t.source));
         var sameSource = trans.filter(t => t.source == this.state.source);
         var sameOp = sameSource.filter(t => t.iface == this.state.iface && t.operation == this.state.operation);
@@ -292,8 +294,8 @@ var BarrelTransitionRemover = React.createClass({
         var reqs = Utils.makeSet(sameTarget.map(t => mergeReqs(t.reqs)));
 
         var apply = () => {
-            this.props.mProt.removeTransition(this.state)
-            editor.refreshMProt();
+            this.props.editor.state.removeTransition(this.state)
+            this.props.editor.refresh();
         };
 
         return (
@@ -336,28 +338,28 @@ var BarrelTransitionRemover = React.createClass({
 });
 
 var BarrelFaultAdder = React.createClass({
-    getInitialState: function() {
-        var states = Object.keys(this.props.mProt.getStates());
+    makeState: function(props) {
+        var states = Object.keys(props.editor.state.mProt.getStates());
         return {
             source: states[0],
             target: states[0]
         };
     },
+    
+    getInitialState: function() {
+        return this.makeState(this.props);
+    },
 
     componentWillReceiveProps: function(nextProps) {
-        var states = Object.keys(nextProps.mProt.getStates());
-        this.setState({
-            source: states[0],
-            target: states[0]
-        });
+        this.setState(this.makeState(nextProps));
     },
 
     render: function() {
-        var states = this.props.mProt.getStates();
+        var states = this.props.editor.state.mProt.getStates();
 
         var apply = () => {
-            this.props.mProt.addFaultHandler(this.state);
-            editor.refreshMProt();
+            this.props.editor.state.mProt.addFaultHandler(this.state);
+            this.props.editor.refresh();
         };
 
         return (
@@ -390,34 +392,41 @@ var BarrelFaultAdder = React.createClass({
 });
 
 var BarrelFaultRemover = React.createClass({
+    makeState: function(props, baseState) {
+        var handlers = props.editor.state.mProt.getFaultHandlers();
+        if (handlers.length == 0) return { source: "", target: "" };
+
+        var sameSource = handlers.filter(h => h.source == baseState.source);
+        if (sameSource.length == 0) return handlers[0];
+
+        var sameTarget = sameSource.filter(h => h.target == baseState.target);
+        if (sameTarget.length == 0) return sameSource[0];
+
+        return sameTarget[0];
+    },
+
     getInitialState: function() {
-        var states = Object.keys(this.props.mProt.getStates());
-        var targets = this.props.mProt.getFaultHandlers().filter(f => f.source == states[0]).map(f => f.target);
-        return {
-            source: states[0],
-            target: targets[0] || ""
-        };
+        return this.makeState(this.props, {});
     },
 
     componentWillReceiveProps: function(nextProps) {
-        this.setSource(Object.keys(nextProps.mProt.getStates())[0]);
+        this.setState(this.makeState(nextProps, {}));
     },
 
     setSource: function(source) {
-        var targets = this.props.mProt.getFaultHandlers().filter(f => f.source == source).map(f => f.target);
-        this.setState({
-            source: source,
-            target: targets[0] || ""
-        });
+        this.setState({ source: source });
+        this.setState(this.makeState(this.props, this.state));
     },
 
     render: function() {
-        var states = this.props.mProt.getStates();
-        var targets = Utils.makeSet(this.props.mProt.getFaultHandlers().filter(f => f.source == this.state.source).map(f => f.target));
+        var mProt = this.props.editor.state.mProt;
+        var handlers = mProt.getFaultHandlers();
+        var sources = Utils.makeSet(handlers.map(h => h.source));
+        var targets = Utils.makeSet(handlers.filter(h => h.source == this.state.source).map(h => h.target));
 
         var apply = () => {
-            this.props.mProt.removeFaultHandler(this.state)
-            editor.refreshMProt();
+            this.props.editor.state.mProt.removeFaultHandler(this.state)
+            this.props.editor.refresh();
         };
 
         return (
@@ -431,7 +440,7 @@ var BarrelFaultRemover = React.createClass({
                         <label className="control-label">Starting state:</label>
                         <SingleSelector
                             value={this.state.source}
-                            items={states}
+                            items={sources}
                             onChange={s => this.setSource(s)} />
                         <label className="control-label">Target state:</label>
                         <SingleSelector
@@ -452,13 +461,12 @@ var BarrelFaultRemover = React.createClass({
 var BarrelMProtGraphState = React.createClass({
     render: function() {
         var makeDraggable = el => { if (el) jsPlumb.draggable(el, { containment: "parent" }); };
-        var initial = mProt.getInitialState() == this.props.name;
 
         return (
             <div
                 ref={makeDraggable}
                 id={"state_" + this.props.name}
-                className={"stateDiv" + (initial ? " initial" : "")}
+                className={"stateDiv" + (this.props.initial ? " initial" : "")}
                 style={{ left: this.props.left, top: this.props.top }}>
                 <div>{this.props.name}</div>
                 <div className="reliesOnOffersDiv">
@@ -476,7 +484,7 @@ var BarrelMProtGraphState = React.createClass({
 
 var BarrelMProtGraph = React.createClass({
      drawTransitions: function() {
-        mProt.getTransitions().forEach(transition => {
+        this.props.mProt.getTransitions().forEach(transition => {
             var sourceState = "state_" + transition.source;
             var targetState = "state_" + transition.target;
             var transLabel = "<b>" + transition.iface + ":" + transition.operation + "</b>";
@@ -503,7 +511,7 @@ var BarrelMProtGraph = React.createClass({
     },
 
     drawHandlers: function() {
-        mProt.getFaultHandlers().forEach(handler => {
+        this.props.mProt.getFaultHandlers().forEach(handler => {
             var sourceState = "state_" + handler.source;
             var targetState = "state_" + handler.target;
 
@@ -520,10 +528,6 @@ var BarrelMProtGraph = React.createClass({
         });
     },
 
-    refresh: function() {
-        this.forceUpdate();
-    },
-
     render: function() {
         jsPlumb.reset();
 
@@ -534,10 +538,21 @@ var BarrelMProtGraph = React.createClass({
         var deltaX = ($(window).width() - 200) / 4;
         var deltaY = ($(window).height() - 100) / 2;
 
+        var mProt = this.props.mProt;
         var instanceStates = mProt.getStates();
+        var initialState = mProt.getInitialState();
+
         var states = [];
         for (var s in instanceStates) {
-            states.push(<BarrelMProtGraphState key={s} name={s} state={instanceStates[s]} left={x + "px"} top={y + "px"}/>)
+            states.push(
+                <BarrelMProtGraphState
+                    key={s}
+                    name={s}
+                    state={instanceStates[s]}
+                    initial={initialState == name}
+                    left={x + "px"}
+                    top={y + "px"} />
+            );
 
             firstRow = !firstRow;
             if (firstRow) {
@@ -567,14 +582,11 @@ var BarrelEditor = React.createClass({
         };
     },
 
-    refreshMProt: function() {
-        this.refs.mProtGraph.refresh();
+    refresh: function() {
+        this.refs.mProtGraph.forceUpdate();
     },
 
     render: function() {
-        if (!this.state.mProt)
-            return null;
-
         var exportXMLDoc = () => {
             var url = URL.createObjectURL(mProt.getXML());
             window.open(url, "_blank", "");
@@ -615,7 +627,7 @@ var BarrelEditor = React.createClass({
                     <tr>
                         <td style={{ width: "70%" }}>
                         <pre>
-                            <BarrelMProtGraph ref="mProtGraph" />
+                                <BarrelMProtGraph ref="mProtGraph" mProt={this.state.mProt} />
                         </pre>
                         </td>
                         <td style={{ width: "30%" }}>
@@ -628,8 +640,8 @@ var BarrelEditor = React.createClass({
                                 value={this.state.mProt.getInitialState()}
                                 items={this.state.mProt.getStates()}
                                 onChange={newInitialState => {
-                                    mProt.setInitialState(newInitialState);
-                                    this.refreshMProt();
+                                        this.state.mProt.setInitialState(newInitialState);
+                                        this.refresh();
                                 }} />
                             </div>
                             <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
@@ -660,19 +672,19 @@ var BarrelEditor = React.createClass({
                 </table>
               </div>
               <div id="modal-state-editor" className="modal fade">
-                <BarrelStateCREditor mProt={this.state.mProt} />
+                    <BarrelStateCREditor editor={this} />
               </div>
               <div id="modal-add-transition-editor" className="modal fade">
-                <BarrelTransitionAdder mProt={this.state.mProt} />
+                    <BarrelTransitionAdder editor={this} />
               </div>
               <div id="modal-remove-transition-editor" className="modal fade">
-                <BarrelTransitionRemover mProt={this.state.mProt} />
+                    <BarrelTransitionRemover editor={this} />
               </div>
               <div id="modal-add-fault-editor" className="modal fade">
-                <BarrelFaultAdder mProt={this.state.mProt} />
+                    <BarrelFaultAdder editor={this} />
               </div>
               <div id="modal-remove-fault-editor" className="modal fade">
-                <BarrelFaultRemover mProt={this.state.mProt} />
+                    <BarrelFaultRemover editor={this} />
               </div>
             </div>
         );
