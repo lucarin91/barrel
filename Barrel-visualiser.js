@@ -92,6 +92,37 @@ var Visualiser = React.createClass({
     );
   },
   componentDidUpdate: function () {
+    var createGraph = function(parentElement, width, height) {
+        // Create the "joint.dia.Graph" to be returned
+        var graph = new joint.dia.Graph();
+
+        // Create a "joint.dia.Paper" environment (inside "parentElement") where to place the graph
+        var paper = new joint.dia.Paper({
+            el: parentElement,
+            width: width,
+            height: height,
+            model: graph
+        });
+
+        // Avoid inner elements to overflow the environment
+        paper.on('cell:pointermove', function (cellView, evt, x, y) {
+            var cell = cellView.getBBox();
+            var constrained = false;
+
+            var constrainedX = x;
+            if (cell.x <= 0) { constrainedX = x + 1; constrained = true }
+            if (cell.x + cell.width >= width) { constrainedX = x - 1; constrained = true }
+
+            var constrainedY = y;
+            if (cell.y <= 0) { constrainedY = y + 1; constrained = true }
+            if (cell.y + cell.height >= height) { constrainedY = y - 1; constrained = true }
+
+            if (constrained) { cellView.pointermove(evt, constrainedX, constrainedY) }
+        });
+
+        // Return the created "joint.dia.Graph"
+        return { graph: graph, paper: paper };
+    };
     var drawTopology = function(parentDiv, topology) {
       // Parse the application topology
       var nodes = topology.data.nodes;
