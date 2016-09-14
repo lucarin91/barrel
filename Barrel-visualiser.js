@@ -39,25 +39,12 @@ var TopologyTable = React.createClass({
   }
 });
 
-var Visualiser = React.createClass({
-  getInitialState: function () {
-    return {
-      appName: null,
-      uiData: null
-    }
-  },
-  update: function(appName,uiData) {
-    this.setState({
-      appName: appName,
-      uiData: uiData
-    })
-  },
+Visualiser = React.createClass({
   render: function() {
-    if(!this.state.uiData) return null;
     return (
         <div>
             <h1 className="legend" style={{textDecoration:"bold"}}>
-            {this.state.appName}
+            {this.props.appName}
             </h1>
             <h4>Application topology</h4>
             <table>
@@ -68,7 +55,7 @@ var Visualiser = React.createClass({
                         </td>
                         <td style={{width:"60%"}}>
                             <div style={{fontSize:"90%",marginLeft:"10px"}}>
-                                <TopologyTable uiData={this.state.uiData} />
+                                <TopologyTable uiData={this.props.uiData} />
                             </div>
                         </td>
                     </tr>
@@ -203,5 +190,3 @@ var Visualiser = React.createClass({
     drawTopology($("#app-topology")[0], this.state.uiData);
   }
 });
-
-visualiser = ReactDOM.render(<Visualiser />, document.getElementById('visualiser'));

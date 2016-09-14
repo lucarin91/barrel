@@ -47,73 +47,44 @@
 	        return url;
         }
         zip.workerScriptsPath = qualifyURL("lib/z-worker.js").slice(0, -("z-worker.js".length));
+        var Visualiser = null;
+        var Simulator = null;
     </script>
 </head>
 <body>
-  <!--Navigation bar-->
-  <nav class="navbar navbar-inverse">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">Barrel</a>
-      </div>
-      <div id="barrelMenu"></div>
+    <div id="main"></div>
+
+    <!--"About" dialog-->
+    <div id="modal-info" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">About</h4>
+                </div>
+                <div class="modal-body">
+                <p>
+                    This editor has been developed in the scope of the research paper "TBD TBD TBD".
+                </p>
+                <center>
+                    <p>
+                        You can download a sample CSAR by clicking <a href="https://github.com/ranma42/MProt/blob/wip/localzip/test/MotivatingScenario.csar?raw=true">here</a>.
+                    </p>
+                </center>
+                <p>
+                    Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Universit&agrave; di Pisa, Italia).
+                </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </nav>
 
-  <div class="hidden">
-    <div class="container" style="background-color: white">
-      <div class="tab-content">
-        <!--Visualiser-->
-        <div class="tab-pane" id="visualiser"></div>
-
-        <!-- Editor -->
-        <div class="tab-pane" id="editor">
-            <div id="barrelEditor"></div>
-        </div>
-
-        <!--Simulator-->
-        <div class="tab-pane" id="simulator"></div>
-
-        <!--Analyser-->
-        <div class="tab-pane" id="analyser">
-            <div class="col-lg-10 hidden" style="color:red;font-weight:bold">THIS IS A PLACEHOLDER FOR ALL TO-BE-IMPLEMENTED ANALYSES</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!--"About" dialog-->
-  <div id="modal-info" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">About</h4>
-        </div>
-        <div class="modal-body">
-          <p>
-            This editor has been developed in the scope of the research paper "TBD TBD TBD".
-          </p>
-          <center>
-            <p>
-              You can download a sample CSAR by clicking <a href="https://github.com/ranma42/MProt/blob/wip/localzip/test/MotivatingScenario.csar?raw=true">here</a>.
-            </p>
-          </center>
-          <p>
-            Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Universit&agrave; di Pisa, Italia).
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- UI + react UI -->
-	<script type="text/javascript" src="Barrel.js"></script>
-  <script type="text/babel" src="Barrel-react.js"></script>
-  <script type="text/babel" src="Barrel-simulator.js"></script>
-  <script type="text/babel" src="Barrel-visualiser.js"></script>
+    <!-- UI + react UI -->
+    <script type="text/babel" src="Barrel-visualiser.js"></script>
+    <script type="text/babel" src="Barrel-simulator.js"></script>
+    <script type="text/babel" src="Barrel-react.js"></script>
 </body>
 </html>

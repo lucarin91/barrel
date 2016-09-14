@@ -149,19 +149,9 @@ var SimulatorTable = React.createClass({
   }
 });
 
-var Simulator = React.createClass({
-  getInitialState: function() {
-    return { uiData: null };
-  },
-  setUIData: function(uiData) {
-    this.setState({uiData: uiData});
-  },
+Simulator = React.createClass({
   render: function() {
-    if (this.state.uiData)
-      return ( <SimulatorTable initialApp={this.state.uiData.data} uiNames={this.state.uiData.uiNames} /> );
-    else
-      return null;
+      return <SimulatorTable initialApp={this.props.uiData.data} uiNames={this.props.uiData.uiNames} />;
   }
 });
 
-simulator = ReactDOM.render(<Simulator />, document.getElementById('simulator'));

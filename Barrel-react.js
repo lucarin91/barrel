@@ -1,39 +1,33 @@
-var BarrelMenu = React.createClass({
+var BarrelNavBar = React.createClass({
     render: function() {
-        var exportCsar =
-            () => mProt.save(
-                () => csar.exportBlob(
-                    blob => saveAs(blob.slice(0, blob.size, "application/octet-stream"), this.csarFileName, true)
-                )
-            );
-
-        var readCsar = evt => {
-            var file = evt.target.files[0];
-            this.csarFileName = file.name;
-            csar = new Csar.Csar(file, onCsarRead);
-        };
-
         return (
-            <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul className="nav navbar-nav">
-                    <li><a data-toggle="tab" href="#visualiser" className="hidden">Visualise</a></li>
-                    <li><a data-toggle="tab" href="#editor" className="hidden">Edit</a></li>
-                    <li><a data-toggle="tab" href="#simulator" className="hidden">Simulate</a></li>
-                    <li><a data-toggle="tab" href="#analyser" className="hidden">Analyse</a></li>
-                    <li className="dropdown">
-                        <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
-                        <ul className="dropdown-menu" role="menu">
-                            <li><a href="#" className="hidden" onClick={exportCsar}>Export</a></li>
-                            <li><a href="#" onClick={() => this.refs.file.click()}>Import
-                                <input ref="file" type="file" onChange={readCsar} style={{ display: "none" }} />
-                            </a></li>
+            <nav className="navbar navbar-inverse">
+                <div className="container-fluid">
+                    <div className="navbar-header">
+                        <a className="navbar-brand" href="#">Barrel</a>
+                    </div>
+                    <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul className="nav navbar-nav">
+                            {this.props.csar ? <li><a data-toggle="tab" href="#visualiser">Visualise</a></li> : null}
+                            {this.props.csar ? <li><a data-toggle="tab" href="#editor">Edit</a></li> : null}
+                            {this.props.csar ? <li><a data-toggle="tab" href="#simulator">Simulate</a></li> : null}
+                            {this.props.csar ? <li><a data-toggle="tab" href="#analyser">Analyse</a></li> : null}
+                            <li className="dropdown">
+                                <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
+                                <ul className="dropdown-menu" role="menu">
+                                    {this.props.csar ? <li><a href="#" onClick={this.props.exportCsar}>Export</a></li> : null}
+                                    <li><a href="#" onClick={() => this.refs.file.click()}>Import
+                                        <input ref="file" type="file" onChange={evt => this.props.onChange(evt.target.files[0])} style={{ display: "none" }} />
+                                    </a></li>
+                                </ul>
+                            </li>
                         </ul>
-                    </li>
-                </ul>
-                <ul className="nav navbar-nav navbar-right">
-                    <li><a data-toggle="modal" data-target="#modal-info">About</a></li>
-                </ul>
-            </div>
+                        <ul className="nav navbar-nav navbar-right">
+                            <li><a data-toggle="modal" data-target="#modal-info">About</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
         );
     }
 });
@@ -576,14 +570,23 @@ var BarrelMProtGraph = React.createClass({
 
 var BarrelEditor = React.createClass({
     getInitialState: function() {
+        return this.makeState(Object.keys(this.props.typeDocs)[0]);
+    },
+
+    makeState: function(name) {
         return {
-            name: "",
-            mProt: null
+            name: name,
+            mProt: new ManagementProtocol.ManagementProtocolEditor(this.props.typeDocs[name], name)
         };
     },
 
+    setType: function(name) {
+        this.setState(this.makeState(name));
+        this.refresh();
+    },
+
     refresh: function() {
-        this.refs.mProtGraph.forceUpdate();
+        this.state.mProt.save(() => this.refs.mProtGraph.forceUpdate());
     },
 
     render: function() {
@@ -592,104 +595,140 @@ var BarrelEditor = React.createClass({
             window.open(url, "_blank", "");
         };
 
-        var setType = name => {
-            var onend = () => {
-                var doc = csar.getTypeDocuments()[name];
-                mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
-                this.setState({ name: name, mProt: mProt });
-                this.refreshMProt();
-            };
-
-            if (mProt != null)
-                mProt.save(onend)
-            else
-                onend();
-        };
-
-        var types = Object.keys(csar.getTypes()).map(t => <li key={t}><a href="#" onClick={() => setType(t)}>{t}</a></li>);
+        var types = Object.keys(this.props.typeDocs).map(t => <li key={t}><a href="#" onClick={() => this.setType(t)}>{t}</a></li>);
 
         return (
             <div className="panel panel-default">
-              <div className="panel-heading">
-                <a className="pull-right btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a>
-                <h3 className="panel-title">Management Protocol for
-                    <div className="btn-group">
-                        <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                            {this.state.name} <span className="caret"></span>
-                        </button>
-                        <ul className="dropdown-menu">{types}</ul>
-                    </div>
-                </h3>
-              </div>
-              <div className="panel-body">
-                <table className="table">
-                    <tbody>
-                    <tr>
-                        <td style={{ width: "70%" }}>
-                        <pre>
+                <div className="panel-heading">
+                    <a className="pull-right btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a>
+                    <h3 className="panel-title">Management Protocol for
+                        <div className="btn-group">
+                            <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                {this.state.name} <span className="caret"></span>
+                            </button>
+                            <ul className="dropdown-menu">{types}</ul>
+                        </div>
+                    </h3>
+                </div>
+                <div className="panel-body">
+                    <table className="table">
+                        <tbody>
+                        <tr>
+                            <td style={{ width: "70%" }}>
+                            <pre>
                                 <BarrelMProtGraph ref="mProtGraph" mProt={this.state.mProt} />
-                        </pre>
-                        </td>
-                        <td style={{ width: "30%" }}>
-                        <form className="form-horizontal">
-                            <fieldset>
-                            <legend>Edit</legend>
-                            <div className="col-lg-10"><label className="control-label">Initial state</label></div>
-                            <div className="col-lg-10" style={{ width: "80%" }}>
-                            <SingleSelector
-                                value={this.state.mProt.getInitialState()}
-                                items={this.state.mProt.getStates()}
-                                onChange={newInitialState => {
+                            </pre>
+                            </td>
+                            <td style={{ width: "30%" }}>
+                            <form className="form-horizontal">
+                                <fieldset>
+                                <legend>Edit</legend>
+                                <div className="col-lg-10"><label className="control-label">Initial state</label></div>
+                                <div className="col-lg-10" style={{ width: "80%" }}>
+                                <SingleSelector
+                                    value={this.state.mProt.getInitialState()}
+                                    items={this.state.mProt.getStates()}
+                                    onChange={newInitialState => {
                                         this.state.mProt.setInitialState(newInitialState);
                                         this.refresh();
-                                }} />
-                            </div>
-                            <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
-                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                                <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                            </div>
-                            <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
-                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                            </div>
-                            <div className="col-lg-10"><label className="control-label">Transitions</label></div>
-                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
-                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
-                            </div>
-                            <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
-                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
-                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
-                            </div>
-                            </fieldset>
-                        </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-              </div>
-              <div id="modal-state-editor" className="modal fade">
+                                    }} />
+                                </div>
+                                <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
+                                <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                    <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                                </div>
+                                <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
+                                <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                    <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                                </div>
+                                <div className="col-lg-10"><label className="control-label">Transitions</label></div>
+                                <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
+                                    <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
+                                </div>
+                                <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
+                                <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
+                                    <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
+                                </div>
+                                </fieldset>
+                            </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="modal-state-editor" className="modal fade">
                     <BarrelStateCREditor editor={this} />
-              </div>
-              <div id="modal-add-transition-editor" className="modal fade">
+                </div>
+                <div id="modal-add-transition-editor" className="modal fade">
                     <BarrelTransitionAdder editor={this} />
-              </div>
-              <div id="modal-remove-transition-editor" className="modal fade">
+                </div>
+                <div id="modal-remove-transition-editor" className="modal fade">
                     <BarrelTransitionRemover editor={this} />
-              </div>
-              <div id="modal-add-fault-editor" className="modal fade">
+                </div>
+                <div id="modal-add-fault-editor" className="modal fade">
                     <BarrelFaultAdder editor={this} />
-              </div>
-              <div id="modal-remove-fault-editor" className="modal fade">
+                </div>
+                <div id="modal-remove-fault-editor" className="modal fade">
                     <BarrelFaultRemover editor={this} />
-              </div>
+                </div>
             </div>
         );
     }
 });
 
-ReactDOM.render(<BarrelMenu />, document.getElementById('barrelMenu'));
-editor = ReactDOM.render(<BarrelEditor />, document.getElementById('barrelEditor'));
+var BarrelTabs = React.createClass({
+    render: function() {
+        var csar = this.props.csar;
+        var serviceTemplate = csar.get("ServiceTemplate")[0].element;
+        var types = csar.getTypes();
+        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types);
+
+        return (
+            <div className="container" style={{ backgroundColor: "white" }}>
+                <div className="tab-content">
+                    <div className="tab-pane" id="visualiser">
+                        <Visualiser uiData={uiData} />
+                    </div>
+                    <div className="tab-pane" id="editor">
+                        <BarrelEditor typeDocs={csar.getTypeDocuments()} />
+                    </div>
+                    <div className="tab-pane" id="simulator">
+                        <Simulator uiData={uiData} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+var BarrelMain = React.createClass({
+    getInitialState: function() {
+        return {
+            csarFileName: "",
+            csar: null
+        };
+    },
+
+    render: function() {
+        var saveBlob = blob => saveAs(blob.slice(0, blob.size, "application/octet-stream"), this.state.csarFileName, true);
+        var exportCsar = () => this.state.csar.exportBlob(saveBlob);
+
+        var readCsar = file => {
+            this.setState({ csarFileName: file.name });
+            var tmpCsar = new Csar.Csar(file, () => this.setState({ csar: tmpCsar }));
+        };
+
+        return (
+            <div>
+                <BarrelNavBar csar={this.state.csar} onChange={readCsar} exportCsar={exportCsar} />
+                {this.state.csar ? <BarrelTabs csar={this.state.csar} /> : null}
+            </div>
+        );
+    }
+});
+
+ReactDOM.render(<BarrelMain />, document.getElementById('main'));
