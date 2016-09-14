@@ -580,58 +580,85 @@ var BarrelEditor = React.createClass({
             window.open(url, "_blank", "");
         };
 
+        var setType = name => {
+            var onend = () => {
+                var doc = csar.getTypeDocuments()[name];
+                mProt = new ManagementProtocol.ManagementProtocolEditor(doc, name);
+                this.setState({ name: name, mProt: mProt });
+                this.refreshMProt();
+            };
+
+            if (mProt != null)
+                mProt.save(onend)
+            else
+                onend();
+        };
+
+        var types = Object.keys(csar.getTypes()).map(t => <li key={t}><a href="#" onClick={() => setType(t)}>{t}</a></li>);
+
         return (
-            <div>
-              <h1 className="legend"><b>{this.state.name}</b></h1>
-              <h4>Management Protocol <a className="btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a></h4>
-              <table className="table">
-                <tbody>
-                  <tr>
-                    <td style={{ width: "70%" }}>
-                      <pre>
-                        <BarrelMProtGraph ref="mProtGraph" />
-                      </pre>
-                    </td>
-                    <td style={{ width: "30%" }}>
-                      <form className="form-horizontal">
-                        <fieldset>
-                          <legend>Edit</legend>
-                          <div className="col-lg-10"><label className="control-label">Initial state</label></div>
-                          <div className="col-lg-10" style={{ width: "80%" }}>
-                          <SingleSelector
-                            value={this.state.mProt.getInitialState()}
-                            items={this.state.mProt.getStates()}
-                            onChange={newInitialState => {
-                                mProt.setInitialState(newInitialState);
-                                this.refreshMProt();
-                            }} />
-                          </div>
-                          <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
-                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                            <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                          </div>
-                          <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
-                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
-                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
-                          </div>
-                          <div className="col-lg-10"><label className="control-label">Transitions</label></div>
-                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
-                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
-                          </div>
-                          <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
-                          <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
-                            <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
-                            <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
-                          </div>
-                        </fieldset>
-                      </form>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <a className="pull-right btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a>
+                <h3 className="panel-title">Management Protocol for
+                    <div className="btn-group">
+                        <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            {this.state.name} <span className="caret"></span>
+                        </button>
+                        <ul className="dropdown-menu">{types}</ul>
+                    </div>
+                </h3>
+              </div>
+              <div className="panel-body">
+                <table className="table">
+                    <tbody>
+                    <tr>
+                        <td style={{ width: "70%" }}>
+                        <pre>
+                            <BarrelMProtGraph ref="mProtGraph" />
+                        </pre>
+                        </td>
+                        <td style={{ width: "30%" }}>
+                        <form className="form-horizontal">
+                            <fieldset>
+                            <legend>Edit</legend>
+                            <div className="col-lg-10"><label className="control-label">Initial state</label></div>
+                            <div className="col-lg-10" style={{ width: "80%" }}>
+                            <SingleSelector
+                                value={this.state.mProt.getInitialState()}
+                                items={this.state.mProt.getStates()}
+                                onChange={newInitialState => {
+                                    mProt.setInitialState(newInitialState);
+                                    this.refreshMProt();
+                                }} />
+                            </div>
+                            <div className="col-lg-10"><label className="control-label">Requirement assumptions</label></div>
+                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                <a className="btn btn-info" data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                            </div>
+                            <div className="col-lg-10"><label className="control-label">Provisioned capabilities</label></div>
+                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Add</a>
+                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-state-editor">Remove</a>
+                            </div>
+                            <div className="col-lg-10"><label className="control-label">Transitions</label></div>
+                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
+                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
+                            </div>
+                            <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
+                            <div className="col-lg-10 btn-group btn-group-justified" style={{ width: "80%" }}>
+                                <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
+                                <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
+                            </div>
+                            </fieldset>
+                        </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+              </div>
               <div id="modal-state-editor" className="modal fade">
                 <BarrelStateCREditor mProt={this.state.mProt} />
               </div>
