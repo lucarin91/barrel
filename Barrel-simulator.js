@@ -3,13 +3,14 @@ var SimulatorNodeCapabilities = React.createClass({
     var caps = Object.keys(this.props.caps);
     return (
       <td> {
-        caps.map(function (capId) {
-          return (
-            <div className="btn btn-xs btn-success disabled">
+        caps.map(capId => (
+            <div
+              key={capId}
+              className="btn btn-xs btn-success disabled">
               {this.props.getUIName(capId)}
             </div>
-          );
-        })
+          )
+        )
       }</td>
     );
   }
@@ -18,22 +19,24 @@ var SimulatorNodeCapabilities = React.createClass({
 var SimulatorNodeRequirements = React.createClass({
   render: function() {
     var reqs = Object.keys(this.props.reqs);
-    var isFault = (reqId) => this.props.faults[reqId] || false;
+    var isFault = reqId => this.props.faults[reqId] || false;
     return (
       <td> {
-        reqs.map(function(reqId) {
-          if(isFault(reqId))
-            return (
-              <div className="btn btn-xs sim-req btn-danger" onClick={this.simulator.handleFault(this.props.nodeId,reqId)}>
+        reqs.map(reqId => {
+          var className="btn btn-xs "
+          if(isFault(reqId)) {
+            className+="btn-danger "
+            if(!this.props.simulator.canHandleFault(this.props.nodeId,reqId)) className+="disabled ";
+          }
+          else className+="btn-success disabled ";
+          return (
+              <div
+                key={reqId}
+                className={className}
+                onClick={() => this.props.simulator.handleFault(this.props.nodeId,reqId)}>
                 {this.props.getUIName(reqId)}
               </div>
-            );
-          else
-            return (
-              <div className="btn btn-xs btn-success disabled">
-                {this.props.getUIName(reqId)}
-              </div>
-            );
+          );
         })
       }</td>
     );
@@ -45,16 +48,16 @@ var SimulatorNodeOperations = React.createClass({
     var ops = Object.keys(this.props.ops);
     return (
       <td> {
-        ops.map(function (opId) {
-          return (
+        ops.map(opId => (
             <div
-              className={this.simulator.canPerformOp(nodeId,opId) ? "btn btn-xs btn-success" : "btn btn-xs btn-warning"}
+              key={opId}
+              className={this.props.simulator.canPerformOp(this.props.nodeId,opId) ? "btn btn-xs btn-success" : "btn btn-xs btn-warning disabled"}
               onClick={() => this.props.simulator.performOp(this.props.nodeId, opId)}
             >
               {this.props.getUIName(opId)}
             </div>
-          );
-        })
+          )
+        )
       }</td>
     );
   }
@@ -64,11 +67,11 @@ var SimulatorNode = React.createClass({
   render: function() {
     return (
       <tr>
-        <td>{this.props.getUIName(this.props.nodeId)}</td>
+        <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
         <td>{this.props.getUIName(this.props.node.stateId)}</td>
         <SimulatorNodeCapabilities
           caps={this.props.node.state.caps}
-          getUIName={this.props.getUiName}
+          getUIName={this.props.getUIName}
         />
         <SimulatorNodeRequirements
           nodeId={this.props.nodeId}
@@ -80,6 +83,7 @@ var SimulatorNode = React.createClass({
         <SimulatorNodeOperations
           nodeId={this.props.nodeId}
           ops={this.props.node.state.ops}
+          getUIName={this.props.getUIName}
           simulator={this.props.simulator}
         />
       </tr>
@@ -87,15 +91,18 @@ var SimulatorNode = React.createClass({
   }
 })
 
-var Simulator = React.createClass({
+var SimulatorTable = React.createClass({
   getInitialState: function() {
     return { app: this.props.initialApp };
   },
   canPerformOp: function(nodeId,opId) {
-    this.setState({ app: this.state.app.canPerformOp(nodeId,opId) })
+    return this.state.app.canPerformOp(nodeId,opId);
   },
   performOp: function(nodeId,opId) {
-    this.setState({ app: this.state.app.performOp(nodeId,opId)})
+    this.setState({ app: this.state.app.performOp(nodeId,opId)});
+  },
+  canHandleFault: function(nodeId,reqId) {
+    return this.state.app.canHandleFault(nodeId,reqId);
   },
   handleFault: function(nodeId,reqId) {
     this.setState({ app: this.state.app.handleFault(nodeId,reqId)})
@@ -106,22 +113,24 @@ var Simulator = React.createClass({
     var nodeIds = Object.keys(nodes);
     return (
       <div>
-        <table className="table table-striped table-hover ">
+        <table className="table table-striped table-hover">
           <thead>
             <tr>
-              <th style="width:10%"></th>
-              <th style="width:10%">State</th>
-              <th style="width:25%">Offered capabilities</th>
-              <th style="width:25%">Assumed requirements</th>
-              <th style="width:30%">Available operations</th>
+              <th style={{width:"10%"}}></th>
+              <th style={{width:"10%"}}>State</th>
+              <th style={{width:"25%"}}>Offered capabilities</th>
+              <th style={{width:"25%"}}>Assumed requirements</th>
+              <th style={{width:"30%"}}>Available operations</th>
             </tr>
           </thead>
           <tbody id="simulator-body">{
-            nodeIds.map(function (nId) {
+            nodeIds.map(nId => {
               return (
                 <SimulatorNode
+                  key={"simnode-"+nId}
                   nodeId={nId}
                   node={nodes[nId]}
+                  faults={this.state.app.faults}
                   getUIName={getUIName}
                   simulator={this}
                 />
@@ -130,7 +139,7 @@ var Simulator = React.createClass({
           }
           </tbody>
         </table>
-        <div className="form-horizontal col-lg-10 hidden" style="text-align:center">
+        <div className="form-horizontal col-lg-10" style={{textAlign:"center"}}>
           <button type="button" className="btn btn-default btn-xs" onClick={() => this.setState(this.getInitialState())}>
             Clear
           </button>
@@ -140,4 +149,19 @@ var Simulator = React.createClass({
   }
 });
 
-//simulator = ReactDOM.render(<Simulator initialApp={uiData.data} uiNames={uiData.uiNames} />, document.getElementById('simulator'));
+var Simulator = React.createClass({
+  getInitialState: function() {
+    return { uiData: null };
+  },
+  setUIData: function(uiData) {
+    this.setState({uiData: uiData});
+  },
+  render: function() {
+    if (this.state.uiData)
+      return ( <SimulatorTable initialApp={this.state.uiData.data} uiNames={this.state.uiData.uiNames} /> );
+    else
+      return null;
+  }
+});
+
+simulator = ReactDOM.render(<Simulator />, document.getElementById('simulator'));

@@ -1,6 +1,6 @@
 var editor = null;
 var simulator = null;
-var nodeTable = null; 
+var nodeTable = null;
 
 var mProt = null;
 var csar = null;
@@ -223,7 +223,7 @@ var onCsarRead = function () {
     // !-------------------------!
     // !        SIMULATOR        !
     // !-------------------------!
-    //buildSimulator();
+    simulator.setUIData(topology);
 
     // !-------------------------!
     // !        ANALYSER         !
