@@ -3,9 +3,15 @@ var BarrelMenu = React.createClass({
         var exportCsar =
             () => mProt.save(
                 () => csar.exportBlob(
-                    blob => saveAs(blob.slice(0, blob.size, "application/octet-stream"), csarFileName, true)
+                    blob => saveAs(blob.slice(0, blob.size, "application/octet-stream"), this.csarFileName, true)
                 )
             );
+
+        var readCsar = evt => {
+            var file = evt.target.files[0];
+            this.csarFileName = file.name;
+            csar = new Csar.Csar(file, onCsarRead);
+        };
 
         return (
             <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">

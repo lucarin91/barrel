@@ -4,7 +4,6 @@ var nodeTable = null;
 
 var mProt = null;
 var csar = null;
-var csarFileName = null;
 
 var nodeTypeSelectorCallback = function (name) {
     var onend = function () {
@@ -230,10 +229,4 @@ var onCsarRead = function () {
     // !        ANALYSER         !
     // !-------------------------!
     // TODO!!!!!!!!!!!!!!
-}
-
-var readCsar = function (evt) {
-    var fileInput = evt.target;
-    csarFileName = fileInput.files[0].name;
-    csar = new Csar.Csar(fileInput.files[0], onCsarRead);
 }
