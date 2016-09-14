@@ -53,20 +53,7 @@ var onCsarRead = function () {
     // !-------------------------!
     // !         EDITOR          !
     // !-------------------------!
-
-    var first = true;
-
-    // Handle click on rows by opening the corresponding management protocol editor
-    for (var name in types) {
-        var onclick = nodeTypeSelectorCallback(name);
-        $(".row-" + name).click(onclick);
-
-        // Initialise editor to display the management protocol of the first processed node
-        if (first) {
-            onclick();
-            first = false;
-        }
-    }
+    // TODO force displaying editor for a type's management protocol
 
     // !-------------------------!
     // !        SIMULATOR        !
@@ -76,5 +63,5 @@ var onCsarRead = function () {
     // !-------------------------!
     // !        ANALYSER         !
     // !-------------------------!
-    // TODO!!!!!!!!!!!!!!
+    // TODO include ANALYSER
 }

@@ -4,12 +4,12 @@ var TopologyRow = React.createClass({
       var els = Object.keys(set);
       return els.map(el => (<span key={el}>{this.props.getUIName(el)}<br /></span>))
     }
-    return (<tr>
-      <td><b>{this.props.name}</b></td>
-      <td>{this.props.type}</td>
-      <td>{renderSet(this.props.caps)}</td>
-      <td>{renderSet(this.props.reqs)}</td>
-      <td>{renderSet(this.props.ops)}</td>
+    return (<tr onClick={nodeTypeSelectorCallback(this.props.node.type)}>
+      <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
+      <td>{this.props.node.type}</td>
+      <td>{renderSet(this.props.node.caps)}</td>
+      <td>{renderSet(this.props.node.reqs)}</td>
+      <td>{renderSet(this.props.node.ops)}</td>
     </tr>);
   }
 })
@@ -41,11 +41,8 @@ var TopologyTable = React.createClass({
               <TopologyRow
                 key={id}
                 getUIName={getUIName}
-                name={getUIName(id)}
-                type={nodes[id].type}
-                caps={nodes[id].caps}
-                reqs={nodes[id].reqs}
-                ops={nodes[id].ops} />
+                nodeId={id}
+                node={nodes[id]} />
             )
           })
       	}
