@@ -73,20 +73,7 @@
                 <div id="app-topology" style="position: relative"></div>
               </td>
               <td style="width:60%">
-                <div style="font-size:90%;margin-left:10px">
-                  <table class="table table-striped table-hover hidden">
-                    <thead>
-                      <tr class="btn-primary disabled">
-                        <th>Node</th>
-                        <th>Node type</th>
-                        <th>Capabilities</th>
-                        <th>Requirements</th>
-                        <th>Operations</th>
-                      </tr>
-                    </thead>
-                    <tbody id="topology-table-body"></tbody>
-                  </table>
-                </div>
+                <div style="font-size:90%;margin-left:10px" id="topology-table"></div>
               </td>
             </tr>
           </table>
@@ -98,24 +85,7 @@
         </div>
 
         <!--Simulator-->
-        <div class="tab-pane" id="simulator">
-            <table class="table table-striped table-hover ">
-                <thead>
-                    <tr>
-                        <th style="width:10%"></th>
-                        <th style="width:10%">State</th>
-                        <th style="width:25%">Offered capabilities</th>
-                        <th style="width:25%">Assumed requirements</th>
-                        <th style="width:30%">Available operations</th>
-                    </tr>
-                </thead>
-                <tbody id="simulator-body">
-                </tbody>
-            </table>
-            <div class="form-horizontal col-lg-10 hidden" style="text-align:center">
-                <button type="button" class="btn btn-default btn-xs" onclick="buildSimulator()">Clear</button>
-            </div>
-        </div>
+        <div class="tab-pane" id="simulator"></div>
 
         <!--Analyser-->
         <div class="tab-pane" id="analyser">

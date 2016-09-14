@@ -199,7 +199,8 @@ var onCsarRead = function () {
     if (serviceTemplate.hasAttribute("name"))
         appName = serviceTemplate.getAttribute("name");
     $("#application-name")[0].innerHTML = appName;
-    $("#topology-table-body")[0].innerHTML = TOSCAAnalysis.uiApplicationToElement(topology);
+    //$("#topology-table-body")[0].innerHTML = TOSCAAnalysis.uiApplicationToElement(topology);
+    nodeTable.setUIData(topology);
     drawTopology($("#app-topology")[0], topology);
 
     // !-------------------------!
