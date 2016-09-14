@@ -1,27 +1,25 @@
 var TopologyRow = React.createClass({
   render: function() {
-    var renderSet = set => {
-      var els = Object.keys(set);
-      return els.map(el => (<span key={el}>{this.props.getUIName(el)}<br /></span>))
-    }
-    return (<tr onClick={nodeTypeSelectorCallback(this.props.node.type)}>
-      <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
-      <td>{this.props.node.type}</td>
-      <td>{renderSet(this.props.node.caps)}</td>
-      <td>{renderSet(this.props.node.reqs)}</td>
-      <td>{renderSet(this.props.node.ops)}</td>
-    </tr>);
+    var renderSet = set => Object.keys(set).map(el => <span key={el}>{this.props.getUIName(el)}<br /></span>);
+
+    return (
+        <tr>
+            <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
+            <td>{this.props.node.type}</td>
+            <td>{renderSet(this.props.node.caps)}</td>
+            <td>{renderSet(this.props.node.reqs)}</td>
+            <td>{renderSet(this.props.node.ops)}</td>
+        </tr>
+    );
   }
 })
 
 var TopologyTable = React.createClass({
   render: function() {
-    if (!this.props.uiData) return null;
     // Setting the stage
     var getUIName = id => this.props.uiData.uiNames[id] || id;
 
   	var nodes = this.props.uiData.data.nodes;
-  	var nodeIds = Object.keys(nodes);
 
   	// Rendering
   	return (
@@ -35,21 +33,10 @@ var TopologyTable = React.createClass({
                 <th>Operations</th>
             </tr>
         </thead>
-        <tbody> {
-          nodeIds.map(id => {
-            return (
-              <TopologyRow
-                key={id}
-                getUIName={getUIName}
-                nodeId={id}
-                node={nodes[id]} />
-            )
-          })
-      	}
-        </tbody>
-    </table>
-  );
- }
+        <tbody>{Object.keys(nodes).map(id => <TopologyRow key={id} getUIName={getUIName} nodeId={id} node={nodes[id]} />)}</tbody>
+      </table>
+    );
+  }
 });
 
 var Visualiser = React.createClass({
@@ -68,24 +55,26 @@ var Visualiser = React.createClass({
   render: function() {
     if(!this.state.uiData) return null;
     return (
-      <div>
-        <h1 className="legend" style={{textDecoration:"bold"}}>
-          {this.state.appName}
-        </h1>
-        <h4>Application topology</h4>
-        <table>
-          <tr>
-            <td style={{width:"40%"}}>
-              <div id="app-topology" style={{position: "relative"}}></div>
-            </td>
-            <td style={{width:"60%"}}>
-              <div style={{fontSize:"90%",marginLeft:"10px"}}>
-                <TopologyTable uiData={this.state.uiData} />
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
+        <div>
+            <h1 className="legend" style={{textDecoration:"bold"}}>
+            {this.state.appName}
+            </h1>
+            <h4>Application topology</h4>
+            <table>
+                <tbody>
+                    <tr>
+                        <td style={{width:"40%"}}>
+                        <div id="app-topology" style={{position: "relative"}}></div>
+                        </td>
+                        <td style={{width:"60%"}}>
+                            <div style={{fontSize:"90%",marginLeft:"10px"}}>
+                                <TopologyTable uiData={this.state.uiData} />
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     );
   },
   componentDidUpdate: function () {
