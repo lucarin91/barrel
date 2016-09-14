@@ -104,7 +104,7 @@ module TOSCAAnalysis {
                 throw "Fault handler increases capabilities";
             else if (!Utils.setContains(reqs[handler.source], reqs[handler.target]))
                 throw "Fault handler increases requirements";
-            else if (!Utils.setEquals(reqs[handler.source], reqs[handler.target]))
+            else if (Utils.setEquals(reqs[handler.source], reqs[handler.target]))
                 throw "Fault handler preserves requirements";
             else
                 reachable[handler.source][handler.target] = true;
