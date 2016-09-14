@@ -121,7 +121,8 @@ var Visualiser = React.createClass({
         return { graph: graph, paper: paper };
     };
     var drawTopology = function(parentDiv, topology) {
-      // Parse the application topology
+      parentDiv.innerHTML = "";
+
       var nodes = topology.data.nodes;
       var cells = {};
 
