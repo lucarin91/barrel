@@ -115,7 +115,7 @@ module TOSCAAnalysis {
 
         var edges: Utils.Map<Utils.Set> = {};
         handlers.forEach(function (handler) { edges[handler.source] = {}; });
-        for (var s in handleReq)
+        for (var s in edges)
             for (var t in reachable[top[s]])
                 if (Utils.setContains(reqs[s], reqs[t]))
                     edges[s][t] = true;
