@@ -457,11 +457,11 @@ var BarrelMProtGraphState = React.createClass({
                 <div>{this.props.name}</div>
                 <div className="reliesOnOffersDiv">
                     Relies on:
-                    {Object.keys(this.props.state.getReqs()).map(x => <div>- {x}</div>)}
+                    {Object.keys(this.props.state.getReqs()).map(x => <div key={x}>- {x}</div>)}
                 </div>
                 <div className="reliesOnOffersDiv">
                     Offers:
-                    {Object.keys(this.props.state.getCaps()).map(x => <div>- {x}</div>)}
+                    {Object.keys(this.props.state.getCaps()).map(x => <div key={x}>- {x}</div>)}
                 </div>
             </div>
         );
@@ -531,7 +531,7 @@ var BarrelMProtGraph = React.createClass({
         var instanceStates = mProt.getStates();
         var states = [];
         for (var s in instanceStates) {
-            states.push(<BarrelMProtGraphState name={s} state={instanceStates[s]} left={x + "px"} top={y + "px"}/>)
+            states.push(<BarrelMProtGraphState key={s} name={s} state={instanceStates[s]} left={x + "px"} top={y + "px"}/>)
 
             firstRow = !firstRow;
             if (firstRow) {
