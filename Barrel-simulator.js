@@ -92,13 +92,13 @@ var Simulator = React.createClass({
     return { app: this.props.initialApp };
   },
   canPerformOp: function(nodeId,opId) {
-    this.setState(this.state.app.canPerformOp(nodeId,opId))
+    this.setState({ app: this.state.app.canPerformOp(nodeId,opId) })
   },
   performOp: function(nodeId,opId) {
-    this.setState(this.state.app.performOp(nodeId,opId))
+    this.setState({ app: this.state.app.performOp(nodeId,opId)})
   },
   handleFault: function(nodeId,reqId) {
-    this.setState(this.state.app.handleFault(nodeId,reqId))
+    this.setState({ app: this.state.app.handleFault(nodeId,reqId)})
   },
   render: function() {
     var getUIName = id => this.props.uiNames[id] || id;
