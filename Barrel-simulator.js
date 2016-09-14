@@ -123,7 +123,7 @@ var SimulatorTable = React.createClass({
               <th style={{width:"30%"}}>Available operations</th>
             </tr>
           </thead>
-          <tbody id="simulator-body">{
+          <tbody>{
             nodeIds.map(nId => {
               return (
                 <SimulatorNode
