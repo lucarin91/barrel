@@ -655,11 +655,20 @@ var BarrelEditor = React.createClass({
                                 </div>
                                 <div className="col-lg-10"><label className="control-label">Auto-completion</label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" onClick={() => alert("TODO")}>Default handling</a>
+                                    <a className="btn btn-primary" onClick={() => {
+                                        try { this.state.mProt.addState("Crashed"); } catch (e) {};
+                                        this.state.mProt.addDefaultHandling("Crashed");
+                                        this.refresh();
+                                    }}>Default handling</a>
                                 </div>
                                 <div className="col-lg-10"><label className="control-label"></label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" onClick={() => alert("TODO")}>Crash handling</a>
+                                    <a className="btn btn-primary" onClick={() => {
+                                        try { this.state.mProt.addState("Crashed"); } catch (e) {};
+                                        try { this.state.mProt.addOperation("Special", "Crash"); } catch (e) {};
+                                        this.state.mProt.addCrashOps("Crashed", "Special", "Crash");
+                                        this.refresh();
+                                    }}>Crash handling</a>
                                 </div>
                                 <div className="col-lg-10"><label className="control-label"></label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">

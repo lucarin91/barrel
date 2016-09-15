@@ -1,6 +1,8 @@
 /// <reference path="lib/jquery/jquery.d.ts" />
 
 module TOSCA {
+    export var toscaNS = "http://docs.oasis-open.org/tosca/ns/2011/12";
+
     export class ToscaDocument {
         public doc: Document;
 
@@ -11,7 +13,7 @@ module TOSCA {
         }
 
         get(name: string) {
-            return this.doc.getElementsByTagNameNS("http://docs.oasis-open.org/tosca/ns/2011/12", name);
+            return this.doc.getElementsByTagNameNS(toscaNS, name);
         }
 
         reload(onend: () => void) {
@@ -37,6 +39,6 @@ module TOSCA {
 
     // Finds an element (of a certain "name") inside "toscaDoc"
     export function getToscaElements(toscaDoc: Element, name: string) {
-        return toscaDoc.getElementsByTagNameNS("http://docs.oasis-open.org/tosca/ns/2011/12", name);
+        return toscaDoc.getElementsByTagNameNS(toscaNS, name);
     }
 }

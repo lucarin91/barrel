@@ -119,25 +119,6 @@ module ManagementProtocol {
                 this.setInitialState(Object.keys(this.getStates())[0]);
         }
 
-        // normalize() {
-        //     var states = this.getStates();
-
-        //     // normalize transitions
-        //     var trans = this.getMProt("Transition");
-        //     for (var i = 0; i < trans.length; i++) {
-        //         var t = <Element>trans[i];
-        //         var source = states[t.getAttribute("sourceState")];
-        //         var target = states[t.getAttribute("targetState")];
-        //         var minReqs = Utils.setUnion(source.getReqs(), target.getReqs());
-        //         var reqs = attrsToStrings(getMProtElements(t, "Requirement"), "name");
-        //         if (!Utils.setContains(reqs, minReqs)) {
-        //             removeAll(getMProtElements(t, "ReliesOn"));
-        //             var reqList = Object.keys(Utils.setUnion(reqs, minReqs));
-        //             t.appendChild(createElementGroup(reqList, this.nodeType.ownerDocument, "ReliesOn", "Requirement", "name"));
-        //         }
-        //     }
-        // }
-
         private getTosca(tagName: string) {
             return TOSCA.getToscaElements(this.nodeType, tagName);
         }
@@ -165,6 +146,15 @@ module ManagementProtocol {
             return r;
         }
 
+        addState(state: string) {
+            if (this.getStates()[state])
+                throw "State already existing";
+
+            var s = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "InstanceState");
+            s.setAttribute("state", state);
+            this.getTosca("InstanceStates")[0].appendChild(s);
+        }
+
         getOps() {
             var r: InterfaceOperation[] = [];
             var ops = this.getTosca("Operation");
@@ -177,6 +167,27 @@ module ManagementProtocol {
                 });
             }
             return r;
+        }
+
+        addOp(iface: string, operation: string) {
+            if (this.getOps().filter(o => o.iface == iface && o.operation == operation).length != 0)
+                throw "Operation already existing";
+
+            var ifaceEl = null;
+            var ifaces = this.getTosca("Interface");
+            for (var i = 0; i < ifaces.length; i++)
+                if (ifaces[i].getAttribute("name") == iface)
+                    ifaceEl = ifaces[i];
+
+            if (ifaceEl == null) {
+                ifaceEl = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "Interface");
+                ifaceEl.setAttribute("name", iface);
+                this.getTosca("Interfaces")[0].appendChild(ifaceEl);
+            }
+
+            var op = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "Operation");
+            op.setAttribute("name", operation);
+            ifaceEl.appendChild(op);
         }
 
         getInitialState() {
@@ -210,7 +221,7 @@ module ManagementProtocol {
 
         addTransition(newT: Transition) {
             if (this.findTransition(newT))
-                throw "Transiiton already in protocol";
+                throw "Transition already in protocol";
 
             var t = this.nodeType.ownerDocument.createElementNS(mprotNS, "Transition");
             t.setAttribute("sourceState", newT.source);
@@ -290,6 +301,36 @@ module ManagementProtocol {
                 });
             }
             return r;
+        }
+
+        addDefaultHandling(target: string) {
+            var states = this.getStates();
+            if (!Utils.isEmptySet(states[target].getReqs()))
+                throw "Illegal target state; must have empty requirements";
+
+            for (var source in states)
+                if (!Utils.isEmptySet(states[source].getReqs()))
+                    this.addFaultHandler({ source: source, target: target });
+        }
+
+        addCrashOps(target: string, iface: string, operation: string) {
+            var states = this.getStates();
+            if (!Utils.isEmptySet(states[target].getReqs()))
+                throw "Illegal target state; must have empty requirements";
+
+            for (var source in states)
+                if (source != target)
+                    this.addTransition({
+                        source: source,
+                        target: target,
+                        iface: iface,
+                        operation: operation,
+                        reqs: {}
+                    });
+        }
+
+        addHardReset() {
+            throw "TODO";
         }
     }
 
