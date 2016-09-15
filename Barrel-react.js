@@ -591,7 +591,7 @@ var BarrelEditor = React.createClass({
 
     render: function() {
         var exportXMLDoc = () => {
-            var url = URL.createObjectURL(mProt.getXML());
+            var url = URL.createObjectURL(this.state.mProt.getXML());
             window.open(url, "_blank", "");
         };
 
