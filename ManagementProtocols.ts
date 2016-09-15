@@ -119,25 +119,6 @@ module ManagementProtocol {
                 this.setInitialState(Object.keys(this.getStates())[0]);
         }
 
-        // normalize() {
-        //     var states = this.getStates();
-
-        //     // normalize transitions
-        //     var trans = this.getMProt("Transition");
-        //     for (var i = 0; i < trans.length; i++) {
-        //         var t = <Element>trans[i];
-        //         var source = states[t.getAttribute("sourceState")];
-        //         var target = states[t.getAttribute("targetState")];
-        //         var minReqs = Utils.setUnion(source.getReqs(), target.getReqs());
-        //         var reqs = attrsToStrings(getMProtElements(t, "Requirement"), "name");
-        //         if (!Utils.setContains(reqs, minReqs)) {
-        //             removeAll(getMProtElements(t, "ReliesOn"));
-        //             var reqList = Object.keys(Utils.setUnion(reqs, minReqs));
-        //             t.appendChild(createElementGroup(reqList, this.nodeType.ownerDocument, "ReliesOn", "Requirement", "name"));
-        //         }
-        //     }
-        // }
-
         private getTosca(tagName: string) {
             return TOSCA.getToscaElements(this.nodeType, tagName);
         }
@@ -210,7 +191,7 @@ module ManagementProtocol {
 
         addTransition(newT: Transition) {
             if (this.findTransition(newT))
-                throw "Transiiton already in protocol";
+                throw "Transition already in protocol";
 
             var t = this.nodeType.ownerDocument.createElementNS(mprotNS, "Transition");
             t.setAttribute("sourceState", newT.source);
