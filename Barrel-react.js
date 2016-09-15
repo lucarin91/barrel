@@ -543,7 +543,7 @@ var BarrelMProtGraph = React.createClass({
                     key={s}
                     name={s}
                     state={instanceStates[s]}
-                    initial={initialState == name}
+                    initial={initialState == s}
                     left={x + "px"}
                     top={y + "px"} />
             );
