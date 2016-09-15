@@ -11,6 +11,16 @@ body {
   background-color: #e5ebe9;
 }
 
+.node-type-selector {
+  margin-bottom: 0;
+}
+
+.node-type-selector select {
+  width: auto;
+  height: auto;
+  font-size: 90%;
+}
+
 .no-margin {
   margin: 0;
 }

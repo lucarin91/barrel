@@ -1,7 +1,7 @@
 var BarrelNavBar = React.createClass({
     render: function() {
         return (
-            <nav className="navbar navbar-inverse">
+            <nav className="navbar navbar-inverse no-margin">
                 <div className="container-fluid">
                     <div className="navbar-header">
                         <a className="navbar-brand" href="#">Barrel</a>
@@ -47,10 +47,8 @@ var SingleSelector = React.createClass({
                 this.props.onChange(evt.target.value);
         };
 
-        var className = "form-control state-selector ";
-        className+=(this.props.nodeTypeSelector?"input-lg bolded":"");
         return (
-            <select className={className} value={this.state.selected} onChange={onChange}>
+            <select className="form-control" value={this.state.selected} onChange={onChange}>
                 {Object.keys(this.props.items).map(makeOption)}
             </select>
         );
@@ -606,11 +604,14 @@ var BarrelEditor = React.createClass({
 
         return (
             <div className="panel panel-default">
-                <SingleSelector
-                  value={Object.keys(this.props.typeDocs)[0]}
-                  items={this.props.typeDocs}
-                  onChange={newType => this.setType(newType)}
-                  nodeTypeSelector={true} />
+                <div>
+                  <h1 className="node-type-selector">
+                    <SingleSelector
+                      value={Object.keys(this.props.typeDocs)[0]}
+                      items={this.props.typeDocs}
+                      onChange={newType => this.setType(newType)}/>
+                  </h1>
+                </div>
                 <div className="panel-body">
                     <table className="table">
                         <thead>
@@ -646,12 +647,12 @@ var BarrelEditor = React.createClass({
                                 <div className="col-lg-10"><label className="control-label">Transitions</label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">
                                     <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
-                                    <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
+                                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
                                 </div>
                                 <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">
                                     <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
-                                    <a className="btn btn-info"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
+                                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
                                 </div>
                                 <div className="col-lg-10"><label className="control-label">Auto-completion</label></div>
                                 <div className="col-lg-10 btn-group btn-group-justified editor-btns">
