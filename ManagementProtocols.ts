@@ -146,6 +146,15 @@ module ManagementProtocol {
             return r;
         }
 
+        addState(state: string) {
+            if (this.getStates()[state])
+                throw "State already existing";
+
+            var s = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "InstanceState");
+            s.setAttribute("state", state);
+            this.getTosca("InstanceStates")[0].appendChild(s);
+        }
+
         getOps() {
             var r: InterfaceOperation[] = [];
             var ops = this.getTosca("Operation");
@@ -158,6 +167,27 @@ module ManagementProtocol {
                 });
             }
             return r;
+        }
+
+        addOp(iface: string, operation: string) {
+            if (this.getOps().filter(o => o.iface == iface && o.operation == operation).length != 0)
+                throw "Operation already existing";
+
+            var ifaceEl = null;
+            var ifaces = this.getTosca("Interface");
+            for (var i = 0; i < ifaces.length; i++)
+                if (ifaces[i].getAttribute("name") == iface)
+                    ifaceEl = ifaces[i];
+
+            if (ifaceEl == null) {
+                ifaceEl = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "Interface");
+                ifaceEl.setAttribute("name", iface);
+                this.getTosca("Interfaces")[0].appendChild(ifaceEl);
+            }
+
+            var op = this.nodeType.ownerDocument.createElementNS(TOSCA.toscaNS, "Operation");
+            op.setAttribute("name", operation);
+            ifaceEl.appendChild(op);
         }
 
         getInitialState() {
