@@ -588,7 +588,10 @@ var BarrelEditor = React.createClass({
     },
 
     refresh: function() {
-        this.state.mProt.save(() => this.refs.mProtGraph.forceUpdate());
+        this.state.mProt.save(() => {
+            this.refs.mProtGraph.forceUpdate();
+            this.props.onChange();
+        });
     },
 
     render: function() {
@@ -696,7 +699,7 @@ var BarrelTabs = React.createClass({
                         <Visualiser uiData={uiData} appName={serviceTemplate.getAttribute("name")}/>
                     </div>
                     <div className="tab-pane" id="editor">
-                        <BarrelEditor typeDocs={csar.getTypeDocuments()} />
+                        <BarrelEditor typeDocs={csar.getTypeDocuments()} onChange={() => this.forceUpdate()} />
                     </div>
                     <div className="tab-pane" id="simulator">
                         <Simulator uiData={uiData} />
