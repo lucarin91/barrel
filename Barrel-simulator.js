@@ -116,6 +116,7 @@ var SimulatorTable = React.createClass({
     var nodeIds = Object.keys(nodes);
     return (
       <div>
+        <h1>Simulator</h1>
         <table className="table table-striped simulator-table">
           <thead>
             <tr className="success">
