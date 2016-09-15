@@ -256,8 +256,10 @@ var BarrelTransitionRemover = React.createClass({
     },
 
     setStateAndComputeDeps: function(nextState) {
-        this.setState(nextState);
-        this.setState(this.makeState(this.props, this.state));
+        for (var k in this.state)
+            if (!(k in nextState))
+                nextState[k] = this.state[k];
+        this.setState(this.makeState(this.props, nextState));
     },
 
     render: function() {
@@ -288,7 +290,7 @@ var BarrelTransitionRemover = React.createClass({
         var reqs = Utils.makeSet(sameTarget.map(t => mergeReqs(t.reqs)));
 
         var apply = () => {
-            this.props.editor.state.removeTransition(this.state)
+            this.props.editor.state.mProt.removeTransition(this.state)
             this.props.editor.refresh();
         };
 
@@ -408,7 +410,7 @@ var BarrelFaultRemover = React.createClass({
     },
 
     setSource: function(source) {
-        this.setState({ source: source });
+        thi.state.source = source;
         this.setState(this.makeState(this.props, this.state));
     },
 
