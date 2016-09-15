@@ -173,20 +173,14 @@ Visualiser = React.createClass({
             {this.props.appName || "Unnamed"}
             </h1>
             <h4>Application topology</h4>
-            <table>
-                <tbody>
-                    <tr>
-                        <td style={{width:"40%"}}>
-                        <div ref={el => drawTopology(el, this.props.uiData)} style={{position: "relative"}}></div>
-                        </td>
-                        <td style={{width:"60%"}}>
-                            <div style={{fontSize:"90%",marginLeft:"10px"}}>
-                                <TopologyTable uiData={this.props.uiData} />
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div style={{float:"left"}}>
+              <div style={{display:"inline-block",position: "relative"}}>
+                <div ref={el => drawTopology(el, this.props.uiData)}></div>
+              </div>
+              <div style={{fontSize:"90%",display:"inline-block"}}>
+                <TopologyTable uiData={this.props.uiData} />
+              </div>
+            </div>
         </div>
     );
   }
