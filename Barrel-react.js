@@ -339,7 +339,7 @@ var BarrelFaultAdder = React.createClass({
             target: states[0]
         };
     },
-    
+
     getInitialState: function() {
         return this.makeState(this.props);
     },
@@ -690,7 +690,7 @@ var BarrelTabs = React.createClass({
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
-                    <div className="tab-pane" id="visualiser">
+                    <div className="tab-pane active" id="visualiser">
                         <Visualiser uiData={uiData} />
                     </div>
                     <div className="tab-pane" id="editor">
