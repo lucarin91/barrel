@@ -4,8 +4,16 @@
     display: block;
     height: 0;
     overflow-y: hidden;
-} 
+}
 /* bootstrap hack end */
+
+.bolded {
+  font-weight: bold;
+}
+
+.editor-btns {
+  width: 80%;
+}
 
 .hidden {
 	display: none;
@@ -35,7 +43,7 @@ a, a:hover, h1 {
 	position: absolute;
 	margin: 0;
     padding: 10px 10px 10px 10px;
-    list-style: none;  
+    list-style: none;
     /*
     background-color: #111;
     background-image: linear-gradient(#C2EBFF, #ACE3FF);
@@ -70,7 +78,7 @@ a, a:hover, h1 {
 	position: absolute;
 	margin: 0;
     padding: 10px 10px 10px 10px;
-    list-style: none;  
+    list-style: none;
     background-color: #112835;
     border-radius: 10px;
 	border-color: #112835;
@@ -89,7 +97,7 @@ a, a:hover, h1 {
 	position: absolute;
 	margin: 0;
     padding: 10px 10px 10px 10px;
-    list-style: none;  
+    list-style: none;
     background-color: #95a5a6;
     border-radius: 10px;
 	border-color: #95a5a6;
@@ -328,10 +336,10 @@ a, a:hover, h1 {
 	z-index:4;
 }
 
-._jsPlumb_endpoint { 
-	z-index:1; 
+._jsPlumb_endpoint {
+	z-index:1;
 }
 
-._jsPlumb_overlay { 
-	z-index:6; 
+._jsPlumb_overlay {
+	z-index:6;
 }
