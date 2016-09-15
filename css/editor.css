@@ -15,6 +15,10 @@
   width: 80%;
 }
 
+.simulator-table {
+  font-size: 120%;
+}
+
 .hidden {
 	display: none;
 }

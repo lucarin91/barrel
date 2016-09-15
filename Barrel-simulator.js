@@ -6,7 +6,7 @@ var SimulatorNodeCapabilities = React.createClass({
         caps.map(capId => (
             <div
               key={capId}
-              className="btn btn-xs btn-success disabled">
+              className="btn btn-sm btn-success disabled">
               {this.props.getUIName(capId)}
             </div>
           )
@@ -23,7 +23,7 @@ var SimulatorNodeRequirements = React.createClass({
     return (
       <td> {
         reqs.map(reqId => {
-          var className="btn btn-xs "
+          var className="btn btn-sm "
           if(isFault(reqId)) {
             className+="btn-danger "
             if(!this.props.simulator.canHandleFault(this.props.nodeId,reqId)) className+="disabled ";
@@ -51,7 +51,7 @@ var SimulatorNodeOperations = React.createClass({
         ops.map(opId => (
             <div
               key={opId}
-              className={this.props.simulator.canPerformOp(this.props.nodeId,opId) ? "btn btn-xs btn-success" : "btn btn-xs btn-warning disabled"}
+              className={this.props.simulator.canPerformOp(this.props.nodeId,opId) ? "btn btn-sm btn-success" : "btn btn-sm btn-warning disabled"}
               onClick={() => this.props.simulator.performOp(this.props.nodeId, opId)}
             >
               {this.props.getUIName(opId)}
@@ -116,14 +116,14 @@ var SimulatorTable = React.createClass({
     var nodeIds = Object.keys(nodes);
     return (
       <div>
-        <table className="table table-striped table-hover">
+        <table className="table table-striped simulator-table">
           <thead>
-            <tr>
-              <th style={{width:"10%"}}></th>
-              <th style={{width:"10%"}}>State</th>
-              <th style={{width:"25%"}}>Offered capabilities</th>
-              <th style={{width:"25%"}}>Assumed requirements</th>
-              <th style={{width:"30%"}}>Available operations</th>
+            <tr className="success">
+              <th></th>
+              <th>State</th>
+              <th>Offered capabilities</th>
+              <th>Assumed requirements</th>
+              <th>Available operations</th>
             </tr>
           </thead>
           <tbody>{
@@ -143,8 +143,8 @@ var SimulatorTable = React.createClass({
           </tbody>
         </table>
         <div className="form-horizontal col-lg-10" style={{textAlign:"center"}}>
-          <button type="button" className="btn btn-default btn-xs" onClick={() => this.setState(this.getInitialState())}>
-            Clear
+          <button type="button" className="btn btn-info btn-sm" onClick={() => this.setState(this.getInitialState())}>
+            Reset
           </button>
         </div>
       </div>
@@ -157,4 +157,3 @@ Simulator = React.createClass({
       return <SimulatorTable initialApp={this.props.uiData.data} uiNames={this.props.uiData.uiNames} />;
   }
 });
-
