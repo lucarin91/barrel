@@ -699,6 +699,9 @@ var BarrelTabs = React.createClass({
                     <div className="tab-pane" id="simulator">
                         <Simulator uiData={uiData} />
                     </div>
+                    <div className="tab-pane" id="analyser">
+                        <Analyser uiData={uiData} />
+                    </div>
                 </div>
             </div>
         );
