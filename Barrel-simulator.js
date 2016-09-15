@@ -95,6 +95,9 @@ var SimulatorTable = React.createClass({
   getInitialState: function() {
     return { app: this.props.initialApp };
   },
+  componentWillReceiveProps: function(nextProps) {
+    this.setState({ app: nextProps.initialApp });
+  },
   canPerformOp: function(nodeId,opId) {
     return this.state.app.canPerformOp(nodeId,opId);
   },
