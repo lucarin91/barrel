@@ -39,8 +39,8 @@ Analyser = React.createClass({
     var setToList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
 
     return (
-      <div className="form-horizontal">
-        <h2 className="legend bolded">Planning</h2>
+      <div>
+        <h1 className="legend bolded">Planning</h1>
         <div className="form-group">
           <StateSelector
             caption="Starting global state"
