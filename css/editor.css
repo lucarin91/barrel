@@ -12,13 +12,22 @@ body {
 }
 
 .node-type-selector {
-  margin-bottom: 0;
+  margin-bottom: 10px;
+  font-size: 120%
 }
 
 .node-type-selector select {
   width: auto;
   height: auto;
-  font-size: 90%;
+  display: inline-block;
+}
+
+.node-type-selector a {
+  float: right;
+}
+
+.table-editor th {
+  text-align: center;
 }
 
 .no-margin {
@@ -27,10 +36,6 @@ body {
 
 .bolded {
   font-weight: bold;
-}
-
-.editor-btns {
-  width: 80%;
 }
 
 .simulator-table {
