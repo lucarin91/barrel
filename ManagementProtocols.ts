@@ -302,6 +302,36 @@ module ManagementProtocol {
             }
             return r;
         }
+
+        addDefaultHandling(target: string) {
+            var states = this.getStates();
+            if (!Utils.isEmptySet(states[target].getReqs()))
+                throw "Illegal target state; must have empty requirements";
+
+            for (var source in states)
+                if (!Utils.isEmptySet(states[source].getReqs()))
+                    this.addFaultHandler({ source: source, target: target });
+        }
+
+        addCrashOps(target: string, iface: string, operation: string) {
+            var states = this.getStates();
+            if (!Utils.isEmptySet(states[target].getReqs()))
+                throw "Illegal target state; must have empty requirements";
+
+            for (var source in states)
+                if (source != target)
+                    this.addTransition({
+                        source: source,
+                        target: target,
+                        iface: iface,
+                        operation: operation,
+                        reqs: {}
+                    });
+        }
+
+        addHardReset() {
+            throw "TODO";
+        }
     }
 
     export class ManagementProtocolEditor extends ManagementProtocol {
