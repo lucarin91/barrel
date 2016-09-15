@@ -170,7 +170,7 @@ Visualiser = React.createClass({
     return (
         <div>
             <h1 className="legend" style={{textDecoration:"bold"}}>
-            {this.props.appName}
+            {this.props.appName || "Unnamed"}
             </h1>
             <h4>Application topology</h4>
             <table>

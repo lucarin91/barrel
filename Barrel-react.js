@@ -691,7 +691,7 @@ var BarrelTabs = React.createClass({
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
                     <div className="tab-pane active" id="visualiser">
-                        <Visualiser uiData={uiData} />
+                        <Visualiser uiData={uiData} appName={serviceTemplate.getAttribute("name")}/>
                     </div>
                     <div className="tab-pane" id="editor">
                         <BarrelEditor typeDocs={csar.getTypeDocuments()} />
