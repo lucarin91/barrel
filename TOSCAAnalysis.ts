@@ -55,6 +55,17 @@ module TOSCAAnalysis {
         return r;
     }
 
+    function mapKeys<T>(a: Utils.Map<T>, m: Utils.Map<string>) {
+        var r: Utils.Map<T> = {};
+        for (var x in a)
+            if (x in m)
+                r[m[x]] = a[x];
+            else
+                console.log("Did not find name for " + x  + ". Dropping it");
+
+        return r;
+    }
+
     function handlerReachability(reachable : Utils.Map<Utils.Set>) {
         var visiting : Utils.Set = {};
         var visited : Utils.Set = {};
@@ -132,6 +143,9 @@ module TOSCAAnalysis {
         for (var s in edges)
             for (var s1 in edges[s])
                 for (var s2 in edges[s]) {
+                    if (s1 == s2)
+                        continue;
+
                     if (!edges[s1][s2] && Utils.setContains(reqs[s1], reqs[s2]))
                             throw "Fault handlers are not co-transitive";
                     var intersection = Utils.setIntersection(reqs[s1], reqs[s2]);
@@ -188,7 +202,7 @@ module TOSCAAnalysis {
                     ops[opName] = new Analysis.Operation(trans[j].target, [opReqs]);
                 }
             }
-            states[s] = new Analysis.State(caps, reqs, ops, handlers[s] || {});
+            states[s] = new Analysis.State(caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
         }
 
         return new UIData(new Analysis.Node(typeName,
