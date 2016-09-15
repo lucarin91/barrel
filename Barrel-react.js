@@ -603,100 +603,82 @@ var BarrelEditor = React.createClass({
         var types = Object.keys(this.props.typeDocs).map(t => <li key={t}><a href="#" onClick={() => this.setType(t)}>{t}</a></li>);
 
         return (
-            <div className="panel panel-default">
-                <div>
-                  <h1 className="node-type-selector">
-                    <SingleSelector
-                      value={Object.keys(this.props.typeDocs)[0]}
-                      items={this.props.typeDocs}
-                      onChange={newType => this.setType(newType)}/>
-                  </h1>
+            <div>
+              <h1>Management protocol editor</h1>
+              <div className="form-horizontal node-type-selector">
+                Node type:
+                <SingleSelector
+                  value={Object.keys(this.props.typeDocs)[0]}
+                  items={this.props.typeDocs}
+                  onChange={newType => this.setType(newType)}/>
+                <a className="btn btn-info" onClick={exportXMLDoc}>Show XML</a>
+              </div>
+              <div className="form-horizontal">
+                <pre><BarrelMProtGraph ref="mProtGraph" mProt={this.state.mProt} /> </pre>
+              </div>
+              <div className="form-horizontal">
+                <div className="col-sm-4">
+                  <h4>Initial state</h4>
+                  <SingleSelector
+                    value={this.state.mProt.getInitialState()}
+                    items={this.state.mProt.getStates()}
+                    onChange={newInitialState => {
+                      this.state.mProt.setInitialState(newInitialState);
+                      this.refresh();
+                    }} />
+                    <h4>States</h4>
+                    <div className="btn-group btn-group-justified">
+                      <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Edit</a>
+                    </div>
                 </div>
-                <div className="panel-body">
-                    <table className="table">
-                        <thead>
-                          <tr>
-                            <th><h4>Management protocol<a className="btn btn-info btn-xs" onClick={exportXMLDoc}>Show XML</a></h4></th>
-                            <th><h4>Edit</h4></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td style={{ width: "70%" }}>
-                              <pre>
-                                <BarrelMProtGraph ref="mProtGraph" mProt={this.state.mProt} />
-                              </pre>
-                            </td>
-                            <td style={{ width: "30%" }}>
-                              <form className="form-horizontal">
-                                <fieldset>
-                                <div className="col-lg-10"><label className="control-label">Initial state</label></div>
-                                <div className="col-lg-10 editor-btns">
-                                  <SingleSelector
-                                      value={this.state.mProt.getInitialState()}
-                                      items={this.state.mProt.getStates()}
-                                      onChange={newInitialState => {
-                                          this.state.mProt.setInitialState(newInitialState);
-                                          this.refresh();
-                                      }} />
-                                </div>
-                                <div className="col-lg-10"><label className="control-label">States</label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-state-editor">Edit</a>
-                                </div>
-                                <div className="col-lg-10"><label className="control-label">Transitions</label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
-                                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
-                                </div>
-                                <div className="col-lg-10"><label className="control-label">Fault handlers</label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
-                                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
-                                </div>
-                                <div className="col-lg-10"><label className="control-label">Auto-completion</label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" onClick={() => {
-                                        try { this.state.mProt.addState("Crashed"); } catch (e) {};
-                                        this.state.mProt.addDefaultHandling("Crashed");
-                                        this.refresh();
-                                    }}>Default handling</a>
-                                </div>
-                                <div className="col-lg-10"><label className="control-label"></label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" onClick={() => {
-                                        try { this.state.mProt.addState("Crashed"); } catch (e) {};
-                                        try { this.state.mProt.addOperation("Special", "Crash"); } catch (e) {};
-                                        this.state.mProt.addCrashOps("Crashed", "Special", "Crash");
-                                        this.refresh();
-                                    }}>Crash handling</a>
-                                </div>
-                                <div className="col-lg-10"><label className="control-label"></label></div>
-                                <div className="col-lg-10 btn-group btn-group-justified editor-btns">
-                                    <a className="btn btn-primary" onClick={() => alert("TODO")}>Hard recovery</a>
-                                </div>
-                                </fieldset>
-                              </form>
-                            </td>
-                          </tr>
-                        </tbody>
-                    </table>
+                <div className="col-sm-4">
+                  <h4>Transitions</h4>
+                  <div className="btn-group btn-group-justified">
+                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-transition-editor">Add</a>
+                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-transition-editor">Remove</a>
+                  </div>
+                  <h4>Fault handlers</h4>
+                  <div className="btn-group btn-group-justified">
+                    <a className="btn btn-primary" data-toggle="modal" data-target="#modal-add-fault-editor">Add</a>
+                    <a className="btn btn-primary"    data-toggle="modal" data-target="#modal-remove-fault-editor">Remove</a>
+                  </div>
                 </div>
-                <div id="modal-state-editor" className="modal fade">
-                    <BarrelStateCREditor editor={this} />
+                <div className="col-sm-4">
+                  <h4>Default handling</h4>
+                  <div className="btn-group btn-group-justified">
+                    <a className="btn btn-primary" onClick={() => {
+                      try { this.state.mProt.addState("Crashed"); } catch (e) {};
+                        this.state.mProt.addDefaultHandling("Crashed");
+                        this.refresh();
+                      }}>Fault</a>
+                    <a className="btn btn-primary" onClick={() => {
+                      try { this.state.mProt.addState("Crashed"); } catch (e) {};
+                      try { this.state.mProt.addOperation("Special", "Crash"); } catch (e) {};
+                        this.state.mProt.addCrashOps("Crashed", "Special", "Crash");
+                        this.refresh();
+                      }}>Crashes</a>
+                  </div>
+                  <h4>Hard recovery</h4>
+                  <div className="btn-group btn-group-justified">
+                    <a className="btn btn-primary" onClick={() => alert("TODO")}>TODO</a>
+                  </div>
                 </div>
-                <div id="modal-add-transition-editor" className="modal fade">
-                    <BarrelTransitionAdder editor={this} />
-                </div>
-                <div id="modal-remove-transition-editor" className="modal fade">
-                    <BarrelTransitionRemover editor={this} />
-                </div>
-                <div id="modal-add-fault-editor" className="modal fade">
-                    <BarrelFaultAdder editor={this} />
-                </div>
-                <div id="modal-remove-fault-editor" className="modal fade">
-                    <BarrelFaultRemover editor={this} />
-                </div>
+              </div>
+              <div id="modal-state-editor" className="modal fade">
+                  <BarrelStateCREditor editor={this} />
+              </div>
+              <div id="modal-add-transition-editor" className="modal fade">
+                  <BarrelTransitionAdder editor={this} />
+              </div>
+              <div id="modal-remove-transition-editor" className="modal fade">
+                  <BarrelTransitionRemover editor={this} />
+              </div>
+              <div id="modal-add-fault-editor" className="modal fade">
+                  <BarrelFaultAdder editor={this} />
+              </div>
+              <div id="modal-remove-fault-editor" className="modal fade">
+                  <BarrelFaultRemover editor={this} />
+              </div>
             </div>
         );
     }
