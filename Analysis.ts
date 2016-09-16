@@ -243,8 +243,10 @@ module Analysis {
                 for (var req in state.nodes[nodeId].reqs)
                     if (state.canHandleFault(nodeId, req)) {
                         var dst = state.handleFault(nodeId, req).globalState;
-                        costs[src][dst] = 1;
-                        steps[src][dst] = new Step(nodeId, req, false);
+                        if(!steps[src][dst]) {
+                          costs[src][dst] = 1;
+                          steps[src][dst] = new Step(nodeId, req, false);
+                        }
                     }
         }
 
