@@ -35,16 +35,32 @@ var StateSelector = React.createClass({
 });
 
 Analyser = React.createClass({
+  getInitialState: function() {
+    return {
+      reachable: Analysis.reachable(this.props.uiData.data),
+      plans: Analysis.plans(this.props.uiData.data)
+    }
+  },
   findPlan: function() {
     var stateSelectors = $(".global-state-selector").map((i,sel) => sel.value);
-    console.log("stateSelectors");
-    console.log(stateSelectors);
-    var initialState=stateSelectors.slice(0,(stateSelectors.length/2));
-    console.log("initialState");
-    console.log(initialState);
-    var targetState=stateSelectors.slice((stateSelectors.length/2),stateSelectors.length);
-    console.log("targetState");
-    console.log(targetState);
+    var startingState=[];
+    var targetState=[];
+    stateSelectors.map((index,val) => {
+      (index<stateSelectors.length/2)?startingState.push(val):targetState.push(val);
+    });
+    var start = startingState.sort().join("|");
+    var target = targetState.sort().join("|");
+
+    console.log(this.state.reachable);
+    console.log("start: " + start);
+    console.log("is start reachable? " + this.state.reachable[start]);
+    console.log("");
+    console.log("target: " + target);
+    console.log("is target reachable? " + this.state.reachable[target]);
+    console.log("");
+    console.log(this.state.plans);
+    console.log("costs[start][target]: " + this.state.plans.costs[start][target]);
+    console.log("plans[start][target]: " + this.state.plans.steps[start][target]);
   },
   render: function() {
     var getUIName = id => this.props.uiData.uiNames[id] || id;
