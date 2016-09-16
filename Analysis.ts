@@ -251,8 +251,8 @@ module Analysis {
         }
 
         for (var src in states)
-            for (var dst in states)
-                for (var via in states)
+            for (var via in costs[src])
+                for (var dst in costs[via])
                     // ! used to abuse undefined sum (which always compares as false)
                     if (src != via && !(costs[src][dst] <= costs[src][via] + costs[via][dst])) {
                         costs[src][dst] = costs[src][via] + costs[via][dst];
