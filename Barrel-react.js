@@ -738,4 +738,4 @@ var BarrelMain = React.createClass({
     }
 });
 
-ReactDOM.render(<BarrelMain />, document.getElementById('main'));
+barrel = ReactDOM.render(<BarrelMain />, document.getElementById('main'));
