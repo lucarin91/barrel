@@ -235,17 +235,23 @@ module Analysis {
                 for (var opId in state.nodes[nodeId].ops)
                     if (state.canPerformOp(nodeId, opId)) {
                         var dst = state.performOp(nodeId, opId).globalState;
-                        costs[src][dst] = 1;
-                        steps[src][dst] = new Step(nodeId, opId, true);
+                        var newCost = 1; // TODO: we might want to compute the cost in a clever way
+                        // ! used to abuse NaN comparison (which always compares as false)
+                        if (!(costs[src][dst] <= newCost)) {
+                            costs[src][dst] = newCost;
+                            steps[src][dst] = new Step(nodeId, opId, true);
+                        }
                     }
 
             for (var nodeId in state.nodes)
                 for (var req in state.nodes[nodeId].reqs)
                     if (state.canHandleFault(nodeId, req)) {
                         var dst = state.handleFault(nodeId, req).globalState;
-                        if(!steps[src][dst]) {
-                          costs[src][dst] = 1;
-                          steps[src][dst] = new Step(nodeId, req, false);
+                        var newCost = 1; // TODO: we might want to compute the cost in a clever way
+                        // ! used to abuse NaN comparison (which always compares as false)
+                        if (!(costs[src][dst] <= newCost)) {
+                            costs[src][dst] = newCost;
+                            steps[src][dst] = new Step(nodeId, req, false);
                         }
                     }
         }
@@ -253,7 +259,7 @@ module Analysis {
         for (var src in states)
             for (var via in costs[src])
                 for (var dst in costs[via])
-                    // ! used to abuse undefined sum (which always compares as false)
+                    // ! used to abuse NaN comparison (which always compares as false)
                     if (src != via && !(costs[src][dst] <= costs[src][via] + costs[via][dst])) {
                         costs[src][dst] = costs[src][via] + costs[via][dst];
                         steps[src][dst] = steps[src][via];
