@@ -23,24 +23,24 @@ module Utils {
         return true;
     }
 
-    export function setEquals(a: Set, b: Set) {
-        for (var x in a)
-            if (!b[x])
-                return false;
+    export function setCount(x: Set) {
+        var r = 0;
+        for (var a in x)
+            r++;
 
+        return r;
+    }
+
+    export function setContains(a: Set, b: Set) {
         for (var x in b)
-            if (!a[x])
+            if (!(x in a))
                 return false;
 
         return true;
     }
 
-    export function setContains(a: Set, b: Set) {
-        for (var x in b)
-            if (!a[x])
-                return false;
-
-        return true;
+    export function setEquals(a: Set, b: Set) {
+        return setContains(a, b) && setContains(b, a);
     }
 
     export function setUnion(a: Set, b: Set) {
@@ -59,7 +59,7 @@ module Utils {
         var r : Set = {};
 
         for (var x in a)
-        	if (b[x])
+            if (x in b)
                 r[x] = true;
 
         return r;
@@ -67,8 +67,9 @@ module Utils {
 
     export function setDiff(a: Set, b: Set) {
         var r : Set = {};
+
         for (var x in a)
-            if (!b[x] && a[x])
+            if (!(x in b))
                 r[x] = true;
 
         return r;
