@@ -256,14 +256,20 @@ module Analysis {
                     }
         }
 
-        for (var src in states)
-            for (var via in costs[src])
-                for (var dst in costs[via])
+        for (var via in states) {
+            for (var src in states) {
+                if (src == via || !(via in costs[src]))
+                    continue;
+
+                for (var dst in costs[via]) {
                     // ! used to abuse NaN comparison (which always compares as false)
-                    if (src != via && !(costs[src][dst] <= costs[src][via] + costs[via][dst])) {
+                    if (!(costs[src][dst] <= costs[src][via] + costs[via][dst])) {
                         costs[src][dst] = costs[src][via] + costs[via][dst];
                         steps[src][dst] = steps[src][via];
                     }
+                }
+            }
+        }
 
         return { costs: costs, steps: steps };
     }
