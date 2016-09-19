@@ -31,9 +31,9 @@ var StateSelector = React.createClass({
     return (
       <div style={{display:"inline-block",paddingRight:"15px"}}>
         <h4 className="bolded">{this.props.caption}</h4>
-        <table>
+        <table className="table table-striped">
           <thead>
-            <tr>
+            <tr className="success">
               <th>Node</th>
               <th>State</th>
             </tr>
