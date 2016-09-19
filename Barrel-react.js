@@ -10,7 +10,6 @@ var BarrelNavBar = React.createClass({
                         <ul className="nav navbar-nav">
                             {this.props.csar ? <li><a data-toggle="tab" href="#visualiser">Visualise</a></li> : null}
                             {this.props.csar ? <li><a data-toggle="tab" href="#editor">Edit</a></li> : null}
-                            {this.props.csar ? <li><a data-toggle="tab" href="#simulator">Simulate</a></li> : null}
                             {this.props.csar ? <li><a data-toggle="tab" href="#analyser">Analyse</a></li> : null}
                             <li className="dropdown">
                                 <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded={false}>CSAR<span className="caret"></span></a>
@@ -700,10 +699,9 @@ var BarrelTabs = React.createClass({
                     <div className="tab-pane" id="editor">
                         <BarrelEditor typeDocs={csar.getTypeDocuments()} onChange={() => this.forceUpdate()} />
                     </div>
-                    <div className="tab-pane" id="simulator">
-                        <Simulator uiData={uiData} />
-                    </div>
                     <div className="tab-pane" id="analyser">
+                        <Simulator uiData={uiData} />
+                        <br />
                         <Analyser uiData={uiData} />
                     </div>
                 </div>
