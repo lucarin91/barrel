@@ -34,13 +34,7 @@ var StateSelector = React.createClass({
   }
 });
 
-Analyser = React.createClass({
-  getInitialState: function() {
-    return {
-      reachable: Analysis.reachable(this.props.uiData.data),
-      plans: Analysis.plans(this.props.uiData.data)
-    }
-  },
+var Planner = React.createClass({
   findPlan: function() {
     var stateSelectors = $(".global-state-selector").map((i,sel) => sel.value);
     var startingState=[];
@@ -51,33 +45,42 @@ Analyser = React.createClass({
     var start = startingState.sort().join("|");
     var target = targetState.sort().join("|");
 
-    console.log(this.state.reachable);
-    console.log("start: " + start);
-    console.log("is start reachable? " + this.state.reachable[start]);
-    console.log("");
-    console.log("target: " + target);
-    console.log("is target reachable? " + this.state.reachable[target]);
-    console.log("");
-    console.log(this.state.plans);
-    console.log("costs[start][target]: " + this.state.plans.costs[start][target]);
-    console.log("plans[start][target]: " + this.state.plans.steps[start][target]);
+    if(!this.props.reachable[start]) {
+      alert("Starting state is unreachable");
+    }
+    else if(!this.props.reachable[target]) {
+      alert("Target state is unreachable");
+    }
+    else {
+      var plan = [];
+
+      var currentApp = this.props.reachable[start];
+      while(currentApp.globalState != target) {
+        var step = this.props.plans.steps[currentApp.globalState][target];
+        plan.push = [ step ];
+        if (step.isOp) {
+          currentApp = currentApp.performOp(step.nodeId,step.opId);
+        } else {
+          currentApp = currentApp.handleFault(step.nodeId,step.opId);
+        }
+      }
+      console.log(plan);
+
+    }
   },
   render: function() {
-    var getUIName = id => this.props.uiData.uiNames[id] || id;
-    var setToList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
-
     return (
       <div>
-        <h1 className="legend bolded">Planning</h1>
+        <h1 className="legend bolded">Planner</h1>
         <div className="form-group">
           <StateSelector
             caption="Starting global state"
-            nodes={setToList(this.props.uiData.data.nodes)}
-            getUIName={getUIName} />
+            nodes={this.props.nodes}
+            getUIName={this.props.getUIName} />
           <StateSelector
             caption="Target global state"
-            nodes={setToList(this.props.uiData.data.nodes)}
-            getUIName={getUIName} />
+            nodes={this.props.nodes}
+            getUIName={this.props.getUIName} />
         </div>
         <div className="form-group">
           <div className="col-sm-4 col-sm-offset-2">
@@ -86,5 +89,20 @@ Analyser = React.createClass({
         </div>
       </div>
     );
+  }
+})
+
+Analyser = React.createClass({
+  render: function() {
+    var getUIName = id => this.props.uiData.uiNames[id] || id;
+    var nodeSetToNodeList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
+
+    return (
+      <Planner
+        nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
+        reachable={Analysis.reachable(this.props.uiData.data)}
+        plans={Analysis.plans(this.props.uiData.data)}
+        getUIName={getUIName} />
+    )
   }
 })
