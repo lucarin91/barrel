@@ -12,9 +12,9 @@ var StateSelector = React.createClass({
       this.props.updateGlobalState(nodeId,stateId,this.props.isStartSelector)
     }
     var makeNodeRow = node => (
-      <tr key={this.props.caption.replace(" ","-")+"-"+node.name}>
+      <tr key={"row-"+node.name+"-"+this.props.isStartSelector}>
         <td>
-          {this.props.getUIName(node.name)}
+          <b>{this.props.getUIName(node.name)}</b>
         </td>
         <td>
           <select
@@ -29,54 +29,80 @@ var StateSelector = React.createClass({
       </tr>
     )
     return (
-      <div style={{display:"inline-block",paddingRight:"15px"}}>
-        <h4 className="bolded">{this.props.caption}</h4>
-        <table className="table table-striped">
-          <thead>
-            <tr className="success">
-              <th>Node</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.props.nodes.map(makeNodeRow)}
-          </tbody>
-        </table>
-      </div>
+      <table className="table table-striped analyser-text">
+        <thead>
+          <tr className="success">
+            <th>Node</th>
+            <th>State</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.nodes.map(makeNodeRow)}
+        </tbody>
+      </table>
     );
   }
 });
 
-var PlannerResult = React.createClass({
+var StateReachability = React.createClass({
   render: function() {
-    console.log(this.props.plan.plan)
-    var renderStep = step => step.nodeId+"."+step.opId + " "
-    if(!this.props.plan.isStartReachable) return (
-        <div className="alert alert-danger">
-          <strong>Starting state is unreachable</strong>{" from the initial global state"}.
-        </div>
-    )
-    if(!this.props.plan.isTargetReachable) return (
-        <div className="alert alert-danger">
-          <strong>Target state is unreachable</strong>{" from the initial global state"}.
-        </div>
-    )
-    if(this.props.plan.plan == null) return (
-      <div className="alert alert-warning">
-        <strong>Target state is unreachable from the starting state</strong>{" (despite they are both reachable from the initial global state)"}.
+    if(!this.props.isReachable) return (
+      <div className="alert alert-danger">
+        <p>The above <b>state is unreachable</b> from the initial global state.</p>
       </div>
     )
-    if(this.props.plan.plan.length>0) return (
-      <div className="alert alert-success">
-        <strong>
-          Target state is reachable from the starting state
-        </strong>
-        {" "}
-        by executing the following sequence of operations:
+    else return (
+      <div className="well">
+        <p>The above <b>state is reachable</b> from the initial global state.</p>
+      </div>
+    )
+  }
+})
+
+var PlannerResult = React.createClass({
+  render: function() {
+    var renderStep = step => {
+      if (step.isOp) return (
+        <p key={"step-"+step.opId}>
+          <span className="label label-primary">Operation</span>
+          {" Execute operation "}
+          <b>{this.props.getUIName(step.opId)}</b>
+          {" on node "}
+          <b>{this.props.getUIName(step.nodeId)}</b>
+        </p>
+      )
+      else return (
+        <p key={"step-"+step.opId}>
+          <span className="label label-default">Fault handler</span>
+          {" Handle fault of "}
+          <b>{this.props.getUIName(step.opId)}</b>
+          {" on node "}
+          <b>{this.props.getUIName(step.nodeId)}</b>
+        </p>
+      )
+    }
+    if(!this.props.plan.isStartReachable || !this.props.plan.isTargetReachable)
+      return null;
+    if(this.props.plan.plan == null)
+      return (
+        <p className="alert alert-warning">
+          Target state is unreachable from the starting state (despite they are both reachable from the initial global state).
+        </p>
+      )
+    if(this.props.plan.plan.length == 0)
+      return (
+        <div className="well">
+          <p>Start and target states do coincide</p>
+        </div>
+      )
+    return (
+      <div className="well">
+        <p>
+          The <b>target state</b> can be reached from the <b>starting state</b> as follows:
+        </p>
         {this.props.plan.plan.map(renderStep)}
       </div>
     )
-    return null;
   }
 });
 
@@ -133,22 +159,28 @@ var Planner = React.createClass({
     var plan = this.findPlan();
     return (
       <div>
-        <h1 className="legend bolded">Planner</h1>
+        <h1 className="bolded">Planner</h1>
         <div className="form-group">
-          <StateSelector
-            caption="Starting global state"
-            nodes={this.props.nodes}
-            getUIName={this.props.getUIName}
-            globalState={this.state.start}
-            isStartSelector={true}
-            updateGlobalState={this.updateGlobalState} />
-          <StateSelector
-            caption="Target global state"
-            nodes={this.props.nodes}
-            getUIName={this.props.getUIName}
-            globalState={this.state.target}
-            isStartSelector={false}
-            updateGlobalState={this.updateGlobalState} />
+          <div style={{display:"inline-block",paddingRight:"15px"}}>
+            <h4 className="bolded">Starting global state</h4>
+            <StateSelector
+              nodes={this.props.nodes}
+              getUIName={this.props.getUIName}
+              globalState={this.state.start}
+              isStartSelector={true}
+              updateGlobalState={this.updateGlobalState} />
+            <StateReachability isReachable={plan.isStartReachable} />
+          </div>
+          <div style={{display:"inline-block",paddingRight:"15px"}}>
+            <h4 className="bolded">Target global state</h4>
+            <StateSelector
+              nodes={this.props.nodes}
+              getUIName={this.props.getUIName}
+              globalState={this.state.target}
+              isStartSelector={false}
+              updateGlobalState={this.updateGlobalState} />
+            <StateReachability isReachable={plan.isTargetReachable} />
+          </div>
           <PlannerResult
             plan={plan}
             getUIName={this.props.getUIName} />
