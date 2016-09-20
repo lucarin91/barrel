@@ -1,7 +1,8 @@
 /// <reference path="lib/zip-fs.js.d.ts" />
 /// <reference path="TOSCA.ts" />
+/// <reference path="Utils.ts" />
 var Csar;
-(function (_Csar) {
+(function (Csar_1) {
     var Csar = (function () {
         function Csar(blob, onend) {
             this.fs = new zip.fs.FS();
@@ -49,7 +50,7 @@ var Csar;
                     }
                     parseToscaDocuments();
                 };
-                doc = new ToscaDocument(load, save, parseDoc);
+                doc = new TOSCA.ToscaDocument(load, save, parseDoc);
             };
             var parseToscaMeta = function (data) {
                 that.entryDef = /Entry-Definitions: *(.*)/.exec(data)[1];
@@ -81,10 +82,19 @@ var Csar;
             }
             return types;
         };
+        Csar.prototype.getTypeDocuments = function () {
+            var nodeTypes = this.get("NodeType");
+            var docs = {};
+            for (var i = 0; i < nodeTypes.length; i++) {
+                var type = nodeTypes[i].element;
+                docs[type.getAttribute("name")] = nodeTypes[i].doc;
+            }
+            return docs;
+        };
         Csar.prototype.exportBlob = function (onend) {
             this.fs.exportBlob(onend);
         };
         return Csar;
-    })();
-    _Csar.Csar = Csar;
+    }());
+    Csar_1.Csar = Csar;
 })(Csar || (Csar = {}));
