@@ -144,8 +144,8 @@ var SimulatorTable = React.createClass({
           </tbody>
         </table>
         <div className="form-horizontal col-lg-10" style={{textAlign:"center"}}>
-          <button type="button" className="btn btn-danger btn-sm" onClick={() => this.setState(this.getInitialState())}>
-            Reset
+          <button type="button" className="btn btn-default btn-sm" onClick={() => this.setState(this.getInitialState())}>
+            Reset simulator
           </button>
         </div>
       </div>

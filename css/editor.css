@@ -43,7 +43,7 @@ body {
   font-weight: bold;
 }
 
-.simulator-table, .analyser-text {
+.simulator-table, .analyser-text, .opt-text {
   font-weight: normal;
   font-size: 120%;
 }

@@ -657,10 +657,6 @@ var BarrelEditor = React.createClass({
                         this.refresh();
                       }}>Crashes</a>
                   </div>
-                  <h4>Hard recovery</h4>
-                  <div className="btn-group btn-group-justified">
-                    <a className="btn btn-primary" onClick={() => alert("TODO")}>TODO</a>
-                  </div>
                 </div>
               </div>
               <div id="modal-state-editor" className="modal fade">
@@ -700,6 +696,8 @@ var BarrelTabs = React.createClass({
                         <BarrelEditor typeDocs={csar.getTypeDocuments()} onChange={() => this.forceUpdate()} />
                     </div>
                     <div className="tab-pane" id="analyser">
+                        <Options uiData={uiData}/>
+                        <br />
                         <Simulator uiData={uiData} />
                         <br />
                         <Analyser uiData={uiData} />
