@@ -1,33 +1,31 @@
 var StateSelector = React.createClass({
-  componentDidUpdate: function () {
-    Object.keys(this.props.globalState).map(node => {
-      $("#state-selector-"+node+"-"+this.props.isStartSelector)[0].value =
-        node+"="+this.props.globalState[node];
-    });
-  },
   render: function() {
     var updateGlobalState = evt => {
       var nodeId = evt.target.value.split("=")[0];
       var stateId = evt.target.value.split("=")[1];
       this.props.updateGlobalState(nodeId,stateId,this.props.isStartSelector)
     }
-    var makeNodeRow = node => (
-      <tr key={"row-"+node.name+"-"+this.props.isStartSelector}>
-        <td>
-          <b>{this.props.getUIName(node.name)}</b>
-        </td>
-        <td>
-          <select
-            id={"state-selector-"+node.name+"-"+this.props.isStartSelector}
-            className="form-control"
-            onChange={updateGlobalState}>
-            {Object.keys(node.obj.states).map(v =>
-              <option key={v+"-"+this.props.isStartSelector} value={node.name+"="+v}>{v}</option>
-            )}
-          </select>
-        </td>
-      </tr>
-    )
+    var makeNodeRow = node => {
+      var val = node.name+"="+this.props.globalState[node.name]
+      return (
+        <tr key={"row-"+node.name+"-"+this.props.isStartSelector}>
+          <td>
+            <b>{this.props.getUIName(node.name)}</b>
+          </td>
+          <td>
+            <select
+              id={"state-selector-"+node.name+"-"+this.props.isStartSelector}
+              className="form-control"
+              value={val}
+              onChange={updateGlobalState}>
+              {Object.keys(node.obj.states).map(v =>
+                <option key={v+"-"+this.props.isStartSelector} value={node.name+"="+v}>{v}</option>
+              )}
+            </select>
+          </td>
+        </tr>
+      )
+    }
     return (
       <table className="table table-striped analyser-text">
         <thead>
