@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Barrel</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!--LINKS-->
+    <link rel="shortcut icon" href="img/barrel_icon.ico"/>
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="css/joint.css" rel="stylesheet" type="text/css">
+    <link href="css/devs.css" rel="stylesheet" type="text/css">
+    <link href="css/editor.css" rel="stylesheet" type="text/css">
+    <!--jQuery-->
+    <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/jquery/jquery-ui.min.js"></script>
+    <!--React-->
+<script src="https://unpkg.com/react@15.3.1/dist/react.js"></script>
+<script src="https://unpkg.com/react-dom@15.3.1/dist/react-dom.js"></script>
+    <script type="text/javascript" src="lib/react/browser.min.js"></script>
+    <!--Required JS Libraries-->
+    <script type="text/javascript" src="lib/FileSaver.min.js"></script>
+    <script type="text/javascript" src="lib/lodash.min.js"></script>
+    <script type="text/javascript" src="lib/backbone-min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+    <!--JS libraries for graphics-->
+    <script type="text/javascript" src="lib/joint.js"></script>
+    <script type="text/javascript" src="lib/graphlib/dist/graphlib.core.min.js"></script>
+    <script type="text/javascript" src="lib/dagre/dist/dagre.core.min.js"></script>
+    <script type="text/javascript" src="lib/joint.layout.DirectedGraph.min.js"></script>
+    <script type="text/javascript" src="lib/jsplumb/dist/js/jquery.jsPlumb-1.7.2-min.js"></script>
+    <script type="text/javascript" src="lib/zip.js"></script>
+    <script type="text/javascript" src="lib/zip-fs.js"></script>
+    <!--Typescript generated-->
+    <script type="text/javascript" src="TOSCA.js"></script>
+    <script type="text/javascript" src="Csar.js"></script>
+    <script type="text/javascript" src="ManagementProtocols.js"></script>
+    <script type="text/javascript" src="TOSCAAnalysis.js"></script>
+    <script type="text/javascript" src="Analysis.js"></script>
+    <script type="text/javascript" src="Utils.js"></script>
+    <!--JS Inline-->
+    <script type="text/javascript">
+        function qualifyURL(url) {
+            var img = document.createElement('img');
+	        img.src = url; // set string url
+	        url = img.src; // get qualified url
+	        img.src = null; // no server request
+	        return url;
+        }
+        zip.workerScriptsPath = qualifyURL("lib/z-worker.js").slice(0, -("z-worker.js".length));
+        var barrel = null;
+        var Visualiser = null;
+        var Simulator = null;
+        var Analyser = null;
+        var Options = null;
+    </script>
+</head>
+<body>
+    <div id="main"></div>
+
+    <!--"About" dialog-->
+    <div id="modal-info" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">About</h4>
+                </div>
+                <div class="modal-body">
+                <p>
+                    This editor has been developed in the scope of the research paper "TBD TBD TBD".
+                </p>
+                <center>
+                    <p>
+                        You can download a sample CSAR by clicking <a href="https://github.com/ranma42/MProt/blob/wip/localzip/test/MotivatingScenario.csar?raw=true">here</a>.
+                    </p>
+                </center>
+                <p>
+                    Copyright &copy;: A. Canciani, J. Soldani (Dip. di Informatica, Universit&agrave; di Pisa, Italia).
+                </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI + react UI -->
+    <script type="text/babel" src="Barrel-visualiser.js"></script>
+    <script type="text/babel" src="Barrel-simulator.js"></script>
+    <script type="text/babel" src="Barrel-react.js"></script>
+    <script type="text/babel" src="Barrel-analyser.js"></script>
+    <script type="text/babel" src="Barrel-options.js"></script>
+</body>
+</html>
