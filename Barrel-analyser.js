@@ -125,6 +125,12 @@ var Planner = React.createClass({
         target: this.state.target
     });
   },
+  switchState: function() {
+    this.setState({
+      start: this.state.target,
+      target: this.state.start
+    })
+  },
   findPlan: function() {
     var fromStateToString = gs => {
       var globalState = [];
@@ -159,7 +165,7 @@ var Planner = React.createClass({
       <div>
         <h1 className="bolded">Planner</h1>
         <div className="form-group">
-          <div style={{display:"inline-block",paddingRight:"15px"}}>
+          <div className="analyser-align">
             <h4 className="bolded">Starting global state</h4>
             <StateSelector
               nodes={this.props.nodes}
@@ -169,7 +175,10 @@ var Planner = React.createClass({
               updateGlobalState={this.updateGlobalState} />
             <StateReachability isReachable={plan.isStartReachable} />
           </div>
-          <div style={{display:"inline-block",paddingRight:"15px"}}>
+          <div className="analyser-align">
+            <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
+          </div>
+          <div className="analyser-align">
             <h4 className="bolded">Target global state</h4>
             <StateSelector
               nodes={this.props.nodes}
