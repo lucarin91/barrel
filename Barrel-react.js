@@ -4,11 +4,11 @@ var BarrelNavBar = React.createClass({
             <nav className="navbar navbar-inverse no-margin">
                 <div className="container-fluid">
                     <div className="navbar-header">
-                        <a className="navbar-brand" href="#">Barrel</a>
+                        <a className="navbar-brand no-events" href="#">Barrel</a>
                     </div>
                     <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                         <ul className="nav navbar-nav">
-                            {this.props.csar ? <li><a data-toggle="tab" href="#visualiser">Visualise</a></li> : null}
+                            {this.props.csar ? <li className="active"><a data-toggle="tab" href="#visualiser">Visualise</a></li> : null}
                             {this.props.csar ? <li><a data-toggle="tab" href="#editor">Edit</a></li> : null}
                             {this.props.csar ? <li><a data-toggle="tab" href="#analyser">Analyse</a></li> : null}
                             <li className="dropdown">

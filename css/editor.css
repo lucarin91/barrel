@@ -11,6 +11,10 @@ body {
   background-color: #e5ebe9;
 }
 
+.no-events {
+  pointer-events: none;
+}
+
 .analyser-align {
   display: inline-block;
   padding-right: 15px;
