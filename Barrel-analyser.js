@@ -61,7 +61,7 @@ var PlannerResult = React.createClass({
   render: function() {
     var renderStep = step => {
       if (step.isOp) return (
-        <p key={"step-"+step.opId}>
+        <p key={"step-"+step.nodeId+"-"+step.opId}
           <span className="label label-primary">Operation</span>
           {" Execute operation "}
           <b>{this.props.getUIName(step.opId)}</b>
