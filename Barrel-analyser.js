@@ -70,7 +70,7 @@ var PlannerResult = React.createClass({
         </p>
       )
       else return (
-        <p key={"step-"+step.opId}>
+        <p key={"step-"+step.nodeId+"-"+step.opId}>
           <span className="label label-default">Fault handler</span>
           {" Handle fault of "}
           <b>{this.props.getUIName(step.opId)}</b>
