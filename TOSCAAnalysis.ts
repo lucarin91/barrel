@@ -220,7 +220,7 @@ module TOSCAAnalysis {
             mergeNames(reqNames.uiNames, capNames.uiNames));
     }
 
-    export function serviceTemplateToApplication(serviceTemplate: Element, types: Utils.Map<Element>) {
+    export function serviceTemplateToApplication(serviceTemplate: Element, types: Utils.Map<Element>, withHardReset: boolean) {
         var nodeTemplates = TOSCA.getToscaElements(serviceTemplate, "NodeTemplate");
         var relationships = TOSCA.getToscaElements(serviceTemplate, "RelationshipTemplate");
 
@@ -261,7 +261,7 @@ module TOSCAAnalysis {
             }
         }
 
-        return new UIData(new Analysis.Application(nodes, binding, containedBy, false), uiNames);
+        return new UIData(new Analysis.Application(nodes, binding, containedBy, withHardReset), uiNames);
     }
 
     export function uiApplicationToElement(app: UIData<Analysis.Application>) {
