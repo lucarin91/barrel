@@ -15,7 +15,9 @@ module Analysis {
     }
 
     export class State {
-        constructor(public caps: Utils.Set,
+        constructor(
+            public isAlive: boolean,
+            public caps: Utils.Set,
             public reqs: Utils.Set,
             public ops: Utils.Map<Operation>,
             public handlers: Utils.Map<string>) { }

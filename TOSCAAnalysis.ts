@@ -180,6 +180,7 @@ module TOSCAAnalysis {
         var reqNames = toscaMap(nodeTemplate, "Requirement", "name");
         var typeName = nodeTemplate.getAttribute("type").split(':')[1]
         var mProt = new ManagementProtocol.ManagementProtocol(types[typeName]);
+        var initialState = mProt.getInitialState();
 
         var states: Utils.Map<Analysis.State> = {};
         var nodeOps: Utils.Set = {};
@@ -204,7 +205,8 @@ module TOSCAAnalysis {
                     ops[opName] = new Analysis.Operation(trans[j].target, [opReqs]);
                 }
             }
-            states[s] = new Analysis.State(caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
+            var isAlive = s == initialState;
+            states[s] = new Analysis.State(isAlive, caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
         }
 
         return new UIData(new Analysis.Node(typeName,
@@ -212,7 +214,7 @@ module TOSCAAnalysis {
             mapSet(mProt.getReqs(), reqNames.data),
             nodeOps,
             states,
-            mProt.getInitialState()),
+            initialState),
             mergeNames(reqNames.uiNames, capNames.uiNames));
     }
 
