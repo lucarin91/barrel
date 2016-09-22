@@ -25,7 +25,7 @@ module TOSCAAnalysis {
         var uiNames: UINames = {};
         var nodes = TOSCA.getToscaElements(node, tagName);
         for (var i = 0; i < nodes.length; i++) {
-            var element = <HTMLElement>nodes[0];
+            var element = <HTMLElement>nodes[i];
             var v = element.getAttribute(attr);
             var id = element.id;
             data[v] = id;
