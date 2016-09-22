@@ -220,6 +220,10 @@ module TOSCAAnalysis {
         var nodeTemplates = TOSCA.getToscaElements(serviceTemplate, "NodeTemplate");
         var relationships = TOSCA.getToscaElements(serviceTemplate, "RelationshipTemplate");
 
+        var reqNodeId: Utils.Map<string> = {};
+        var capNodeId: Utils.Map<string> = {};
+        var containedBy: Utils.Map<string> = {};
+
         var nodes: Utils.Map<Analysis.Node> = {};
         var binding: Utils.Map<string> = {};
         var uiNames: UINames = {};
@@ -228,10 +232,16 @@ module TOSCAAnalysis {
             var template = <HTMLElement>nodeTemplates[i];
             var name = template.getAttribute("name");
             var n = nodeTemplateToNode(template, types);
-            nodes[template.id] = n.data;
+            var nodeId = template.id;
+            nodes[nodeId] = n.data;
             uiNames = mergeNames(uiNames, n.uiNames);
             if (name)
-                uiNames[template.id] = name;
+                uiNames[nodeId] = name;
+
+            for (var r in n.data.reqs)
+                reqNodeId[r] = nodeId;
+            for (var c in n.data.caps)
+                capNodeId[c] = nodeId;
         }
 
         for (var i = 0; i < relationships.length; i++) {
@@ -239,6 +249,12 @@ module TOSCAAnalysis {
             var req = toscaString(rel, "SourceElement", "ref");
             var cap = toscaString(rel, "TargetElement", "ref");
             binding[req] = cap;
+
+            if (/(^|.*:)hostedOn$/.test(rel.getAttribute("type"))) {
+                var contained = reqNodeId[req];
+                var container = capNodeId[cap];
+                containedBy[contained] = container;
+            }
         }
 
         return new UIData(new Analysis.Application(nodes, binding), uiNames);
