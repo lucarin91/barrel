@@ -205,7 +205,7 @@ module TOSCAAnalysis {
                     ops[opName] = new Analysis.Operation(trans[j].target, [opReqs]);
                 }
             }
-            var isAlive = s == initialState;
+            var isAlive = s != initialState;
             states[s] = new Analysis.State(isAlive, caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
         }
 
