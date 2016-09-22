@@ -134,7 +134,7 @@ module Analysis {
                 states.push(nodeId + "=" + node.stateId);
                 this.reqs = Utils.setUnion(this.reqs, nodeState.reqs);
                 this.caps = Utils.setUnion(this.caps, nodeState.caps);
-                if (node.state.isAlive && containedBy[nodeId])
+                if (nodeState.isAlive && (nodeId in containedBy))
                     this.isContainmentConsistent = this.isContainmentConsistent && nodes[containedBy[nodeId]].state.isAlive;
 
                 for (var r in node.reqs)

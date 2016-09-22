@@ -132,17 +132,14 @@ var Planner = React.createClass({
     })
   },
   findPlan: function() {
-    var fromStateToString = gs => {
-      var globalState = [];
-      Object.keys(gs).map(s => globalState.push(s + "=" + gs[s]));
-      return globalState.join("|");
-    }
+    var fromStateToString = gs => Object.keys(gs).map(s => s + "=" + gs[s]).join("|");
+
     var start = fromStateToString(this.state.start);
     var target = fromStateToString(this.state.target);
 
     var result = {
-      isStartReachable: this.props.reachable[start]?true:false,
-      isTargetReachable: this.props.reachable[target]?true:false,
+      isStartReachable: start in this.props.reachable,
+      isTargetReachable: target in this.props.reachable,
       plan: null
     };
     if(result.isStartReachable &&
