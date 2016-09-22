@@ -209,7 +209,9 @@ module TOSCAAnalysis {
             states[s] = new Analysis.State(isAlive, caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
         }
 
-        return new UIData(new Analysis.Node(typeName,
+        return new UIData(new Analysis.Node(
+            initialState,
+            typeName,
             mapSet(mProt.getCaps(), capNames.data),
             mapSet(mProt.getReqs(), reqNames.data),
             nodeOps,

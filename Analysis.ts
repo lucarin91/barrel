@@ -26,7 +26,9 @@ module Analysis {
     export class Node {
         public state: State;
 
-        constructor(public type: string,
+        constructor(
+            public initialState: string,
+            public type: string,
             public caps: Utils.Set,
             public reqs: Utils.Set,
             public ops: Utils.Set,
@@ -73,6 +75,7 @@ module Analysis {
                 throw "Operation " + opId + " is not supported in the current state";
 
             return new Node(
+                this.initialState,
                 this.type,
                 this.caps,
                 this.reqs,
@@ -87,12 +90,25 @@ module Analysis {
                 throw "No fault handler for " + req + " in the current state";
 
             return new Node(
+                this.initialState,
                 this.type,
                 this.caps,
                 this.reqs,
                 this.ops,
                 this.states,
                 this.state.handlers[req]
+            );
+        }
+
+        doHardReset() {
+            return new Node(
+                this.initialState,
+                this.type,
+                this.caps,
+                this.reqs,
+                this.ops,
+                this.states,
+                this.initialState
             );
         }
     }
