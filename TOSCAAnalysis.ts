@@ -103,11 +103,17 @@ module TOSCAAnalysis {
 
     function computeFaultHandlers(states: Utils.Map<ManagementProtocol.State>, handlers: ManagementProtocol.FaultHandler[]) {
         var reqs: Utils.Map<Utils.Set> = {};
-        for (var s in states)
-            reqs[s] = states[s].getReqs();
-
+        var edges: Utils.Map<Utils.Set> = {};
         var reachable: Utils.Map<Utils.Set> = {};
-        handlers.forEach(function (handler) { reachable[handler.source] = {}; });
+        var handleReq: Utils.Map<Utils.Map<string>> = {};
+
+        for (var s in states) {
+            reqs[s] = states[s].getReqs();
+            edges[s] = {};
+            reachable[s] = {};
+            handleReq[s] = {};
+        }
+
         handlers.forEach(function (handler) {
             var source = states[handler.source];
             var target = states[handler.target];
@@ -124,11 +130,6 @@ module TOSCAAnalysis {
         handlerReachability(reachable);
         var top = handlerTop(reqs, reachable);
 
-        var edges: Utils.Map<Utils.Set> = {};
-        handlers.forEach(function (handler) {
-          edges[handler.source] = {};
-          edges[handler.target] = {}; 
-        });
         for (var s in edges)
             for (var t in reachable[top[s]])
                 if (Utils.setContains(reqs[s], reqs[t]))
@@ -165,8 +166,6 @@ module TOSCAAnalysis {
                         throw "Nondeterministic fault handlers (missing intersection)";
                 }
 
-        var handleReq: Utils.Map<Utils.Map<string>> = {};
-        handlers.forEach(function (handler) { handleReq[handler.source] = {}; });
         for (var s in edges)
             for (var t in edges[s])
                 for (var r in Utils.setDiff(reqs[s], reqs[t]))
