@@ -323,7 +323,7 @@ module Analysis {
                     // ! used to abuse NaN comparison (which always compares as false)
                     if (!(costs[src][dst] <= newCost)) {
                         costs[src][dst] = newCost;
-                        steps[src][dst] = new Step(nodeId, req, false);
+                        steps[src][dst] = new Step(nodeId, null, false);
                     }
                 }
         }
