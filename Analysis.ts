@@ -96,6 +96,7 @@ module Analysis {
     }
 
     export class Application {
+        public reqNodeId: Utils.Map<string> = {};
         public capNodeId: Utils.Map<string> = {};
         public globalState: string;
         public reqs: Utils.Set = {};
@@ -112,6 +113,8 @@ module Analysis {
                 states.push(nodeId + "=" + node.stateId);
                 this.reqs = Utils.setUnion(this.reqs, nodeState.reqs);
                 this.caps = Utils.setUnion(this.caps, nodeState.caps);
+                for (var r in node.reqs)
+                    this.reqNodeId[r] = nodeId;
                 for (var c in node.caps)
                     this.capNodeId[c] = nodeId;
             }
