@@ -38,6 +38,12 @@ var SingleSelector = React.createClass({
         };
     },
 
+    componentWillReceiveProps: function(nextProps) {
+        this.setState({
+            selected: nextProps.value,
+        });
+    },
+
     render: function() {
         var makeOption = v => <option key={v} value={v}>{v}</option>;
         var onChange = evt => {
@@ -69,9 +75,12 @@ var MultiSelector =  React.createClass({
 
 var BarrelStateCREditor = React.createClass({
     makeState: function(props) {
-        return {
-            selectedState: props.editor.state.mProt.getInitialState()
-        };
+        if (this.state && this.state.selectedState in props.editor.state.mProt.getStates())
+            return this.state;
+        else
+            return {
+                selectedState: props.editor.state.mProt.getInitialState()
+            };
     },
 
     getInitialState: function() {
