@@ -308,8 +308,15 @@ module ManagementProtocol {
             if (!Utils.isEmptySet(states[target].getReqs()))
                 throw "Illegal target state; must have empty requirements";
 
+            var alreadyHandledToEmpty = {};
+            this.getFaultHandlers().forEach(function(handler) {
+              if(Utils.isEmptySet(states[handler.target].getReqs()))
+                alreadyHandledToEmpty[handler.source] = true;
+            });
+            
             for (var source in states)
-                if (!Utils.isEmptySet(states[source].getReqs()))
+                if (!Utils.isEmptySet(states[source].getReqs()) &&
+                    !alreadyHandledToEmpty[source])
                     this.addFaultHandler({ source: source, target: target });
         }
 
