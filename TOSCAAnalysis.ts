@@ -93,7 +93,7 @@ module TOSCAAnalysis {
             top[s] = s;
         }
         for (var t in reachable) {
-            for (var s in reachable[s])
+            for (var s in reachable[t])
                 if (Utils.setContains(reqs[t], reqs[top[s]]))
                     top[s] = t;
         }
