@@ -261,7 +261,7 @@ module TOSCAAnalysis {
             }
         }
 
-        return new UIData(new Analysis.Application(nodes, binding), uiNames);
+        return new UIData(new Analysis.Application(nodes, binding, containedBy, false), uiNames);
     }
 
     export function uiApplicationToElement(app: UIData<Analysis.Application>) {
