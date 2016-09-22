@@ -5,7 +5,11 @@ var Operations = React.createClass({
       op.parentElement.getAttribute("name")+":"+op.getAttribute("name");
     return (
       <span>
-        {$.map(ops, op => (<span>{opString(op)}<br /></span>))}
+        {$.map(ops, op => (
+          <span key={this.props.nodeId+"-"+opString(op)}>
+            {opString(op)}
+            <br />
+          </span>))}
       </span>
     )
   }
@@ -20,7 +24,7 @@ var TopologyRow = React.createClass({
             <td>{this.props.node.type}</td>
             <td>{renderSet(this.props.node.caps)}</td>
             <td>{renderSet(this.props.node.reqs)}</td>
-            <td><Operations nodeType={this.props.nodeType} /></td>
+            <td><Operations nodeId={this.props.nodeId} nodeType={this.props.nodeType} /></td>
         </tr>
     );
   }
