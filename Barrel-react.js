@@ -616,7 +616,7 @@ var BarrelEditor = React.createClass({
               <div className="form-horizontal node-type-selector">
                 Node type:
                 <SingleSelector
-                  value={Object.keys(this.props.typeDocs)[0]}
+                  value={this.state.name}
                   items={this.props.typeDocs}
                   onChange={newType => this.setType(newType)}/>
                 <a className="btn btn-info" onClick={exportXMLDoc}>Show XML</a>
