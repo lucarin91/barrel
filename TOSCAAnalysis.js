@@ -83,7 +83,7 @@ var TOSCAAnalysis;
             top[s] = s;
         }
         for (var t in reachable) {
-            for (var s in reachable[s])
+            for (var s in reachable[t])
                 if (Utils.setContains(reqs[t], reqs[top[s]]))
                     top[s] = t;
         }
@@ -110,7 +110,10 @@ var TOSCAAnalysis;
         handlerReachability(reachable);
         var top = handlerTop(reqs, reachable);
         var edges = {};
-        handlers.forEach(function (handler) { edges[handler.source] = {}; });
+        handlers.forEach(function (handler) {
+            edges[handler.source] = {};
+            edges[handler.target] = {};
+        });
         for (var s in edges)
             for (var t in reachable[top[s]])
                 if (Utils.setContains(reqs[s], reqs[t]))
