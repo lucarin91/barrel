@@ -1,14 +1,26 @@
+var Operations = React.createClass({
+  render: function() {
+    var ops = this.props.nodeType.getElementsByTagName("Operation");
+    var opString = op =>
+      op.parentElement.getAttribute("name")+":"+op.getAttribute("name");
+    return (
+      <span>
+        {$.map(ops, op => (<span>{opString(op)}<br /></span>))}
+      </span>
+    )
+  }
+})
+
 var TopologyRow = React.createClass({
   render: function() {
     var renderSet = set => Object.keys(set).map(el => <span key={el}>{this.props.getUIName(el)}<br /></span>);
-
     return (
         <tr>
             <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
             <td>{this.props.node.type}</td>
             <td>{renderSet(this.props.node.caps)}</td>
             <td>{renderSet(this.props.node.reqs)}</td>
-            <td>{renderSet(this.props.node.ops)}</td>
+            <td><Operations nodeType={this.props.nodeType} /></td>
         </tr>
     );
   }
@@ -20,8 +32,7 @@ var TopologyTable = React.createClass({
     var getUIName = id => this.props.uiData.uiNames[id] || id;
 
   	var nodes = this.props.uiData.data.nodes;
-
-  	// Rendering
+    // Rendering
   	return (
       <table className="table table-striped table-hover">
         <thead>
@@ -33,7 +44,16 @@ var TopologyTable = React.createClass({
                 <th>Operations</th>
             </tr>
         </thead>
-        <tbody>{Object.keys(nodes).map(id => <TopologyRow key={id} getUIName={getUIName} nodeId={id} node={nodes[id]} />)}</tbody>
+        <tbody>{
+          Object.keys(nodes).map(id =>
+            <TopologyRow
+                key={id}
+                getUIName={getUIName}
+                nodeId={id}
+                node={nodes[id]}
+                nodeType={this.props.nodeTypes[nodes[id].type]}
+            />)
+        }</tbody>
       </table>
     );
   }
@@ -178,7 +198,7 @@ Visualiser = React.createClass({
                 <div ref={el => drawTopology(el, this.props.uiData)}></div>
               </div>
               <div style={{fontSize:"90%", verticalAlign: "top", display:"inline-block"}}>
-                <TopologyTable uiData={this.props.uiData} />
+                <TopologyTable uiData={this.props.uiData} nodeTypes={this.props.nodeTypes}/>
               </div>
             </div>
         </div>
