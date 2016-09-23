@@ -254,7 +254,7 @@ module TOSCAAnalysis {
             var cap = toscaString(rel, "TargetElement", "ref");
             binding[req] = cap;
 
-            if (/(^|.*:)hostedOn$/.test(rel.getAttribute("type"))) {
+            if (/(^|.*:)[hH]ostedOn$/.test(rel.getAttribute("type"))) {
                 var contained = reqNodeId[req];
                 var container = capNodeId[cap];
                 containedBy[contained] = container;
