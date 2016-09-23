@@ -33,7 +33,7 @@ var SimulatorHardReset = React.createClass({
       <div
         className="btn btn-sm btn-danger"
         onClick={() => {this.props.simulator.hardReset(this.props.nodeId)}}>
-        Handle reset
+        Hard recover
       </div>
     );
   }
