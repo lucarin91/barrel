@@ -172,7 +172,6 @@ var SimulatorTable = React.createClass({
     var getUIName = id => this.props.uiNames[id] || id;
     var nodes = this.state.app.nodes;
     var nodeIds = Object.keys(nodes);
-    console.log(this.state.app)
     return (
       <div>
         <h1>Simulator</h1>
