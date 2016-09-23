@@ -1,3 +1,44 @@
+var SimulatorNodeName = React.createClass({
+  render: function() {
+    return (
+      <td>
+        <b>{this.props.getUIName(this.props.nodeId)}</b>
+      </td>
+    );
+  }
+})
+
+var SimulatorNodeState = React.createClass({
+  render: function() {
+    return (
+      <td>
+        {this.props.getUIName(this.props.stateId)}
+        {" "}
+        <SimulatorHardReset
+          nodeId={this.props.nodeId}
+          stateId={this.props.stateId}
+          simulator={this.props.simulator}
+        />
+      </td>
+    );
+  }
+})
+
+var SimulatorHardReset = React.createClass({
+  render: function() {
+    if (!this.props.simulator.canHardReset(this.props.nodeId) ||
+        this.props.simulator.isInitialState(this.props.nodeId,this.props.stateId))
+      return null;
+    return (
+      <div
+        className="btn btn-sm btn-danger"
+        onClick={() => {this.props.simulator.hardReset(this.props.nodeId)}}>
+        Handle reset
+      </div>
+    );
+  }
+})
+
 var SimulatorNodeCapabilities = React.createClass({
   render: function() {
     var caps = Object.keys(this.props.caps);
@@ -67,8 +108,16 @@ var SimulatorNode = React.createClass({
   render: function() {
     return (
       <tr>
-        <td><b>{this.props.getUIName(this.props.nodeId)}</b></td>
-        <td>{this.props.getUIName(this.props.node.stateId)}</td>
+        <SimulatorNodeName
+          nodeId={this.props.nodeId}
+          getUIName={this.props.getUIName}
+        />
+        <SimulatorNodeState
+          nodeId={this.props.nodeId}
+          stateId={this.props.node.stateId}
+          getUIName={this.props.getUIName}
+          simulator={this.props.simulator}
+        />
         <SimulatorNodeCapabilities
           caps={this.props.node.state.caps}
           getUIName={this.props.getUIName}
@@ -98,6 +147,9 @@ var SimulatorTable = React.createClass({
   componentWillReceiveProps: function(nextProps) {
     this.setState({ app: nextProps.initialApp });
   },
+  isInitialState: function(nodeId,stateId) {
+    return (this.state.app.nodes[nodeId].initialState==stateId);
+  },
   canPerformOp: function(nodeId,opId) {
     return this.state.app.canPerformOp(nodeId,opId);
   },
@@ -110,10 +162,17 @@ var SimulatorTable = React.createClass({
   handleFault: function(nodeId,reqId) {
     this.setState({ app: this.state.app.handleFault(nodeId,reqId)})
   },
+  canHardReset: function(nodeId) {
+    return this.state.app.canHardReset(nodeId);
+  },
+  hardReset: function(nodeId) {
+    this.setState({ app: this.state.app.doHardReset(nodeId) })
+  },
   render: function() {
     var getUIName = id => this.props.uiNames[id] || id;
     var nodes = this.state.app.nodes;
     var nodeIds = Object.keys(nodes);
+    console.log(this.state.app)
     return (
       <div>
         <h1>Simulator</h1>
