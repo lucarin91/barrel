@@ -103,11 +103,17 @@ module TOSCAAnalysis {
 
     function computeFaultHandlers(states: Utils.Map<ManagementProtocol.State>, handlers: ManagementProtocol.FaultHandler[]) {
         var reqs: Utils.Map<Utils.Set> = {};
-        for (var s in states)
-            reqs[s] = states[s].getReqs();
-
+        var edges: Utils.Map<Utils.Set> = {};
         var reachable: Utils.Map<Utils.Set> = {};
-        handlers.forEach(function (handler) { reachable[handler.source] = {}; });
+        var handleReq: Utils.Map<Utils.Map<string>> = {};
+
+        for (var s in states) {
+            reqs[s] = states[s].getReqs();
+            edges[s] = {};
+            reachable[s] = {};
+            handleReq[s] = {};
+        }
+
         handlers.forEach(function (handler) {
             var source = states[handler.source];
             var target = states[handler.target];
@@ -124,11 +130,6 @@ module TOSCAAnalysis {
         handlerReachability(reachable);
         var top = handlerTop(reqs, reachable);
 
-        var edges: Utils.Map<Utils.Set> = {};
-        handlers.forEach(function (handler) {
-          edges[handler.source] = {};
-          edges[handler.target] = {}; 
-        });
         for (var s in edges)
             for (var t in reachable[top[s]])
                 if (Utils.setContains(reqs[s], reqs[t]))
@@ -165,8 +166,6 @@ module TOSCAAnalysis {
                         throw "Nondeterministic fault handlers (missing intersection)";
                 }
 
-        var handleReq: Utils.Map<Utils.Map<string>> = {};
-        handlers.forEach(function (handler) { handleReq[handler.source] = {}; });
         for (var s in edges)
             for (var t in edges[s])
                 for (var r in Utils.setDiff(reqs[s], reqs[t]))
@@ -181,6 +180,7 @@ module TOSCAAnalysis {
         var reqNames = toscaMap(nodeTemplate, "Requirement", "name");
         var typeName = nodeTemplate.getAttribute("type").split(':')[1]
         var mProt = new ManagementProtocol.ManagementProtocol(types[typeName]);
+        var initialState = mProt.getInitialState();
 
         var states: Utils.Map<Analysis.State> = {};
         var nodeOps: Utils.Set = {};
@@ -205,21 +205,28 @@ module TOSCAAnalysis {
                     ops[opName] = new Analysis.Operation(trans[j].target, [opReqs]);
                 }
             }
-            states[s] = new Analysis.State(caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
+            var isAlive = s != initialState;
+            states[s] = new Analysis.State(isAlive, caps, reqs, ops, mapKeys(handlers[s] || {}, reqNames.data));
         }
 
-        return new UIData(new Analysis.Node(typeName,
+        return new UIData(new Analysis.Node(
+            initialState,
+            typeName,
             mapSet(mProt.getCaps(), capNames.data),
             mapSet(mProt.getReqs(), reqNames.data),
             nodeOps,
             states,
-            mProt.getInitialState()),
+            initialState),
             mergeNames(reqNames.uiNames, capNames.uiNames));
     }
 
-    export function serviceTemplateToApplication(serviceTemplate: Element, types: Utils.Map<Element>) {
+    export function serviceTemplateToApplication(serviceTemplate: Element, types: Utils.Map<Element>, withHardReset: boolean) {
         var nodeTemplates = TOSCA.getToscaElements(serviceTemplate, "NodeTemplate");
         var relationships = TOSCA.getToscaElements(serviceTemplate, "RelationshipTemplate");
+
+        var reqNodeId: Utils.Map<string> = {};
+        var capNodeId: Utils.Map<string> = {};
+        var containedBy: Utils.Map<string> = {};
 
         var nodes: Utils.Map<Analysis.Node> = {};
         var binding: Utils.Map<string> = {};
@@ -229,10 +236,16 @@ module TOSCAAnalysis {
             var template = <HTMLElement>nodeTemplates[i];
             var name = template.getAttribute("name");
             var n = nodeTemplateToNode(template, types);
-            nodes[template.id] = n.data;
+            var nodeId = template.id;
+            nodes[nodeId] = n.data;
             uiNames = mergeNames(uiNames, n.uiNames);
             if (name)
-                uiNames[template.id] = name;
+                uiNames[nodeId] = name;
+
+            for (var r in n.data.reqs)
+                reqNodeId[r] = nodeId;
+            for (var c in n.data.caps)
+                capNodeId[c] = nodeId;
         }
 
         for (var i = 0; i < relationships.length; i++) {
@@ -240,9 +253,15 @@ module TOSCAAnalysis {
             var req = toscaString(rel, "SourceElement", "ref");
             var cap = toscaString(rel, "TargetElement", "ref");
             binding[req] = cap;
+
+            if (/(^|.*:)[hH]ostedOn$/.test(rel.getAttribute("type"))) {
+                var contained = reqNodeId[req];
+                var container = capNodeId[cap];
+                containedBy[contained] = container;
+            }
         }
 
-        return new UIData(new Analysis.Application(nodes, binding), uiNames);
+        return new UIData(new Analysis.Application(nodes, binding, containedBy, withHardReset), uiNames);
     }
 
     export function uiApplicationToElement(app: UIData<Analysis.Application>) {

@@ -689,11 +689,15 @@ var BarrelEditor = React.createClass({
 });
 
 var BarrelTabs = React.createClass({
+    getInitialState() {
+        return { hardReset: false };
+    },
+
     render: function() {
         var csar = this.props.csar;
         var serviceTemplate = csar.get("ServiceTemplate")[0].element;
         var types = csar.getTypes();
-        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types);
+        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, this.state.hardReset);
 
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
@@ -708,7 +712,13 @@ var BarrelTabs = React.createClass({
                         <BarrelEditor typeDocs={csar.getTypeDocuments()} onChange={() => this.forceUpdate()} />
                     </div>
                     <div className="tab-pane" id="analyser">
-                        <Options uiData={uiData}/>
+                        <div>
+                            <h1 className="bolded">Options</h1>
+                            <Opt
+                                caption="Hard recovery"
+                                enabled={this.state.hardReset}
+                                onClick={() => this.setState({ hardReset: !this.state.hardReset })} />
+                        </div>
                         <br />
                         <Simulator uiData={uiData} />
                         <br />
