@@ -60,7 +60,15 @@ var StateReachability = React.createClass({
 var PlannerResult = React.createClass({
   render: function() {
     var renderStep = step => {
-      if (step.isOp) return (
+      if (!step.opId) return (
+        <p key={"step-"+step.nodeId+"--"}>
+          <span className="label label-default">Hard recover</span>
+          {" Node "}
+          <b>{this.props.getUIName(step.nodeId)}</b>
+          {" is now hard recovered to its initial state."}
+        </p>
+      );
+      else if (step.isOp) return (
         <p key={"step-"+step.nodeId+"-"+step.opId}>
           <span className="label label-primary">Operation</span>
           {" Execute operation "}
@@ -132,17 +140,14 @@ var Planner = React.createClass({
     })
   },
   findPlan: function() {
-    var fromStateToString = gs => {
-      var globalState = [];
-      Object.keys(gs).map(s => globalState.push(s + "=" + gs[s]));
-      return globalState.join("|");
-    }
+    var fromStateToString = gs => Object.keys(gs).map(s => s + "=" + gs[s]).join("|");
+
     var start = fromStateToString(this.state.start);
     var target = fromStateToString(this.state.target);
 
     var result = {
-      isStartReachable: this.props.reachable[start]?true:false,
-      isTargetReachable: this.props.reachable[target]?true:false,
+      isStartReachable: start in this.props.reachable,
+      isTargetReachable: target in this.props.reachable,
       plan: null
     };
     if(result.isStartReachable &&
@@ -153,7 +158,8 @@ var Planner = React.createClass({
       while(currentApp.globalState != target) {
         var step = this.props.plans.steps[currentApp.globalState][target];
         result.plan.push(step);
-        if (step.isOp) currentApp = currentApp.performOp(step.nodeId,step.opId);
+        if (!step.opId) currentApp = currentApp.doHardReset(step.nodeId);
+        else if (step.isOp) currentApp = currentApp.performOp(step.nodeId,step.opId);
         else currentApp = currentApp.handleFault(step.nodeId,step.opId);
       }
     }

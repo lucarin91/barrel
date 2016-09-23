@@ -21,7 +21,8 @@ var Analysis;
     }());
     Analysis.Operation = Operation;
     var State = (function () {
-        function State(caps, reqs, ops, handlers) {
+        function State(isAlive, caps, reqs, ops, handlers) {
+            this.isAlive = isAlive;
             this.caps = caps;
             this.reqs = reqs;
             this.ops = ops;
@@ -31,7 +32,8 @@ var Analysis;
     }());
     Analysis.State = State;
     var Node = (function () {
-        function Node(type, caps, reqs, ops, states, stateId) {
+        function Node(initialState, type, caps, reqs, ops, states, stateId) {
+            this.initialState = initialState;
             this.type = type;
             this.caps = caps;
             this.reqs = reqs;
@@ -69,25 +71,32 @@ var Analysis;
         Node.prototype.performOp = function (opId) {
             if (!(opId in this.state.ops))
                 throw "Operation " + opId + " is not supported in the current state";
-            return new Node(this.type, this.caps, this.reqs, this.ops, this.states, this.state.ops[opId].to);
+            return new Node(this.initialState, this.type, this.caps, this.reqs, this.ops, this.states, this.state.ops[opId].to);
         };
         Node.prototype.handleFault = function (req) {
             if (!(req in this.state.handlers))
                 throw "No fault handler for " + req + " in the current state";
-            return new Node(this.type, this.caps, this.reqs, this.ops, this.states, this.state.handlers[req]);
+            return new Node(this.initialState, this.type, this.caps, this.reqs, this.ops, this.states, this.state.handlers[req]);
+        };
+        Node.prototype.doHardReset = function () {
+            return new Node(this.initialState, this.type, this.caps, this.reqs, this.ops, this.states, this.initialState);
         };
         return Node;
     }());
     Analysis.Node = Node;
     var Application = (function () {
-        function Application(nodes, binding) {
+        function Application(nodes, binding, containedBy, hasHardReset) {
             this.nodes = nodes;
             this.binding = binding;
+            this.containedBy = containedBy;
+            this.hasHardReset = hasHardReset;
+            this.reqNodeId = {};
             this.capNodeId = {};
             this.reqs = {};
             this.caps = {};
             this.faults = {};
             this.isConsistent = true;
+            this.isContainmentConsistent = true;
             var states = [];
             for (var nodeId in nodes) {
                 var node = nodes[nodeId];
@@ -95,6 +104,10 @@ var Analysis;
                 states.push(nodeId + "=" + node.stateId);
                 this.reqs = Utils.setUnion(this.reqs, nodeState.reqs);
                 this.caps = Utils.setUnion(this.caps, nodeState.caps);
+                if (nodeState.isAlive && (nodeId in containedBy))
+                    this.isContainmentConsistent = this.isContainmentConsistent && nodes[containedBy[nodeId]].state.isAlive;
+                for (var r in node.reqs)
+                    this.reqNodeId[r] = nodeId;
                 for (var c in node.caps)
                     this.capNodeId[c] = nodeId;
             }
@@ -116,6 +129,8 @@ var Analysis;
         Application.prototype.unsatisfiedOpConstraints = function (nodeId, opId) {
             if (!this.isConsistent)
                 return "Operations are not allowed while faults are pending";
+            if (this.hasHardReset && !this.isContainmentConsistent)
+                return "Operations are not allowed while a liveness constraint is failing";
             if (!(nodeId in this.nodes))
                 return "There is no " + nodeId + " node in the application";
             if (!(opId in this.nodes[nodeId].state.ops))
@@ -136,7 +151,7 @@ var Analysis;
             var nodes = Utils.cloneMap(this.nodes);
             var node = nodes[nodeId];
             nodes[nodeId] = node.performOp(opId);
-            return new Application(nodes, this.binding);
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
         };
         Application.prototype.unsatisfiedHandlerConstraints = function (nodeId, r) {
             if (!(r in this.faults))
@@ -156,7 +171,28 @@ var Analysis;
             var nodes = Utils.cloneMap(this.nodes);
             var node = nodes[nodeId];
             nodes[nodeId] = node.handleFault(r);
-            return new Application(nodes, this.binding);
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
+        };
+        Application.prototype.unsatisfiedHardResetConstraints = function (nodeId) {
+            if (!this.hasHardReset)
+                return "Hard resets are not enabled on the application";
+            if (!(nodeId in this.containedBy))
+                return "The node " + nodeId + "is not contained in another node";
+            var container = this.containedBy[nodeId];
+            if (this.nodes[container].state.isAlive)
+                return container + " (the container of " + nodeId + ") is alive";
+        };
+        Application.prototype.canHardReset = function (nodeId) {
+            return !this.unsatisfiedHardResetConstraints(nodeId);
+        };
+        Application.prototype.doHardReset = function (nodeId) {
+            var constraints = this.unsatisfiedHardResetConstraints(nodeId);
+            if (constraints)
+                throw constraints;
+            var nodes = Utils.cloneMap(this.nodes);
+            var node = nodes[nodeId];
+            nodes[nodeId] = node.doHardReset();
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
         };
         return Application;
     }());
@@ -175,6 +211,9 @@ var Analysis;
                 for (var req in app.nodes[nodeId].reqs)
                     if (app.canHandleFault(nodeId, req))
                         visit(app.handleFault(nodeId, req));
+            for (var nodeId in app.nodes)
+                if (app.canHardReset(nodeId))
+                    visit(app.doHardReset(nodeId));
         };
         visit(application);
         return visited;
@@ -212,6 +251,16 @@ var Analysis;
                             steps[src][dst] = new Step(nodeId, req, false);
                         }
                     }
+            for (var nodeId in state.nodes)
+                if (state.canHardReset(nodeId)) {
+                    var dst = state.doHardReset(nodeId).globalState;
+                    var newCost = 1; // TODO: we might want to compute the cost in a clever way
+                    // ! used to abuse NaN comparison (which always compares as false)
+                    if (!(costs[src][dst] <= newCost)) {
+                        costs[src][dst] = newCost;
+                        steps[src][dst] = new Step(nodeId, null, false);
+                    }
+                }
         }
         for (var via in states) {
             for (var src in states) {

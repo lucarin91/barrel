@@ -15,7 +15,9 @@ module Analysis {
     }
 
     export class State {
-        constructor(public caps: Utils.Set,
+        constructor(
+            public isAlive: boolean,
+            public caps: Utils.Set,
             public reqs: Utils.Set,
             public ops: Utils.Map<Operation>,
             public handlers: Utils.Map<string>) { }
@@ -24,7 +26,9 @@ module Analysis {
     export class Node {
         public state: State;
 
-        constructor(public type: string,
+        constructor(
+            public initialState: string,
+            public type: string,
             public caps: Utils.Set,
             public reqs: Utils.Set,
             public ops: Utils.Set,
@@ -71,6 +75,7 @@ module Analysis {
                 throw "Operation " + opId + " is not supported in the current state";
 
             return new Node(
+                this.initialState,
                 this.type,
                 this.caps,
                 this.reqs,
@@ -85,6 +90,7 @@ module Analysis {
                 throw "No fault handler for " + req + " in the current state";
 
             return new Node(
+                this.initialState,
                 this.type,
                 this.caps,
                 this.reqs,
@@ -93,18 +99,34 @@ module Analysis {
                 this.state.handlers[req]
             );
         }
+
+        doHardReset() {
+            return new Node(
+                this.initialState,
+                this.type,
+                this.caps,
+                this.reqs,
+                this.ops,
+                this.states,
+                this.initialState
+            );
+        }
     }
 
     export class Application {
+        public reqNodeId: Utils.Map<string> = {};
         public capNodeId: Utils.Map<string> = {};
         public globalState: string;
         public reqs: Utils.Set = {};
         public caps: Utils.Set = {};
         public faults: Utils.Set = {};
         public isConsistent = true;
+        public isContainmentConsistent = true;
 
         constructor(public nodes: Utils.Map<Node>,
-                    public binding: Utils.Map<string>) {
+                    public binding: Utils.Map<string>,
+                    public containedBy: Utils.Map<string>,
+                    public hasHardReset) {
             var states = [];
             for (var nodeId in nodes) {
                 var node = nodes[nodeId];
@@ -112,6 +134,11 @@ module Analysis {
                 states.push(nodeId + "=" + node.stateId);
                 this.reqs = Utils.setUnion(this.reqs, nodeState.reqs);
                 this.caps = Utils.setUnion(this.caps, nodeState.caps);
+                if (nodeState.isAlive && (nodeId in containedBy))
+                    this.isContainmentConsistent = this.isContainmentConsistent && nodes[containedBy[nodeId]].state.isAlive;
+
+                for (var r in node.reqs)
+                    this.reqNodeId[r] = nodeId;
                 for (var c in node.caps)
                     this.capNodeId[c] = nodeId;
             }
@@ -140,6 +167,9 @@ module Analysis {
             if (!this.isConsistent)
                 return "Operations are not allowed while faults are pending";
 
+            if (this.hasHardReset && !this.isContainmentConsistent)
+                return "Operations are not allowed while a liveness constraint is failing";
+
             if (!(nodeId in this.nodes))
                 return "There is no " + nodeId + " node in the application";
 
@@ -166,7 +196,7 @@ module Analysis {
             var nodes = Utils.cloneMap(this.nodes);
             var node = nodes[nodeId];
             nodes[nodeId] = node.performOp(opId);
-            return new Application(nodes, this.binding);
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
         }
 
         unsatisfiedHandlerConstraints(nodeId: string, r: string) {
@@ -192,7 +222,34 @@ module Analysis {
             var nodes = Utils.cloneMap(this.nodes);
             var node = nodes[nodeId];
             nodes[nodeId] = node.handleFault(r);
-            return new Application(nodes, this.binding);
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
+        }
+
+        unsatisfiedHardResetConstraints(nodeId: string) {
+            if (!this.hasHardReset)
+                return "Hard resets are not enabled on the application";
+
+            if (!(nodeId in this.containedBy))
+                return "The node " + nodeId + "is not contained in another node";
+
+            var container = this.containedBy[nodeId];
+            if (this.nodes[container].state.isAlive)
+                return container + " (the container of " + nodeId + ") is alive";
+        }
+
+        canHardReset(nodeId: string) {
+            return !this.unsatisfiedHardResetConstraints(nodeId);
+        }
+
+        doHardReset(nodeId: string) {
+            var constraints = this.unsatisfiedHardResetConstraints(nodeId);
+            if (constraints)
+                throw constraints;
+
+            var nodes = Utils.cloneMap(this.nodes);
+            var node = nodes[nodeId];
+            nodes[nodeId] = node.doHardReset();
+            return new Application(nodes, this.binding, this.containedBy, this.hasHardReset);
         }
     }
 
@@ -213,6 +270,10 @@ module Analysis {
                 for (var req in app.nodes[nodeId].reqs)
                     if (app.canHandleFault(nodeId, req))
                         visit(app.handleFault(nodeId, req));
+
+            for (var nodeId in app.nodes)
+                if (app.canHardReset(nodeId))
+                    visit(app.doHardReset(nodeId));
         };
         visit(application);
         return visited;
@@ -254,6 +315,17 @@ module Analysis {
                             steps[src][dst] = new Step(nodeId, req, false);
                         }
                     }
+
+            for (var nodeId in state.nodes)
+                if (state.canHardReset(nodeId)) {
+                    var dst = state.doHardReset(nodeId).globalState;
+                    var newCost = 1; // TODO: we might want to compute the cost in a clever way
+                    // ! used to abuse NaN comparison (which always compares as false)
+                    if (!(costs[src][dst] <= newCost)) {
+                        costs[src][dst] = newCost;
+                        steps[src][dst] = new Step(nodeId, null, false);
+                    }
+                }
         }
 
         for (var via in states) {
