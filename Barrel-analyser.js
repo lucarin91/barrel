@@ -62,9 +62,10 @@ var PlannerResult = React.createClass({
     var renderStep = step => {
       if (!step.opId) return (
         <p key={"step-"+step.nodeId+"--"}>
-          <span className="label label-primary">Operation</span>
-          {" Reset on node "}
+          <span className="label label-default">Hard recover</span>
+          {" Node "}
           <b>{this.props.getUIName(step.nodeId)}</b>
+          {" is now hard recovered to its initial state."}
         </p>
       );
       else if (step.isOp) return (
