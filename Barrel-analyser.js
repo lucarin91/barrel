@@ -209,12 +209,17 @@ Analyser = React.createClass({
     var nodeSetToNodeList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
 
     return (
-      <Planner
-        initialGlobalState={this.props.uiData.data.globalState}
-        nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
-        reachable={Analysis.reachable(this.props.uiData.data)}
-        plans={Analysis.plans(this.props.uiData.data)}
-        getUIName={getUIName} />
+      <div>
+        <Simulator uiData={this.props.uiData} />
+        <br />
+        <Planner
+          initialGlobalState={this.props.uiData.data.globalState}
+          nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
+          reachable={Analysis.reachable(this.props.uiData.data)}
+          plans={Analysis.plans(this.props.uiData.data)}
+          getUIName={getUIName}
+        />
+      </div>
     )
   }
 })
