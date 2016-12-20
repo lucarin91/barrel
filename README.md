@@ -9,7 +9,7 @@ The very first step is to import a [CSAR](http://docs.oasis-open.org/tosca/TOSCA
 
 Sample CSARs concerning the application in the below figure are available in this repository.
 
-![Thinking application](https://github.com/di-unipi-socc/barrel/tree/master/examples/thinking-app.png)
+![Thinking application](https://raw.githubusercontent.com/di-unipi-socc/barrel/master/examples/thinking-app.png)
 
 They can be found in the [examples](https://github.com/di-unipi-socc/barrel/tree/master/examples) folder:
 * [thinking-app-without-protocols.csar](https://github.com/di-unipi-socc/barrel/raw/master/examples/thinking-app-without-protocols.csar) is the CSAR modelling the application, without specifying any management protocol.
