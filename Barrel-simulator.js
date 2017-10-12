@@ -202,7 +202,7 @@ var SimulatorTable = React.createClass({
           </tbody>
         </table>
         <div className="form-horizontal col-lg-10" style={{textAlign:"center"}}>
-          <button type="button" className="btn btn-default btn-sm" onClick={() => this.setState(this.getInitialState())}>
+          <button type="button" className="btn btn-default btn-sm" onClick={() => this.props.resetSimulator()}>
             Reset simulator
           </button>
         </div>
@@ -213,6 +213,6 @@ var SimulatorTable = React.createClass({
 
 Simulator = React.createClass({
   render: function() {
-      return <SimulatorTable initialApp={this.props.app} uiNames={this.props.uiNames} />;
+      return <SimulatorTable initialApp={this.props.app} uiNames={this.props.uiNames} resetSimulator={this.props.resetSimulator} />;
   }
 });
