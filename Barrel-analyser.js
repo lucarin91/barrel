@@ -215,8 +215,8 @@ Analyser = React.createClass({
         <Planner
           initialGlobalState={this.props.uiData.data.globalState}
           nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
-          reachable={Analysis.reachable(this.props.uiData.data)}
-          plans={Analysis.plans(this.props.uiData.data)}
+          reachable={this.props.reachable}
+          plans={this.props.plans}
           getUIName={getUIName}
         />
       </div>
