@@ -210,7 +210,7 @@ Analyser = React.createClass({
 
     return (
       <div>
-        <Simulator uiData={this.props.uiData} />
+        <Simulator app={this.props.uiData.data} uiNames={this.props.uiData.uiNames} />
         <br />
         <Planner
           initialGlobalState={this.props.uiData.data.globalState}

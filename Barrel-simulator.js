@@ -213,6 +213,6 @@ var SimulatorTable = React.createClass({
 
 Simulator = React.createClass({
   render: function() {
-      return <SimulatorTable initialApp={this.props.uiData.data} uiNames={this.props.uiData.uiNames} />;
+      return <SimulatorTable initialApp={this.props.app} uiNames={this.props.uiNames} />;
   }
 });
