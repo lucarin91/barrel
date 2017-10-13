@@ -720,7 +720,10 @@ var BarrelTabs = React.createClass({
                                 onClick={() => this.setState({ hardReset: !this.state.hardReset })} />
                         </div>
                         <br />
-                        <Analyser uiData={uiData} />
+                        <Analyser
+                          uiData={uiData}
+                          reachable={Analysis.reachable(uiData.data)}
+                          plans={Analysis.plans(uiData.data)} />
                     </div>
                 </div>
             </div>

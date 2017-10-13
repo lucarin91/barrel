@@ -180,6 +180,9 @@ var Planner = React.createClass({
               isStartSelector={true}
               updateGlobalState={this.updateGlobalState} />
             <StateReachability isReachable={plan.isStartReachable} />
+            <div style={{textAlign: "center"}}>
+              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
+            </div>
           </div>
           <div className="analyser-align">
             <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
@@ -193,6 +196,9 @@ var Planner = React.createClass({
               isStartSelector={false}
               updateGlobalState={this.updateGlobalState} />
             <StateReachability isReachable={plan.isTargetReachable} />
+            <div style={{textAlign: "center"}}>
+              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
+            </div>
           </div>
           <PlannerResult
             plan={plan}
@@ -204,20 +210,44 @@ var Planner = React.createClass({
 })
 
 Analyser = React.createClass({
+  getInitialState: function() {
+    return {
+      simulatorApp: this.props.uiData.data
+    };
+  },
+  resetSimulatorState: function() {
+    this.setState({
+      simulatorApp: this.props.uiData.data
+    });
+  },
+  setSimulatorState: function(gs) {
+    var fromStateToString = gs => Object.keys(gs).map(s => s + "=" + gs[s]).join("|");
+
+    var desiredState = fromStateToString(gs);
+
+    if (desiredState in this.props.reachable)
+      this.setState({
+        simulatorApp: this.props.reachable[desiredState]
+      });
+  },
   render: function() {
     var getUIName = id => this.props.uiData.uiNames[id] || id;
     var nodeSetToNodeList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
 
     return (
       <div>
-        <Simulator uiData={this.props.uiData} />
+        <Simulator
+          app={this.state.simulatorApp}
+          uiNames={this.props.uiData.uiNames}
+          resetSimulator={this.resetSimulatorState} />
         <br />
         <Planner
           initialGlobalState={this.props.uiData.data.globalState}
           nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
-          reachable={Analysis.reachable(this.props.uiData.data)}
-          plans={Analysis.plans(this.props.uiData.data)}
+          reachable={this.props.reachable}
+          plans={this.props.plans}
           getUIName={getUIName}
+          setSimulatorState={this.setSimulatorState}
         />
       </div>
     )
