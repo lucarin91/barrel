@@ -166,6 +166,7 @@ var Planner = React.createClass({
     return result;
   },
   render: function() {
+    console.log('render Planner')
     var plan = this.findPlan();
     return (
       <div>
@@ -231,6 +232,8 @@ Analyser = React.createClass({
       });
   },
   render: function() {
+    if (this.props.loading) return null;
+    console.log('render Analyser')
     var getUIName = id => this.props.uiData.uiNames[id] || id;
     var nodeSetToNodeList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
 

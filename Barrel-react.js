@@ -599,6 +599,7 @@ var BarrelEditor = React.createClass({
         this.state.mProt.save(() => {
             this.refs.mProtGraph.forceUpdate();
             this.props.onChange();
+            return false;
         });
     },
 
@@ -688,28 +689,70 @@ var BarrelEditor = React.createClass({
     }
 });
 
+var worker = new Worker("worker.js");
+
 var BarrelTabs = React.createClass({
     getInitialState() {
-        return { hardReset: false };
-    },
-
-    render: function() {
         var csar = this.props.csar;
         var serviceTemplate = csar.get("ServiceTemplate")[0].element;
         var types = csar.getTypes();
-        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, this.state.hardReset);
+        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, false);
+        this.updatePlan(uiData)
+        return {
+            hardReset: false,
+            csar: csar,
+            serviceTemplate: serviceTemplate,
+            types: types,
+            uiData: uiData,
+            plans: null};
+    },
+    updateState: function(){
+        this.setState({csar: this.props.csar});
+        this.setState({serviceTemplate: this.state.csar.get("ServiceTemplate")[0].element})
+        this.setState({types: this.state.csar.getTypes()})
+        this.setState({uiData: TOSCAAnalysis.serviceTemplateToApplication(
+            this.state.serviceTemplate, this.state.types, this.state.hardReset)});
 
+    },
+    updatePlan: function(uiData){
+        uiData = uiData || this.state.uiData
+        // send message to web worker
+        worker.postMessage(uiData);
+        // receive messages from web worker
+        worker.onmessage = (e) => {
+            console.log('receive', e.data);
+            this.setState({plans: e.data});
+            // this.forceUpdate();
+        };
+     },
+    render: function() {
+        console.log('render tabs');
+        // // DEBUG
+        // var worker = new Worker("worker.js");
+        // console.log(this.state.uiData);
+        // // Analysis.plans(this.state.uiData);
+        // worker.postMessage(this.state.uiData);
+        // // receive messages from web worker
+        // worker.onmessage = (e) => {
+        //   console.log('receive', e.data);
+        //     // this.setState({plans: e.data});
+        // };
+        // // DEBUG
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
                     <div className="tab-pane active" id="visualiser">
                         <Visualiser
-                            uiData={uiData}
-                            nodeTypes={types}
-                            appName={serviceTemplate.getAttribute("name")} />
+                            uiData={this.state.uiData}
+                            nodeTypes={this.state.types}
+                            appName={this.state.serviceTemplate.getAttribute("name")} />
                     </div>
                     <div className="tab-pane" id="editor">
-                        <BarrelEditor typeDocs={csar.getTypeDocuments()} onChange={() => {}} />
+                        <BarrelEditor typeDocs={this.state.csar.getTypeDocuments()} onChange={() => {
+                            console.log('force refresh');
+                            this.updateState()
+                            this.updatePlan()
+                        }} />
                     </div>
                     <div className="tab-pane" id="analyser">
                         <div>
@@ -721,9 +764,10 @@ var BarrelTabs = React.createClass({
                         </div>
                         <br />
                         <Analyser
-                          uiData={uiData}
-                          reachable={Analysis.reachable(uiData.data)}
-                          plans={Analysis.plans(uiData.data)} />
+                          uiData={this.state.uiData}
+                          reachable={Analysis.reachable(this.state.uiData.data)}
+                          plans={this.state.plans}
+                          loading={this.state.plans==null}/>
                     </div>
                 </div>
             </div>
