@@ -689,55 +689,29 @@ var BarrelEditor = React.createClass({
     }
 });
 
-var worker = new Worker("worker.js");
-
 var BarrelTabs = React.createClass({
     getInitialState() {
         var csar = this.props.csar;
         var serviceTemplate = csar.get("ServiceTemplate")[0].element;
         var types = csar.getTypes();
         var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, false);
-        this.updatePlan(uiData)
         return {
             hardReset: false,
             csar: csar,
             serviceTemplate: serviceTemplate,
             types: types,
-            uiData: uiData,
-            plans: null};
+            uiData: uiData};
     },
-    updateState: function(){
+    updateState() {
+        //TODO: fix this mess
         this.setState({csar: this.props.csar});
         this.setState({serviceTemplate: this.state.csar.get("ServiceTemplate")[0].element})
         this.setState({types: this.state.csar.getTypes()})
         this.setState({uiData: TOSCAAnalysis.serviceTemplateToApplication(
             this.state.serviceTemplate, this.state.types, this.state.hardReset)});
-
     },
-    updatePlan: function(uiData){
-        uiData = uiData || this.state.uiData
-        // send message to web worker
-        worker.postMessage(uiData);
-        // receive messages from web worker
-        worker.onmessage = (e) => {
-            console.log('receive', e.data);
-            this.setState({plans: e.data});
-            // this.forceUpdate();
-        };
-     },
     render: function() {
         console.log('render tabs');
-        // // DEBUG
-        // var worker = new Worker("worker.js");
-        // console.log(this.state.uiData);
-        // // Analysis.plans(this.state.uiData);
-        // worker.postMessage(this.state.uiData);
-        // // receive messages from web worker
-        // worker.onmessage = (e) => {
-        //   console.log('receive', e.data);
-        //     // this.setState({plans: e.data});
-        // };
-        // // DEBUG
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
@@ -750,8 +724,8 @@ var BarrelTabs = React.createClass({
                     <div className="tab-pane" id="editor">
                         <BarrelEditor typeDocs={this.state.csar.getTypeDocuments()} onChange={() => {
                             console.log('force refresh');
-                            this.updateState()
-                            this.updatePlan()
+                            this.updateState();
+                            // this.forceUpdate();
                         }} />
                     </div>
                     <div className="tab-pane" id="analyser">
@@ -766,8 +740,7 @@ var BarrelTabs = React.createClass({
                         <Analyser
                           uiData={this.state.uiData}
                           reachable={Analysis.reachable(this.state.uiData.data)}
-                          plans={this.state.plans}
-                          loading={this.state.plans==null}/>
+                        />
                     </div>
                 </div>
             </div>

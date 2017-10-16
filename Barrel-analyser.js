@@ -112,6 +112,8 @@ var PlannerResult = React.createClass({
   }
 });
 
+var worker = new Worker("worker.js");
+
 var Planner = React.createClass({
   getInitialState: function () {
     var startGS = {};
@@ -139,7 +141,7 @@ var Planner = React.createClass({
       target: this.state.start
     })
   },
-  findPlan: function() {
+  findPlan: function(plans) {
     var fromStateToString = gs => Object.keys(gs).map(s => s + "=" + gs[s]).join("|");
 
     var start = fromStateToString(this.state.start);
@@ -152,11 +154,11 @@ var Planner = React.createClass({
     };
     if(result.isStartReachable &&
         result.isTargetReachable &&
-        this.props.plans.costs[start][target]>=0) {
+        plans.costs[start][target]>=0) {
       result.plan = [];
       var currentApp = this.props.reachable[start];
       while(currentApp.globalState != target) {
-        var step = this.props.plans.steps[currentApp.globalState][target];
+        var step = plans.steps[currentApp.globalState][target];
         result.plan.push(step);
         if (!step.opId) currentApp = currentApp.doHardReset(step.nodeId);
         else if (step.isOp) currentApp = currentApp.performOp(step.nodeId,step.opId);
@@ -165,9 +167,26 @@ var Planner = React.createClass({
     }
     return result;
   },
+  updatePlan(uiData) {
+    uiData = uiData||this.props.uiData;
+    // send message to web worker
+    worker.postMessage(uiData);
+    // receive messages from web worker
+    worker.onmessage = (e) => {
+        var plans = e.data;
+        this.setState({plan: this.findPlan(plans)});
+        console.log('Update plan!')
+        // this.forceUpdate();
+    };
+  },
+  componentWillMount() {
+   this.updatePlan();
+  },
+  componentWillReceiveProps(nextProps){
+   this.updatePlan(nextProps.uiData);
+  },
   render: function() {
-    console.log('render Planner')
-    var plan = this.findPlan();
+    if (!this.state.plan) return null
     return (
       <div>
         <h1 className="bolded">Planner</h1>
@@ -180,7 +199,7 @@ var Planner = React.createClass({
               globalState={this.state.start}
               isStartSelector={true}
               updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={plan.isStartReachable} />
+            <StateReachability isReachable={this.state.plan.isStartReachable} />
             <div style={{textAlign: "center"}}>
               <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
             </div>
@@ -196,13 +215,13 @@ var Planner = React.createClass({
               globalState={this.state.target}
               isStartSelector={false}
               updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={plan.isTargetReachable} />
+            <StateReachability isReachable={this.state.plan.isTargetReachable} />
             <div style={{textAlign: "center"}}>
               <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
             </div>
           </div>
           <PlannerResult
-            plan={plan}
+            plan={this.state.plan}
             getUIName={this.props.getUIName} />
         </div>
       </div>
@@ -231,6 +250,12 @@ Analyser = React.createClass({
         simulatorApp: this.props.reachable[desiredState]
       });
   },
+  componentWillReceiveProps(nextProps){
+    console.log('Analyser will receive new props')
+    this.setState({
+      simulatorApp: nextProps.uiData.data
+    });
+  },
   render: function() {
     if (this.props.loading) return null;
     console.log('render Analyser')
@@ -248,7 +273,7 @@ Analyser = React.createClass({
           initialGlobalState={this.props.uiData.data.globalState}
           nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
           reachable={this.props.reachable}
-          plans={this.props.plans}
+          uiData={this.props.uiData}
           getUIName={getUIName}
           setSimulatorState={this.setSimulatorState}
         />
