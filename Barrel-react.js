@@ -189,6 +189,7 @@ var BarrelTransitionAdder = React.createClass({
         };
 
         var apply = () => {
+            // TODO: must check if it is possible to add the transition
             this.props.editor.state.mProt.addTransition(this.state);
             this.props.editor.refresh();
         };
@@ -592,17 +593,16 @@ var BarrelEditor = React.createClass({
 
     setType: function(name) {
         this.setState(this.makeState(name));
-        this.refresh();
+        // this.refresh();
     },
 
     refresh: function() {
+        console.log('Save new csar')
         this.state.mProt.save(() => {
             this.refs.mProtGraph.forceUpdate();
             this.props.onChange();
-            return false;
         });
     },
-
     render: function() {
         var exportXMLDoc = () => {
             var url = URL.createObjectURL(this.state.mProt.getXML());
@@ -691,41 +691,29 @@ var BarrelEditor = React.createClass({
 
 var BarrelTabs = React.createClass({
     getInitialState() {
-        var csar = this.props.csar;
-        var serviceTemplate = csar.get("ServiceTemplate")[0].element;
-        var types = csar.getTypes();
-        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, false);
         return {
             hardReset: false,
-            csar: csar,
-            serviceTemplate: serviceTemplate,
-            types: types,
-            uiData: uiData};
-    },
-    updateState() {
-        //TODO: fix this mess
-        this.setState({csar: this.props.csar});
-        this.setState({serviceTemplate: this.state.csar.get("ServiceTemplate")[0].element})
-        this.setState({types: this.state.csar.getTypes()})
-        this.setState({uiData: TOSCAAnalysis.serviceTemplateToApplication(
-            this.state.serviceTemplate, this.state.types, this.state.hardReset)});
+            csar: this.props.csar
+        };
     },
     render: function() {
-        console.log('render tabs');
+      console.log('render tabs');
+        var serviceTemplate = this.state.csar.get("ServiceTemplate")[0].element;
+        var types = this.state.csar.getTypes();
+        var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, this.state.hardReset);
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
                     <div className="tab-pane active" id="visualiser">
                         <Visualiser
-                            uiData={this.state.uiData}
-                            nodeTypes={this.state.types}
-                            appName={this.state.serviceTemplate.getAttribute("name")} />
+                            uiData={uiData}
+                            nodeTypes={types}
+                            appName={serviceTemplate.getAttribute("name")} />
                     </div>
                     <div className="tab-pane" id="editor">
                         <BarrelEditor typeDocs={this.state.csar.getTypeDocuments()} onChange={() => {
                             console.log('force refresh');
-                            this.updateState();
-                            // this.forceUpdate();
+                            this.forceUpdate();
                         }} />
                     </div>
                     <div className="tab-pane" id="analyser">
@@ -738,8 +726,8 @@ var BarrelTabs = React.createClass({
                         </div>
                         <br />
                         <Analyser
-                          uiData={this.state.uiData}
-                          reachable={Analysis.reachable(this.state.uiData.data)}
+                          uiData={uiData}
+                          reachable={Analysis.reachable(uiData.data)}
                         />
                     </div>
                 </div>

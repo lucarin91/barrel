@@ -111,8 +111,12 @@ var PlannerResult = React.createClass({
     )
   }
 });
-
-var worker = new Worker("worker.js");
+if (!!window.Worker){
+  console.log('Use web worker to update plans');
+  var PlanWorker = new Worker("worker.js");
+}else{
+  console.log('Cannot use web worker to update plans');
+}
 
 var Planner = React.createClass({
   getInitialState: function () {
@@ -169,15 +173,22 @@ var Planner = React.createClass({
   },
   updatePlan(uiData) {
     uiData = uiData||this.props.uiData;
-    // send message to web worker
-    worker.postMessage(uiData);
-    // receive messages from web worker
-    worker.onmessage = (e) => {
-        var plans = e.data;
-        this.setState({plan: this.findPlan(plans)});
-        console.log('Update plan!')
-        // this.forceUpdate();
-    };
+    this.setState({plan: null});
+    if (!!window.Worker){
+      // send message to web worker
+      PlanWorker.postMessage(uiData);
+      // receive messages from web worker
+      PlanWorker.onmessage = (e) => {
+          var plans = e.data;
+          this.setState({plan: this.findPlan(plans)});
+          console.log('Update plan!')
+      };
+    } else{
+      var plans = Analysis.plans(uiData.data);
+      this.setState({plan: this.findPlan(plans)});
+      console.log('Update plan!')
+    }
+
   },
   componentWillMount() {
    this.updatePlan();
@@ -186,44 +197,48 @@ var Planner = React.createClass({
    this.updatePlan(nextProps.uiData);
   },
   render: function() {
-    if (!this.state.plan) return null
+    // if (!this.state.plan) return null
     return (
       <div>
         <h1 className="bolded">Planner</h1>
-        <div className="form-group">
-          <div className="analyser-align">
-            <h4 className="bolded">Starting global state</h4>
-            <StateSelector
-              nodes={this.props.nodes}
-              getUIName={this.props.getUIName}
-              globalState={this.state.start}
-              isStartSelector={true}
-              updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={this.state.plan.isStartReachable} />
-            <div style={{textAlign: "center"}}>
-              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
+        {!this.state.plan &&
+          <img src="img/loading.svg" className="center-block" style={{marginTop: "50px", marginBottom: "50px"}}/>}
+        {this.state.plan &&
+          <div className="form-group">
+            <div className="analyser-align">
+              <h4 className="bolded">Starting global state</h4>
+              <StateSelector
+                nodes={this.props.nodes}
+                getUIName={this.props.getUIName}
+                globalState={this.state.start}
+                isStartSelector={true}
+                updateGlobalState={this.updateGlobalState} />
+              <StateReachability isReachable={this.state.plan.isStartReachable} />
+              <div style={{textAlign: "center"}}>
+                <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
+              </div>
             </div>
-          </div>
-          <div className="analyser-align">
-            <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
-          </div>
-          <div className="analyser-align">
-            <h4 className="bolded">Target global state</h4>
-            <StateSelector
-              nodes={this.props.nodes}
-              getUIName={this.props.getUIName}
-              globalState={this.state.target}
-              isStartSelector={false}
-              updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={this.state.plan.isTargetReachable} />
-            <div style={{textAlign: "center"}}>
-              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
+            <div className="analyser-align">
+              <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
             </div>
+            <div className="analyser-align">
+              <h4 className="bolded">Target global state</h4>
+              <StateSelector
+                nodes={this.props.nodes}
+                getUIName={this.props.getUIName}
+                globalState={this.state.target}
+                isStartSelector={false}
+                updateGlobalState={this.updateGlobalState} />
+              <StateReachability isReachable={this.state.plan.isTargetReachable} />
+              <div style={{textAlign: "center"}}>
+                <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
+              </div>
+            </div>
+            <PlannerResult
+              plan={this.state.plan}
+              getUIName={this.props.getUIName} />
           </div>
-          <PlannerResult
-            plan={this.state.plan}
-            getUIName={this.props.getUIName} />
-        </div>
+        }
       </div>
     );
   }
