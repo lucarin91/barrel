@@ -592,7 +592,6 @@ var BarrelEditor = React.createClass({
 
     setType: function(name) {
         this.setState(this.makeState(name));
-        this.refresh();
     },
 
     refresh: function() {
@@ -601,7 +600,6 @@ var BarrelEditor = React.createClass({
             this.props.onChange();
         });
     },
-
     render: function() {
         var exportXMLDoc = () => {
             var url = URL.createObjectURL(this.state.mProt.getXML());
@@ -692,13 +690,11 @@ var BarrelTabs = React.createClass({
     getInitialState() {
         return { hardReset: false };
     },
-
     render: function() {
         var csar = this.props.csar;
         var serviceTemplate = csar.get("ServiceTemplate")[0].element;
         var types = csar.getTypes();
         var uiData = TOSCAAnalysis.serviceTemplateToApplication(serviceTemplate, types, this.state.hardReset);
-
         return (
             <div className="container" style={{ backgroundColor: "white" }}>
                 <div className="tab-content">
@@ -723,7 +719,7 @@ var BarrelTabs = React.createClass({
                         <Analyser
                           uiData={uiData}
                           reachable={Analysis.reachable(uiData.data)}
-                          plans={Analysis.plans(uiData.data)} />
+                        />
                     </div>
                 </div>
             </div>

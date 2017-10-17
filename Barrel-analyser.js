@@ -112,6 +112,14 @@ var PlannerResult = React.createClass({
   }
 });
 
+// create web worker if the browser supported it.
+if (!!window.Worker){
+  console.log('Use web worker to update plans');
+  var PlansWorker = new Worker("Plans-worker.js");
+}else{
+  console.log('Cannot use web worker to update plans');
+}
+
 var Planner = React.createClass({
   getInitialState: function () {
     var startGS = {};
@@ -152,11 +160,11 @@ var Planner = React.createClass({
     };
     if(result.isStartReachable &&
         result.isTargetReachable &&
-        this.props.plans.costs[start][target]>=0) {
+        this.state.plans.costs[start][target]>=0) {
       result.plan = [];
       var currentApp = this.props.reachable[start];
       while(currentApp.globalState != target) {
-        var step = this.props.plans.steps[currentApp.globalState][target];
+        var step = this.state.plans.steps[currentApp.globalState][target];
         result.plan.push(step);
         if (!step.opId) currentApp = currentApp.doHardReset(step.nodeId);
         else if (step.isOp) currentApp = currentApp.performOp(step.nodeId,step.opId);
@@ -165,45 +173,76 @@ var Planner = React.createClass({
     }
     return result;
   },
+  updatePlan(uiData) {
+    uiData = uiData||this.props.uiData;
+    this.setState({plans: null});
+    if (!!window.Worker){
+      // send message to web worker
+      PlansWorker.postMessage(uiData);
+      // receive messages from web worker
+      PlansWorker.onmessage = (e) => {
+          var plans = e.data;
+          this.setState({plans: plans});
+          console.log('Update plans with worker!')
+      };
+    } else{
+      var plans = Analysis.plans(uiData.data);
+      this.setState({plans: plans});
+      console.log('Update plans wihout worker!')
+    }
+
+  },
+  componentWillMount() {
+    this.updatePlan();
+  },
+  componentWillReceiveProps(nextProps){
+    var shouldUpdate = !Object.is(nextProps.uiData, this.props.uiData);
+    if (shouldUpdate)
+      this.updatePlan(nextProps.uiData);
+  },
   render: function() {
-    var plan = this.findPlan();
+    var plan = this.state.plans ? this.findPlan() : null;
     return (
       <div>
         <h1 className="bolded">Planner</h1>
-        <div className="form-group">
-          <div className="analyser-align">
-            <h4 className="bolded">Starting global state</h4>
-            <StateSelector
-              nodes={this.props.nodes}
-              getUIName={this.props.getUIName}
-              globalState={this.state.start}
-              isStartSelector={true}
-              updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={plan.isStartReachable} />
-            <div style={{textAlign: "center"}}>
-              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
+        {!plan &&
+          <img src="img/loading.svg" className="center-block" style={{marginTop: "50px", marginBottom: "50px"}}/>}
+        {plan &&
+          <div className="form-group">
+            <div className="analyser-align">
+              <h4 className="bolded">Starting global state</h4>
+              <StateSelector
+                nodes={this.props.nodes}
+                getUIName={this.props.getUIName}
+                globalState={this.state.start}
+                isStartSelector={true}
+                updateGlobalState={this.updateGlobalState} />
+              <StateReachability isReachable={plan.isStartReachable} />
+              <div style={{textAlign: "center"}}>
+                <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.start)}>Set as simulator state</a>
+              </div>
             </div>
-          </div>
-          <div className="analyser-align">
-            <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
-          </div>
-          <div className="analyser-align">
-            <h4 className="bolded">Target global state</h4>
-            <StateSelector
-              nodes={this.props.nodes}
-              getUIName={this.props.getUIName}
-              globalState={this.state.target}
-              isStartSelector={false}
-              updateGlobalState={this.updateGlobalState} />
-            <StateReachability isReachable={plan.isTargetReachable} />
-            <div style={{textAlign: "center"}}>
-              <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
+            <div className="analyser-align">
+              <a className="btn btn-sm btn-default" onClick={this.switchState}>Switch states</a>
             </div>
+            <div className="analyser-align">
+              <h4 className="bolded">Target global state</h4>
+              <StateSelector
+                nodes={this.props.nodes}
+                getUIName={this.props.getUIName}
+                globalState={this.state.target}
+                isStartSelector={false}
+                updateGlobalState={this.updateGlobalState} />
+              <StateReachability isReachable={plan.isTargetReachable} />
+              <div style={{textAlign: "center"}}>
+                <a className="btn btn-sm btn-default" onClick={() => this.props.setSimulatorState(this.state.target)}>Set as simulator state</a>
+              </div>
+            </div>
+            <PlannerResult
+              plan={plan}
+              getUIName={this.props.getUIName} />
           </div>
-          <PlannerResult
-            plan={plan}
-            getUIName={this.props.getUIName} />
-        </div>
+        }
       </div>
     );
   }
@@ -230,6 +269,11 @@ Analyser = React.createClass({
         simulatorApp: this.props.reachable[desiredState]
       });
   },
+  componentWillReceiveProps(nextProps){
+    this.setState({
+      simulatorApp: nextProps.uiData.data
+    });
+  },
   render: function() {
     var getUIName = id => this.props.uiData.uiNames[id] || id;
     var nodeSetToNodeList = set => Object.keys(set).map(el => { return { name: el, obj: set[el] } });
@@ -245,7 +289,7 @@ Analyser = React.createClass({
           initialGlobalState={this.props.uiData.data.globalState}
           nodes={nodeSetToNodeList(this.props.uiData.data.nodes)}
           reachable={this.props.reachable}
-          plans={this.props.plans}
+          uiData={this.props.uiData}
           getUIName={getUIName}
           setSimulatorState={this.setSimulatorState}
         />
